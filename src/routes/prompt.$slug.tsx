@@ -64,7 +64,7 @@ function PromptPage() {
     toast.success("Prompt copied to clipboard");
     const { data } = await supabase.rpc("increment_prompt_copy", { _slug: prompt.slug });
     if (typeof data === "number") setCopyCount(data);
-    else setCopyCount((n) => n + 1);
+    else setCopyCount((n) => (n ?? prompt.copy_count ?? 0) + 1);
     setTimeout(() => setCopied(false), 1800);
   };
 
