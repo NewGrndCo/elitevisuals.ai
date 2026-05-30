@@ -1,7 +1,13 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
+import { toast } from "sonner";
+import logoUrl from "@/assets/logo.png";
+
+const ADMIN_TAP_COUNT = 4;
+const ADMIN_TAP_WINDOW_MS = 1500;
+const ADMIN_PASSWORD = (import.meta.env.VITE_ADMIN_PASSWORD as string | undefined) ?? "elite";
 
 export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
