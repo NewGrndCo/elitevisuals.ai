@@ -432,7 +432,8 @@ function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories
 
 /* ──────────────────────────── Landing Page Editor ─────────────────────────── */
 
-type Block = { key: string; label: string; fields: { name: string; label: string; type: "text" | "textarea" }[] };
+type FieldKind = "text" | "textarea" | "image";
+type Block = { key: string; label: string; fields: { name: string; label: string; type: FieldKind }[] };
 
 const LANDING_BLOCKS: Block[] = [
   { key: "hero", label: "Hero section", fields: [
@@ -442,10 +443,12 @@ const LANDING_BLOCKS: Block[] = [
     { name: "subhead", label: "Subheading", type: "textarea" },
     { name: "cta_primary", label: "Primary CTA button", type: "text" },
     { name: "cta_secondary", label: "Secondary CTA button", type: "text" },
+    { name: "product_image", label: "Product preview image (pricing card)", type: "image" },
   ]},
   { key: "library", label: "Library page", fields: [
     { name: "title", label: "Page title", type: "text" },
     { name: "description", label: "Page description", type: "textarea" },
+    { name: "hero_image", label: "Image above 'Kinetic V1 Prompt Pack' title", type: "image" },
   ]},
   { key: "footer", label: "Footer", fields: [
     { name: "copyright", label: "Copyright text", type: "text" },
@@ -474,6 +477,15 @@ function LandingEditor() {
   const setField = (block: string, field: string, value: string) =>
     setDrafts((d) => ({ ...d, [block]: { ...(d[block] ?? {}), [field]: value } }));
 
+  const uploadImage = async (block: string, field: string, file: File) => {
+    const path = `landing/${block}-${field}-${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("elite-media").upload(path, file, { upsert: true });
+    if (error) { toast.error(error.message); return; }
+    const { data } = supabase.storage.from("elite-media").getPublicUrl(path);
+    setField(block, field, data.publicUrl);
+    toast.success("Uploaded — remember to Save");
+  };
+
   const saveBlock = async (key: string) => {
     await mut.mutateAsync({ key, value: drafts[key] ?? {} });
     toast.success("Saved — changes are live");
@@ -482,7 +494,7 @@ function LandingEditor() {
   return (
     <div className="space-y-6">
       <section className="glass rounded-3xl p-6">
-        <SectionHeader title="Landing page content" desc="Edit hero text, library page copy, and footer. Changes appear immediately on the live site." />
+        <SectionHeader title="Landing page content" desc="Edit hero text, library page copy, footer, and images. Changes appear immediately on the live site." />
       </section>
 
       {LANDING_BLOCKS.map((block) => (
@@ -495,29 +507,55 @@ function LandingEditor() {
             </button>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {block.fields.map((f) => (
-              <div key={f.name} className={f.type === "textarea" ? "sm:col-span-2" : ""}>
-                <Field label={f.label}>
-                  {f.type === "textarea" ? (
-                    <textarea
-                      value={drafts[block.key]?.[f.name] ?? ""}
-                      onChange={(e) => setField(block.key, f.name, e.target.value)}
-                      rows={3}
-                      className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
-                    />
-                  ) : (
-                    <input
-                      value={drafts[block.key]?.[f.name] ?? ""}
-                      onChange={(e) => setField(block.key, f.name, e.target.value)}
-                      className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
-                    />
-                  )}
-                </Field>
-              </div>
-            ))}
+            {block.fields.map((f) => {
+              const val = drafts[block.key]?.[f.name] ?? "";
+              const wide = f.type !== "text";
+              return (
+                <div key={f.name} className={wide ? "sm:col-span-2" : ""}>
+                  <Field label={f.label}>
+                    {f.type === "textarea" ? (
+                      <textarea
+                        value={val}
+                        onChange={(e) => setField(block.key, f.name, e.target.value)}
+                        rows={3}
+                        className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
+                      />
+                    ) : f.type === "image" ? (
+                      <div className="space-y-2">
+                        {val && (
+                          <div className="glass aspect-video w-full overflow-hidden rounded-xl bg-black/40">
+                            <img src={val} alt="" className="h-full w-full object-cover" />
+                          </div>
+                        )}
+                        <input
+                          value={val}
+                          onChange={(e) => setField(block.key, f.name, e.target.value)}
+                          placeholder="https://… or upload below"
+                          className="glass w-full rounded-xl bg-transparent px-3 py-2 text-xs outline-none"
+                        />
+                        <label className="glass flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs hover:bg-white/10">
+                          <Upload className="h-3.5 w-3.5" /> Upload image
+                          <input
+                            type="file" accept="image/*" className="hidden"
+                            onChange={(e) => e.target.files?.[0] && uploadImage(block.key, f.name, e.target.files[0])}
+                          />
+                        </label>
+                      </div>
+                    ) : (
+                      <input
+                        value={val}
+                        onChange={(e) => setField(block.key, f.name, e.target.value)}
+                        className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
+                      />
+                    )}
+                  </Field>
+                </div>
+              );
+            })}
           </div>
         </section>
       ))}
+
     </div>
   );
 }

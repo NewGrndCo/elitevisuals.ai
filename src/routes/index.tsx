@@ -48,6 +48,7 @@ function HomePage() {
   const headline = sc(site, "hero", "headline", "The best AI transitions for video editors.");
   const subhead = sc(site, "hero", "subhead", `A curated library of ${totalPrompts} image-to-video prompts engineered to create cinematic motion and transformation effects across modern AI video generation platforms.`);
   const ctaPrimary = sc(site, "hero", "cta_primary", "Explore Prompts");
+  const productImage = sc(site, "hero", "product_image", "");
 
   return (
     <>
@@ -100,68 +101,6 @@ function HomePage() {
           </Link>
         </section>
 
-        {/* MOTION STYLES — Explore Prompts */}
-        <section id="styles" className="mx-auto max-w-[1100px] px-6 py-28">
-          <div className="mb-16 max-w-[520px]">
-            <SectionTag>Motion Styles</SectionTag>
-            <h2 className="mb-3 text-[clamp(1.8rem,3.5vw,2.6rem)] font-bold leading-[1.2] tracking-[-0.03em]">
-              {totalStyles} distinct motion languages.
-            </h2>
-            <p className="mt-3 text-[0.95rem] leading-[1.75] text-muted-foreground">
-              Elite Visuals is built around the concept of motion as transformation. Each style uses a specific motion language to evolve a still image into a dynamic cinematic sequence.
-            </p>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {cats?.map((c) => {
-              const meta = STYLE_META[c.slug] ?? STYLE_META.temporal;
-              const Icon = meta.icon;
-              const count = prompts?.filter((p) => p.category_id === c.id).length ?? 5;
-              return (
-                <Link
-                  key={c.id}
-                  to="/library"
-                  search={{ category: c.slug }}
-                  className="glass group relative overflow-hidden rounded-[14px] p-7 transition-all hover:-translate-y-1"
-                  style={{ borderColor: undefined }}
-                >
-                  <div
-                    className="pointer-events-none absolute inset-0"
-                    style={{ background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${meta.tint}, transparent 70%)` }}
-                  />
-                  <div className="absolute right-5 top-5 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-                    {count} prompts
-                  </div>
-                  <div className="relative">
-                    <div
-                      className="mb-5 grid h-12 w-12 place-items-center rounded-[12px] border"
-                      style={{ background: meta.tint, borderColor: meta.tintBorder }}
-                    >
-                      <Icon className="h-5 w-5" style={{ color: meta.tintText }} />
-                    </div>
-                    <h3 className="mb-1 text-base font-bold tracking-[-0.01em]">{c.name}</h3>
-                    <div className="mb-3 text-[0.7rem] font-bold uppercase tracking-[0.1em]" style={{ color: meta.tintText }}>{meta.lang}</div>
-                    <p className="mb-5 text-[0.825rem] leading-[1.65] text-muted-foreground">{c.description}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {meta.tags.map((t) => (
-                        <span
-                          key={t}
-                          className="rounded-[4px] border px-2 py-0.5 text-[0.68rem] font-semibold tracking-[0.04em]"
-                          style={{ background: meta.tint, borderColor: meta.tintBorder, color: meta.tintText }}
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-
-        <SectionDivider />
-
         {/* DEMO REEL */}
         <section id="demo" className="mx-auto max-w-[1100px] px-6 py-28">
           <div className="mb-12 flex flex-wrap items-end justify-between gap-6">
@@ -180,9 +119,6 @@ function HomePage() {
 
         {/* COMPAT CAROUSEL */}
         <section className="overflow-hidden px-6 py-16 text-center">
-          <p className="mb-8 text-[0.78rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-            Compatible with leading AI models.
-          </p>
           <div
             className="overflow-hidden"
             style={{
@@ -215,7 +151,7 @@ function HomePage() {
 
         <SectionDivider />
 
-        {/* HOW TO USE — Scroll to Explore */}
+        {/* HOW TO USE — Workflow */}
         <section id="how-to" className="mx-auto max-w-[1100px] px-6 py-28">
           <div className="mb-2 flex flex-col items-center text-center">
             <SectionTag>Workflow</SectionTag>
@@ -240,7 +176,67 @@ function HomePage() {
               </div>
             ))}
           </div>
+
+          {/* MOTION STYLES — nested under Workflow */}
+          <div id="styles" className="mt-24">
+            <div className="mb-12 max-w-[520px]">
+              <SectionTag>Motion Styles</SectionTag>
+              <h2 className="mb-3 text-[clamp(1.6rem,3vw,2.2rem)] font-bold leading-[1.2] tracking-[-0.03em]">
+                {totalStyles} distinct motion languages.
+              </h2>
+              <p className="mt-3 text-[0.95rem] leading-[1.75] text-muted-foreground">
+                Elite Visuals is built around the concept of motion as transformation. Each style uses a specific motion language to evolve a still image into a dynamic cinematic sequence.
+              </p>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {cats?.map((c) => {
+                const meta = STYLE_META[c.slug] ?? STYLE_META.temporal;
+                const Icon = meta.icon;
+                const count = prompts?.filter((p) => p.category_id === c.id).length ?? 5;
+                return (
+                  <Link
+                    key={c.id}
+                    to="/library"
+                    search={{ category: c.slug }}
+                    className="glass group relative overflow-hidden rounded-[14px] p-7 transition-all hover:-translate-y-1"
+                  >
+                    <div
+                      className="pointer-events-none absolute inset-0"
+                      style={{ background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${meta.tint}, transparent 70%)` }}
+                    />
+                    <div className="absolute right-5 top-5 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                      {count} prompts
+                    </div>
+                    <div className="relative">
+                      <div
+                        className="mb-5 grid h-12 w-12 place-items-center rounded-[12px] border"
+                        style={{ background: meta.tint, borderColor: meta.tintBorder }}
+                      >
+                        <Icon className="h-5 w-5" style={{ color: meta.tintText }} />
+                      </div>
+                      <h3 className="mb-1 text-base font-bold tracking-[-0.01em]">{c.name}</h3>
+                      <div className="mb-3 text-[0.7rem] font-bold uppercase tracking-[0.1em]" style={{ color: meta.tintText }}>{meta.lang}</div>
+                      <p className="mb-5 text-[0.825rem] leading-[1.65] text-muted-foreground">{c.description}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {meta.tags.map((t) => (
+                          <span
+                            key={t}
+                            className="rounded-[4px] border px-2 py-0.5 text-[0.68rem] font-semibold tracking-[0.04em]"
+                            style={{ background: meta.tint, borderColor: meta.tintBorder, color: meta.tintText }}
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         </section>
+
 
         <SectionDivider />
 
@@ -307,20 +303,24 @@ function HomePage() {
             </div>
 
             {/* Right: Image */}
-            <div className="relative min-h-[280px] flex-1 border-t border-border lg:min-h-0 lg:border-l lg:border-t-0">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(124,92,252,0.10),transparent_70%),linear-gradient(135deg,rgba(124,92,252,0.05),rgba(56,182,255,0.05))]" />
-              <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-4 p-8">
-                <div className="grid h-20 w-20 place-items-center rounded-[18px] border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.12)] shadow-[0_0_30px_rgba(124,92,252,0.15)]">
-                  <Sparkles className="h-9 w-9 text-[#a78bfa]" />
-                </div>
-                <p className="max-w-[220px] text-center text-sm font-medium text-muted-foreground">
-                  Product preview image
-                </p>
-                <p className="max-w-[260px] text-center text-xs text-muted-foreground/60">
-                  Replace this area with your product preview, mockup, or featured visual.
-                </p>
-              </div>
+            <div className="relative min-h-[280px] flex-1 overflow-hidden border-t border-border lg:min-h-0 lg:border-l lg:border-t-0">
+              {productImage ? (
+                <img src={productImage} alt="Product preview" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+              ) : (
+                <>
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(124,92,252,0.10),transparent_70%),linear-gradient(135deg,rgba(124,92,252,0.05),rgba(56,182,255,0.05))]" />
+                  <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-4 p-8">
+                    <div className="grid h-20 w-20 place-items-center rounded-[18px] border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.12)] shadow-[0_0_30px_rgba(124,92,252,0.15)]">
+                      <Sparkles className="h-9 w-9 text-[#a78bfa]" />
+                    </div>
+                    <p className="max-w-[260px] text-center text-xs text-muted-foreground/60">
+                      Upload a product preview image from the Admin → Landing page tab.
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
+
           </div>
         </section>
 

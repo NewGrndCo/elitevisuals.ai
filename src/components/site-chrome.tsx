@@ -2,12 +2,10 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut } from "lucide-react";
-import { toast } from "sonner";
 import logoUrl from "@/assets/logo.png";
 
 const ADMIN_TAP_COUNT = 4;
 const ADMIN_TAP_WINDOW_MS = 1500;
-const ADMIN_PASSWORD = (import.meta.env.VITE_ADMIN_PASSWORD as string | undefined) ?? "0671";
 
 export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -38,13 +36,7 @@ export function SiteHeader() {
     if (tapsRef.current.length >= ADMIN_TAP_COUNT) {
       e.preventDefault();
       tapsRef.current = [];
-      const pwd = window.prompt("Admin password");
-      if (pwd == null) return;
-      if (pwd.trim() === ADMIN_PASSWORD) {
-        navigate({ to: "/admin" });
-      } else {
-        toast.error("Incorrect password");
-      }
+      navigate({ to: "/admin" });
     }
   };
 
