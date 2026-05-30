@@ -429,6 +429,99 @@ function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories
   );
 }
 
+
+/* ──────────────────────────── Landing Page Editor ─────────────────────────── */
+
+type Block = { key: string; label: string; fields: { name: string; label: string; type: "text" | "textarea" }[] };
+
+const LANDING_BLOCKS: Block[] = [
+  { key: "hero", label: "Hero section", fields: [
+    { name: "badge", label: "Badge (small uppercase tag)", type: "text" },
+    { name: "badge_label", label: "Badge label", type: "text" },
+    { name: "headline", label: "Headline", type: "textarea" },
+    { name: "subhead", label: "Subheading", type: "textarea" },
+    { name: "cta_primary", label: "Primary CTA button", type: "text" },
+    { name: "cta_secondary", label: "Secondary CTA button", type: "text" },
+  ]},
+  { key: "library", label: "Library page", fields: [
+    { name: "title", label: "Page title", type: "text" },
+    { name: "description", label: "Page description", type: "textarea" },
+  ]},
+  { key: "footer", label: "Footer", fields: [
+    { name: "copyright", label: "Copyright text", type: "text" },
+    { name: "tagline", label: "Tagline", type: "text" },
+  ]},
+];
+
+function LandingEditor() {
+  const { data: site } = useSiteContent();
+  const mut = useSiteContentMutation();
+  const [drafts, setDrafts] = useState<Record<string, Record<string, string>>>({});
+
+  useEffect(() => {
+    if (!site) return;
+    const next: Record<string, Record<string, string>> = {};
+    LANDING_BLOCKS.forEach((b) => {
+      next[b.key] = {};
+      b.fields.forEach((f) => {
+        const v = site[b.key]?.[f.name];
+        next[b.key][f.name] = typeof v === "string" ? v : "";
+      });
+    });
+    setDrafts(next);
+  }, [site]);
+
+  const setField = (block: string, field: string, value: string) =>
+    setDrafts((d) => ({ ...d, [block]: { ...(d[block] ?? {}), [field]: value } }));
+
+  const saveBlock = async (key: string) => {
+    await mut.mutateAsync({ key, value: drafts[key] ?? {} });
+    toast.success("Saved — changes are live");
+  };
+
+  return (
+    <div className="space-y-6">
+      <section className="glass rounded-3xl p-6">
+        <SectionHeader title="Landing page content" desc="Edit hero text, library page copy, and footer. Changes appear immediately on the live site." />
+      </section>
+
+      {LANDING_BLOCKS.map((block) => (
+        <section key={block.key} className="glass rounded-3xl p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-xl font-semibold">{block.label}</h2>
+            <button onClick={() => saveBlock(block.key)} disabled={mut.isPending}
+              className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">
+              <Save className="h-4 w-4" /> Save
+            </button>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {block.fields.map((f) => (
+              <div key={f.name} className={f.type === "textarea" ? "sm:col-span-2" : ""}>
+                <Field label={f.label}>
+                  {f.type === "textarea" ? (
+                    <textarea
+                      value={drafts[block.key]?.[f.name] ?? ""}
+                      onChange={(e) => setField(block.key, f.name, e.target.value)}
+                      rows={3}
+                      className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
+                    />
+                  ) : (
+                    <input
+                      value={drafts[block.key]?.[f.name] ?? ""}
+                      onChange={(e) => setField(block.key, f.name, e.target.value)}
+                      className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
+                    />
+                  )}
+                </Field>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div><label className="mb-1 block text-xs uppercase tracking-wider text-muted-foreground">{label}</label>{children}</div>;
 }
