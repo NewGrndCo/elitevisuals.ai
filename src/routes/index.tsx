@@ -36,9 +36,12 @@ const STYLE_META: Record<string, { icon: React.ComponentType<React.SVGProps<SVGS
 function HomePage() {
   const { data: cats } = useCategories();
   const { data: prompts } = usePrompts();
+  const { data: aiLogos } = useAiLogos();
   const totalPrompts = prompts?.length ?? 20;
   const totalStyles = cats?.length ?? 4;
   const perStyle = totalStyles ? Math.round(totalPrompts / totalStyles) : 5;
+  const publishedLogos = (aiLogos ?? []).filter((l) => l.is_published);
+
 
   return (
     <>
