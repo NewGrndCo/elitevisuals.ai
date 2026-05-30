@@ -3,13 +3,13 @@ import { SiteHeader } from "@/components/site-chrome";
 import { useAuth } from "@/lib/use-auth";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCategories, usePrompts, useAiLogos, type Prompt, type Category, type AiLogo } from "@/lib/queries";
+import { useCategories, usePrompts, useAiLogos, useSiteContent, useSiteContentMutation, type Prompt, type Category, type AiLogo } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Plus, Trash2, Save, Upload, Mail, ArrowUp, ArrowDown,
   LayoutDashboard, FileText, FolderKanban, Image as ImageIcon, ShieldCheck,
-  Eye, EyeOff, Copy, Search, ExternalLink,
+  Eye, EyeOff, Copy, Search, ExternalLink, Type,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
