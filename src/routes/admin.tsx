@@ -3,13 +3,13 @@ import { SiteHeader } from "@/components/site-chrome";
 import { useAuth } from "@/lib/use-auth";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCategories, usePrompts, useAiLogos, type Prompt, type Category, type AiLogo } from "@/lib/queries";
+import { useCategories, usePrompts, useAiLogos, useSiteContent, useSiteContentMutation, type Prompt, type Category, type AiLogo } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Plus, Trash2, Save, Upload, Mail, ArrowUp, ArrowDown,
   LayoutDashboard, FileText, FolderKanban, Image as ImageIcon, ShieldCheck,
-  Eye, EyeOff, Copy, Search, ExternalLink,
+  Eye, EyeOff, Copy, Search, ExternalLink, Type,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -17,12 +17,13 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type TabKey = "overview" | "prompts" | "categories" | "logos" | "whitelist";
+type TabKey = "overview" | "landing" | "prompts" | "categories" | "logos" | "whitelist";
 
 const TABS: { key: TabKey; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
+  { key: "landing", label: "Landing page", icon: Type },
   { key: "prompts", label: "Prompts", icon: FileText },
-  { key: "categories", label: "Categories", icon: FolderKanban },
+  { key: "categories", label: "Prompt Packs", icon: FolderKanban },
   { key: "logos", label: "AI Models", icon: ImageIcon },
   { key: "whitelist", label: "Admins", icon: ShieldCheck },
 ];
@@ -80,6 +81,7 @@ function AdminPage() {
         {/* Content */}
         <div className="min-w-0 space-y-6">
           {tab === "overview" && <Overview onJump={setTab} />}
+          {tab === "landing" && <LandingEditor />}
           {tab === "prompts" && <PromptManager />}
           {tab === "categories" && <CategoryManager />}
           {tab === "logos" && <AiLogoManager />}
@@ -423,6 +425,99 @@ function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories
           <button onClick={save} disabled={saving} className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"><Save className="h-4 w-4" /> {saving ? "Saving…" : "Save changes"}</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+
+/* ──────────────────────────── Landing Page Editor ─────────────────────────── */
+
+type Block = { key: string; label: string; fields: { name: string; label: string; type: "text" | "textarea" }[] };
+
+const LANDING_BLOCKS: Block[] = [
+  { key: "hero", label: "Hero section", fields: [
+    { name: "badge", label: "Badge (small uppercase tag)", type: "text" },
+    { name: "badge_label", label: "Badge label", type: "text" },
+    { name: "headline", label: "Headline", type: "textarea" },
+    { name: "subhead", label: "Subheading", type: "textarea" },
+    { name: "cta_primary", label: "Primary CTA button", type: "text" },
+    { name: "cta_secondary", label: "Secondary CTA button", type: "text" },
+  ]},
+  { key: "library", label: "Library page", fields: [
+    { name: "title", label: "Page title", type: "text" },
+    { name: "description", label: "Page description", type: "textarea" },
+  ]},
+  { key: "footer", label: "Footer", fields: [
+    { name: "copyright", label: "Copyright text", type: "text" },
+    { name: "tagline", label: "Tagline", type: "text" },
+  ]},
+];
+
+function LandingEditor() {
+  const { data: site } = useSiteContent();
+  const mut = useSiteContentMutation();
+  const [drafts, setDrafts] = useState<Record<string, Record<string, string>>>({});
+
+  useEffect(() => {
+    if (!site) return;
+    const next: Record<string, Record<string, string>> = {};
+    LANDING_BLOCKS.forEach((b) => {
+      next[b.key] = {};
+      b.fields.forEach((f) => {
+        const v = site[b.key]?.[f.name];
+        next[b.key][f.name] = typeof v === "string" ? v : "";
+      });
+    });
+    setDrafts(next);
+  }, [site]);
+
+  const setField = (block: string, field: string, value: string) =>
+    setDrafts((d) => ({ ...d, [block]: { ...(d[block] ?? {}), [field]: value } }));
+
+  const saveBlock = async (key: string) => {
+    await mut.mutateAsync({ key, value: drafts[key] ?? {} });
+    toast.success("Saved — changes are live");
+  };
+
+  return (
+    <div className="space-y-6">
+      <section className="glass rounded-3xl p-6">
+        <SectionHeader title="Landing page content" desc="Edit hero text, library page copy, and footer. Changes appear immediately on the live site." />
+      </section>
+
+      {LANDING_BLOCKS.map((block) => (
+        <section key={block.key} className="glass rounded-3xl p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-xl font-semibold">{block.label}</h2>
+            <button onClick={() => saveBlock(block.key)} disabled={mut.isPending}
+              className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">
+              <Save className="h-4 w-4" /> Save
+            </button>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {block.fields.map((f) => (
+              <div key={f.name} className={f.type === "textarea" ? "sm:col-span-2" : ""}>
+                <Field label={f.label}>
+                  {f.type === "textarea" ? (
+                    <textarea
+                      value={drafts[block.key]?.[f.name] ?? ""}
+                      onChange={(e) => setField(block.key, f.name, e.target.value)}
+                      rows={3}
+                      className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
+                    />
+                  ) : (
+                    <input
+                      value={drafts[block.key]?.[f.name] ?? ""}
+                      onChange={(e) => setField(block.key, f.name, e.target.value)}
+                      className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
+                    />
+                  )}
+                </Field>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
