@@ -10,6 +10,7 @@ export type Prompt = {
   prompt_text: string; category_id: string | null;
   cover_image_url: string | null; demo_video_url: string | null;
   gallery_urls: string[]; is_published: boolean; sort_order: number;
+  copy_count: number;
 };
 
 export const useCategories = () =>
