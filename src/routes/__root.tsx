@@ -109,7 +109,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthListener />
-      <Outlet />
+      <AnimatedBackground />
+      <div className="relative z-10">
+        <Outlet />
+      </div>
       <Toaster theme="dark" position="bottom-right" toastOptions={{ className: "glass" }} />
     </QueryClientProvider>
   );
