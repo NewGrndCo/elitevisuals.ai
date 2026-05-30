@@ -29,6 +29,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_logos: {
+        Row: {
+          created_at: string
+          id: string
+          is_published: boolean
+          link_url: string | null
+          logo_url: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          link_url?: string | null
+          logo_url: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          link_url?: string | null
+          logo_url?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           accent_color: string | null
