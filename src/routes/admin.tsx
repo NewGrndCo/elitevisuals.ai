@@ -38,6 +38,7 @@ function AdminPage() {
         <WhitelistManager />
         <CategoryManager />
         <PromptManager />
+        <AiLogoManager />
       </div>
     </Shell>
   );
