@@ -56,10 +56,15 @@ function PromptPage() {
   const hero = activeImg ?? prompt.cover_image_url;
   const accent = prompt.categories?.accent_color ?? "#a78bfa";
 
+  const [copyCount, setCopyCount] = useState<number>(prompt.copy_count ?? 0);
+
   const copy = async () => {
     await navigator.clipboard.writeText(prompt.prompt_text);
     setCopied(true);
     toast.success("Prompt copied to clipboard");
+    const { data } = await supabase.rpc("increment_prompt_copy", { _slug: prompt.slug });
+    if (typeof data === "number") setCopyCount(data);
+    else setCopyCount((n) => n + 1);
     setTimeout(() => setCopied(false), 1800);
   };
 
