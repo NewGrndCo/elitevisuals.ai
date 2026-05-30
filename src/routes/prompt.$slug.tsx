@@ -38,6 +38,7 @@ function PromptPage() {
   const { data: prompt, isLoading } = usePrompt(slug);
   const [copied, setCopied] = useState(false);
   const [activeImg, setActiveImg] = useState<string | null>(null);
+  const [copyCount, setCopyCount] = useState<number | null>(null);
 
   if (isLoading) {
     return (
@@ -55,8 +56,7 @@ function PromptPage() {
 
   const hero = activeImg ?? prompt.cover_image_url;
   const accent = prompt.categories?.accent_color ?? "#a78bfa";
-
-  const [copyCount, setCopyCount] = useState<number>(prompt.copy_count ?? 0);
+  const displayedCount = copyCount ?? prompt.copy_count ?? 0;
 
   const copy = async () => {
     await navigator.clipboard.writeText(prompt.prompt_text);
