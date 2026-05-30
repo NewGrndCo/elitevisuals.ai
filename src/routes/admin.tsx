@@ -81,6 +81,7 @@ function AdminPage() {
         {/* Content */}
         <div className="min-w-0 space-y-6">
           {tab === "overview" && <Overview onJump={setTab} />}
+          {tab === "landing" && <LandingEditor />}
           {tab === "prompts" && <PromptManager />}
           {tab === "categories" && <CategoryManager />}
           {tab === "logos" && <AiLogoManager />}
