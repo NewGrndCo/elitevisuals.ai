@@ -17,12 +17,13 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type TabKey = "overview" | "prompts" | "categories" | "logos" | "whitelist";
+type TabKey = "overview" | "landing" | "prompts" | "categories" | "logos" | "whitelist";
 
 const TABS: { key: TabKey; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
+  { key: "landing", label: "Landing page", icon: Type },
   { key: "prompts", label: "Prompts", icon: FileText },
-  { key: "categories", label: "Categories", icon: FolderKanban },
+  { key: "categories", label: "Prompt Packs", icon: FolderKanban },
   { key: "logos", label: "AI Models", icon: ImageIcon },
   { key: "whitelist", label: "Admins", icon: ShieldCheck },
 ];
