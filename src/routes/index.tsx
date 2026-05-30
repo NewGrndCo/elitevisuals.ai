@@ -27,7 +27,7 @@ const compatLogos = [
   { label: "Sora", short: "So", grad: "linear-gradient(135deg,#0f172a,#475569)" },
 ];
 
-const STYLE_META: Record<string, { icon: React.ComponentType<{ className?: string }>; lang: string; tags: string[]; tint: string; tintBorder: string; tintText: string }> = {
+const STYLE_META: Record<string, { icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; lang: string; tags: string[]; tint: string; tintBorder: string; tintText: string }> = {
   temporal: { icon: Timer,    lang: "Motion Language: Time",   tags: ["Time Distortion", "Speed Variation", "Temporal Loops", "Motion Echoes", "Time Reversal"], tint: "rgba(56,182,255,0.18)",  tintBorder: "rgba(56,182,255,0.25)",  tintText: "#7dd3fc" },
   particle: { icon: Sparkles, lang: "Motion Language: Matter", tags: ["Fragmentation", "Dissolution", "Reconstruction", "Dust Effects", "Sparks"],            tint: "rgba(251,146,60,0.15)",  tintBorder: "rgba(251,146,60,0.25)",  tintText: "#fbbf5a" },
   fluid:    { icon: Waves,    lang: "Motion Language: Flow",   tags: ["Liquid Motion", "Ink Effects", "Smoke Dynamics", "Organic Morphing", "Melting"],         tint: "rgba(52,211,153,0.15)",  tintBorder: "rgba(52,211,153,0.25)",  tintText: "#6ee7b7" },
