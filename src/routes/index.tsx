@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { useCategories, usePrompts, useAiLogos, useSiteContent, sc } from "@/lib/queries";
+import { getSectionOrder } from "./admin";
 import {
   ArrowRight, Play, Monitor, UploadCloud, CheckCircle2, Timer, Sparkles, Waves, Zap, Check,
 } from "lucide-react";
