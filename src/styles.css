@@ -152,3 +152,39 @@
   background-size: 200% 100%;
   animation: shimmer 2.4s linear infinite;
 }
+
+/* Ambient mesh-gradient orb animations */
+@keyframes orb-a {
+  0%,100% { transform: translate3d(0,0,0) scale(1); }
+  50%     { transform: translate3d(6%, 4%, 0) scale(1.08); }
+}
+@keyframes orb-b {
+  0%,100% { transform: translate3d(0,0,0) scale(1); }
+  50%     { transform: translate3d(-5%, 6%, 0) scale(1.1); }
+}
+@keyframes orb-c {
+  0%,100% { transform: translate(-50%,-50%) scale(1); }
+  50%     { transform: translate(-48%,-52%) scale(1.12); }
+}
+@keyframes orb-d {
+  0%,100% { transform: translateX(-50%) scale(1); opacity: .9; }
+  50%     { transform: translateX(-52%) scale(1.15); opacity: 1; }
+}
+@keyframes orb-e {
+  0%,100% { transform: translateX(-50%) scale(1); }
+  50%     { transform: translateX(-48%) scale(1.06); }
+}
+.animate-orb-a { animation: orb-a 28s ease-in-out infinite; will-change: transform; }
+.animate-orb-b { animation: orb-b 34s ease-in-out infinite; will-change: transform; }
+.animate-orb-c { animation: orb-c 40s ease-in-out infinite; will-change: transform; }
+.animate-orb-d { animation: orb-d 24s ease-in-out infinite; will-change: transform, opacity; }
+.animate-orb-e { animation: orb-e 36s ease-in-out infinite; will-change: transform; }
+
+@media (max-width: 640px) {
+  .animate-orb-a, .animate-orb-b, .animate-orb-c,
+  .animate-orb-d, .animate-orb-e { filter: blur(80px) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-orb-a, .animate-orb-b, .animate-orb-c,
+  .animate-orb-d, .animate-orb-e { animation: none !important; }
+}
