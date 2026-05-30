@@ -2,7 +2,6 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut } from "lucide-react";
-import { toast } from "sonner";
 import logoUrl from "@/assets/logo.png";
 
 const ADMIN_TAP_COUNT = 4;
