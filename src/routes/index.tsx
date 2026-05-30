@@ -308,22 +308,6 @@ function HomePage() {
     </>
   );
 }
-                className="block w-full rounded-[10px] bg-primary py-3.5 text-base font-bold tracking-[-0.01em] text-primary-foreground shadow-[0_0_36px_rgba(124,92,252,0.35),0_0_80px_rgba(124,92,252,0.18)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_50px_rgba(124,92,252,0.45),0_0_110px_rgba(124,92,252,0.25)]"
-              >
-                Browse Library
-              </Link>
-              <p className="mt-4 text-[0.73rem] text-muted-foreground">
-                Secure checkout · Instant delivery · 30-day refund guarantee
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <SiteFooter />
-      </main>
-    </>
-  );
-}
 
 function SectionTag({ children }: { children: React.ReactNode }) {
   return (
