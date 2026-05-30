@@ -119,8 +119,14 @@ function PromptPage() {
             {/* RIGHT: sticky prompt sidebar */}
             <aside className="lg:sticky lg:top-28 lg:self-start">
               <div className="glass-strong rounded-3xl p-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-display text-sm uppercase tracking-widest text-muted-foreground">Prompt</h2>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-sm uppercase tracking-widest text-muted-foreground">Prompt</h2>
+                    <div className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <ClipboardCheck className="h-3.5 w-3.5 text-[#a78bfa]" />
+                      Copied <span className="font-mono text-foreground">{displayedCount.toLocaleString()}</span> {displayedCount === 1 ? "time" : "times"}
+                    </div>
+                  </div>
                   <button onClick={copy} className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">
                     {copied ? <><Check className="h-3.5 w-3.5" /> Copied</> : <><Copy className="h-3.5 w-3.5" /> Copy</>}
                   </button>
