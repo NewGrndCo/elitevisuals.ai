@@ -33,10 +33,19 @@ function AdminPage() {
   const nav = useNavigate();
   const [tab, setTab] = useState<TabKey>("overview");
 
-  useEffect(() => { if (!loading && !user) nav({ to: "/login" }); }, [loading, user, nav]);
-
   if (loading) return <Shell><div className="glass animate-pulse rounded-3xl p-10">Loading…</div></Shell>;
-  if (!user) return null;
+  if (!user) return (
+    <Shell>
+      <div className="glass mx-auto max-w-md rounded-3xl p-10 text-center">
+        <ShieldCheck className="mx-auto h-10 w-10 text-muted-foreground" />
+        <h1 className="mt-4 font-display text-2xl">Sign in required</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Admin tools require an authenticated session so changes pass the database security rules.</p>
+        <button onClick={() => nav({ to: "/login" })} className="ring-glow mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+          Go to sign in
+        </button>
+      </div>
+    </Shell>
+  );
   if (!isAdmin) return (
     <Shell>
       <div className="glass mx-auto max-w-md rounded-3xl p-10 text-center">
