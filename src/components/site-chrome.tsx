@@ -1,7 +1,13 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
+import { toast } from "sonner";
+import logoUrl from "@/assets/logo.png";
+
+const ADMIN_TAP_COUNT = 4;
+const ADMIN_TAP_WINDOW_MS = 1500;
+const ADMIN_PASSWORD = (import.meta.env.VITE_ADMIN_PASSWORD as string | undefined) ?? "elite";
 
 export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -24,6 +30,24 @@ export function SiteHeader() {
     return () => { mounted = false; sub.subscription.unsubscribe(); };
   }, []);
 
+  const navigate = useNavigate();
+  const tapsRef = useRef<number[]>([]);
+  const handleLogoTap = (e: React.MouseEvent) => {
+    const now = Date.now();
+    tapsRef.current = [...tapsRef.current.filter((t) => now - t < ADMIN_TAP_WINDOW_MS), now];
+    if (tapsRef.current.length >= ADMIN_TAP_COUNT) {
+      e.preventDefault();
+      tapsRef.current = [];
+      const pwd = window.prompt("Admin password");
+      if (pwd == null) return;
+      if (pwd === ADMIN_PASSWORD) {
+        navigate({ to: "/admin" });
+      } else {
+        toast.error("Incorrect password");
+      }
+    }
+  };
+
   const nav = [
     { to: "/", label: "Home" },
     { to: "/library", label: "Library" },
@@ -32,11 +56,9 @@ export function SiteHeader() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4">
       <div className="glass flex w-full max-w-6xl items-center justify-between rounded-2xl px-4 py-2.5 sm:px-6">
-        <Link to="/" className="flex items-center gap-2 font-display text-base font-semibold">
-          <span className="relative grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-[oklch(0.72_0.20_295)] via-[oklch(0.70_0.16_240)] to-[oklch(0.82_0.16_200)] shadow-[var(--shadow-glow)]">
-            <Sparkles className="h-4 w-4 text-background" />
-          </span>
-          <span className="text-gradient">Elite Visuals</span>
+        <Link to="/" onClick={handleLogoTap} className="flex items-center gap-2 font-display text-base font-semibold sm:text-lg">
+          <img src={logoUrl} alt="ELITEVISUALS logo" className="h-8 w-8 select-none object-contain sm:h-9 sm:w-9" draggable={false} />
+          <span className="tracking-[0.18em] text-white">ELITEVISUALS</span>
         </Link>
         <nav className="hidden items-center gap-1 sm:flex">
           {nav.map((n) => {
