@@ -37,13 +37,7 @@ export function SiteHeader() {
     if (tapsRef.current.length >= ADMIN_TAP_COUNT) {
       e.preventDefault();
       tapsRef.current = [];
-      const pwd = window.prompt("Admin password");
-      if (pwd == null) return;
-      if (pwd.trim() === ADMIN_PASSWORD) {
-        navigate({ to: "/admin" });
-      } else {
-        toast.error("Incorrect password");
-      }
+      navigate({ to: "/admin" });
     }
   };
 
