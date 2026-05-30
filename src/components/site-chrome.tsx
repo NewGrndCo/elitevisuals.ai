@@ -7,7 +7,7 @@ import logoUrl from "@/assets/logo.png";
 
 const ADMIN_TAP_COUNT = 4;
 const ADMIN_TAP_WINDOW_MS = 1500;
-const ADMIN_PASSWORD = (import.meta.env.VITE_ADMIN_PASSWORD as string | undefined) ?? "elite";
+const ADMIN_PASSWORD = (import.meta.env.VITE_ADMIN_PASSWORD as string | undefined) ?? "0671";
 
 export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
