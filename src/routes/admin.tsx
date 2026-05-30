@@ -3,10 +3,10 @@ import { SiteHeader } from "@/components/site-chrome";
 import { useAuth } from "@/lib/use-auth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCategories, usePrompts, type Prompt, type Category } from "@/lib/queries";
+import { useCategories, usePrompts, useAiLogos, type Prompt, type Category, type AiLogo } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, Upload, Mail } from "lucide-react";
+import { Plus, Trash2, Save, Upload, Mail, ArrowUp, ArrowDown } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Elite Visuals" }] }),
