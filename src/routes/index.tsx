@@ -2,8 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { useCategories, usePrompts } from "@/lib/queries";
 import {
-  ArrowRight, Play, Monitor, UploadCloud, CheckCircle2, Timer, Sparkles, Waves, Zap,
-  Film, Palette, Megaphone, Music, Smartphone, MonitorPlay, Check,
+  ArrowRight, Play, Monitor, UploadCloud, CheckCircle2, Timer, Sparkles, Waves, Zap, Check,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -34,15 +33,6 @@ const STYLE_META: Record<string, { icon: React.ComponentType<React.SVGProps<SVGS
   energy:   { icon: Zap,      lang: "Motion Language: Force",  tags: ["Electrical Effects", "Plasma Movement", "Light Trails", "Shockwaves", "Power Surges"],   tint: "rgba(251,113,133,0.15)", tintBorder: "rgba(251,113,133,0.25)", tintText: "#fca5a5" },
 };
 
-const audience = [
-  { icon: Film,        title: "Video Editors",        body: "Add cinematic transitions without complex VFX pipelines." },
-  { icon: Palette,     title: "AI Artists",           body: "Combine motion styles with image generation workflows." },
-  { icon: Megaphone,   title: "Marketers",            body: "Produce high-impact content faster for campaigns." },
-  { icon: Music,       title: "Musicians",            body: "Create visually striking music videos and lyric reels." },
-  { icon: Smartphone,  title: "Content Creators",     body: "Stand out on social with professional-grade transitions." },
-  { icon: MonitorPlay, title: "Multimedia Producers", body: "Integrate dynamic motion across multi-format projects." },
-];
-
 function HomePage() {
   const { data: cats } = useCategories();
   const { data: prompts } = usePrompts();
@@ -54,7 +44,7 @@ function HomePage() {
     <>
       <SiteHeader />
       <main className="pt-16">
-        {/* HERO — centered, eyebrow, stats, single CTA, scroll cue */}
+        {/* HERO */}
         <section className="flex min-h-[100vh] flex-col items-center justify-center px-6 pb-20 pt-32 text-center">
           <div className="mb-8 inline-flex items-center gap-3">
             <span className="rounded-md border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.10)] px-3 py-1 text-[0.72rem] font-extrabold uppercase tracking-[0.1em] text-[#a78bfa]">
@@ -99,66 +89,9 @@ function HomePage() {
           >
             Explore Prompts <ArrowRight className="h-[18px] w-[18px]" />
           </Link>
-
-          <div className="mt-16 flex flex-col items-center gap-2 text-[0.72rem] uppercase tracking-[0.08em] text-muted-foreground">
-            <span>Scroll to explore</span>
-            <div className="h-10 w-px animate-[scrollPulse_2s_ease-in-out_infinite] bg-gradient-to-b from-muted-foreground to-transparent" />
-          </div>
         </section>
 
-        {/* COMPAT CAROUSEL */}
-        <section className="overflow-hidden px-6 py-16 text-center">
-          <p className="mb-8 text-[0.78rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-            Compatible with leading AI models.
-          </p>
-          <div
-            className="overflow-hidden"
-            style={{
-              maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
-              WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
-            }}
-          >
-            <div className="flex w-max animate-[marquee_24s_linear_infinite] gap-4 hover:[animation-play-state:paused]">
-              {[...compatLogos, ...compatLogos].map((l, i) => (
-                <div key={i} className="glass flex flex-shrink-0 items-center gap-2.5 whitespace-nowrap rounded-[8px] px-5 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:border-[rgba(124,92,252,0.3)] hover:text-foreground">
-                  <span className="grid h-[26px] w-[26px] place-items-center rounded-[5px] text-[0.6rem] font-black text-white" style={{ background: l.grad }}>{l.short}</span>
-                  {l.label}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <SectionDivider />
-
-        {/* HOW TO USE */}
-        <section id="how-to" className="mx-auto max-w-[1100px] px-6 py-28">
-          <SectionTag>Workflow</SectionTag>
-          <SectionTitle>Unlock the power of your prompts<br/>in three easy steps.</SectionTitle>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { n: "01", icon: Monitor,     t: "Extract Start & End Frames", b: "Use your preferred editing software to select and export the high-quality frames that define the beginning and end of your transition." },
-              { n: "02", icon: UploadCloud, t: "Upload to Your AI Model",   b: "Input your selected start and end frames into your preferred AI image-to-video generator to set the foundation for the motion." },
-              { n: "03", icon: CheckCircle2,t: "Apply Your Prompt",         b: "Copy and paste your chosen prompt from the pack into the model's text field to trigger the specific cinematic effect and generate your transition." },
-            ].map(({ n, icon: Icon, t, b }) => (
-              <div key={n} className="glass group relative overflow-hidden rounded-[14px] p-8 transition-all hover:-translate-y-1 hover:border-[rgba(124,92,252,0.28)]">
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(124,92,252,0.05),transparent_60%)]" />
-                <div className="relative">
-                  <div className="mb-5 text-[3.5rem] font-extrabold leading-none tracking-[-0.05em] text-[rgba(124,92,252,0.18)]">{n}</div>
-                  <div className="mb-5 grid h-11 w-11 place-items-center rounded-[10px] border border-[rgba(124,92,252,0.2)] bg-[rgba(124,92,252,0.12)]">
-                    <Icon className="h-[22px] w-[22px] text-[#a78bfa]" />
-                  </div>
-                  <h3 className="mb-2 text-[1.05rem] font-semibold tracking-[-0.01em]">{t}</h3>
-                  <p className="text-sm leading-[1.7] text-muted-foreground">{b}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <SectionDivider />
-
-        {/* MOTION STYLES */}
+        {/* MOTION STYLES — Explore Prompts */}
         <section id="styles" className="mx-auto max-w-[1100px] px-6 py-28">
           <div className="mb-16 max-w-[520px]">
             <SectionTag>Motion Styles</SectionTag>
@@ -220,7 +153,7 @@ function HomePage() {
 
         <SectionDivider />
 
-        {/* DEMO */}
+        {/* DEMO REEL */}
         <section id="demo" className="mx-auto max-w-[1100px] px-6 py-28">
           <div className="mb-12 flex flex-wrap items-end justify-between gap-6">
             <div>
@@ -236,20 +169,53 @@ function HomePage() {
 
         <SectionDivider />
 
-        {/* WHO IT'S FOR */}
-        <section id="target" className="mx-auto max-w-[1100px] px-6 py-24">
-          <SectionTag>Made For</SectionTag>
-          <h2 className="max-w-[500px] text-[clamp(1.8rem,3.5vw,2.6rem)] font-bold leading-[1.2] tracking-[-0.03em]">
-            Built for creators at every level.
-          </h2>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {audience.map(({ icon: Icon, title, body }) => (
-              <div key={title} className="glass rounded-[14px] p-6 text-center transition-all hover:-translate-y-0.5 hover:border-[rgba(124,92,252,0.22)]">
-                <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-[10px] border border-[rgba(124,92,252,0.2)] bg-[rgba(124,92,252,0.12)]">
-                  <Icon className="h-5 w-5 text-[#a78bfa]" />
+        {/* COMPAT CAROUSEL */}
+        <section className="overflow-hidden px-6 py-16 text-center">
+          <p className="mb-8 text-[0.78rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            Compatible with leading AI models.
+          </p>
+          <div
+            className="overflow-hidden"
+            style={{
+              maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
+            }}
+          >
+            <div className="flex w-max animate-[marquee_24s_linear_infinite] gap-4 hover:[animation-play-state:paused]">
+              {[...compatLogos, ...compatLogos].map((l, i) => (
+                <div key={i} className="glass flex flex-shrink-0 items-center gap-2.5 whitespace-nowrap rounded-[8px] px-5 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:border-[rgba(124,92,252,0.3)] hover:text-foreground">
+                  <span className="grid h-[26px] w-[26px] place-items-center rounded-[5px] text-[0.6rem] font-black text-white" style={{ background: l.grad }}>{l.short}</span>
+                  {l.label}
                 </div>
-                <h4 className="mb-1 text-sm font-semibold">{title}</h4>
-                <p className="text-[0.775rem] leading-[1.5] text-muted-foreground">{body}</p>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <SectionDivider />
+
+        {/* HOW TO USE — Scroll to Explore */}
+        <section id="how-to" className="mx-auto max-w-[1100px] px-6 py-28">
+          <div className="mb-2 flex flex-col items-center text-center">
+            <SectionTag>Workflow</SectionTag>
+            <SectionTitle>Unlock the power of your prompts<br />in three easy steps.</SectionTitle>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { n: "01", icon: Monitor,     t: "Extract Start & End Frames", b: "Use your preferred editing software to select and export the high-quality frames that define the beginning and end of your transition." },
+              { n: "02", icon: UploadCloud, t: "Upload to Your AI Model",   b: "Input your selected start and end frames into your preferred AI image-to-video generator to set the foundation for the motion." },
+              { n: "03", icon: CheckCircle2,t: "Apply Your Prompt",         b: "Copy and paste your chosen prompt from the pack into the model's text field to trigger the specific cinematic effect and generate your transition." },
+            ].map(({ n, icon: Icon, t, b }) => (
+              <div key={n} className="glass group relative overflow-hidden rounded-[14px] p-8 transition-all hover:-translate-y-1 hover:border-[rgba(124,92,252,0.28)]">
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(124,92,252,0.05),transparent_60%)]" />
+                <div className="relative">
+                  <div className="mb-5 text-[3.5rem] font-extrabold leading-none tracking-[-0.05em] text-[rgba(124,92,252,0.18)]">{n}</div>
+                  <div className="mb-5 grid h-11 w-11 place-items-center rounded-[10px] border border-[rgba(124,92,252,0.2)] bg-[rgba(124,92,252,0.12)]">
+                    <Icon className="h-[22px] w-[22px] text-[#a78bfa]" />
+                  </div>
+                  <h3 className="mb-2 text-[1.05rem] font-semibold tracking-[-0.01em]">{t}</h3>
+                  <p className="text-sm leading-[1.7] text-muted-foreground">{b}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -257,20 +223,24 @@ function HomePage() {
 
         <SectionDivider />
 
-        {/* PRICING */}
-        <section id="pricing" className="mx-auto max-w-[1100px] px-6 py-28 text-center">
-          <SectionTag>Pricing</SectionTag>
-          <h2 className="mx-auto max-w-[480px] text-[clamp(1.8rem,3.5vw,2.6rem)] font-bold leading-[1.2] tracking-[-0.03em]">
-            Invest in your creativity.
-          </h2>
-          <p className="mb-14 mt-3 text-base text-muted-foreground">
-            Gain access to the Elite Visuals prompt pack library.
-          </p>
+        {/* PRICING — split layout */}
+        <section id="pricing" className="mx-auto max-w-[1100px] px-6 py-28">
+          <div className="mb-14 text-center">
+            <SectionTag>Pricing</SectionTag>
+            <h2 className="mx-auto max-w-[480px] text-[clamp(1.8rem,3.5vw,2.6rem)] font-bold leading-[1.2] tracking-[-0.03em]">
+              Invest in your creativity.
+            </h2>
+            <p className="mb-0 mt-3 text-base text-muted-foreground">
+              Gain access to the Elite Visuals prompt pack library.
+            </p>
+          </div>
 
-          <div className="glass relative mx-auto max-w-[480px] overflow-hidden rounded-[14px] p-10">
+          <div className="glass relative mx-auto flex max-w-[960px] flex-col overflow-hidden rounded-[14px] lg:flex-row">
             <div className="pointer-events-none absolute -top-16 left-1/2 h-[220px] w-[320px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(124,92,252,0.18),transparent_70%)]" />
-            <div className="relative">
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-2 text-left">
+
+            {/* Left: Content */}
+            <div className="relative flex flex-1 flex-col justify-center p-8 sm:p-10 lg:p-12">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.08em] text-[#a78bfa]">EVKT1: Kinetic V1</div>
                   <div className="mt-1 text-[0.8rem] text-muted-foreground">Lifetime access · One-time payment</div>
@@ -280,13 +250,13 @@ function HomePage() {
                 </div>
               </div>
 
-              <div className="flex items-baseline justify-center gap-1">
-                <span className="self-start mt-2 text-2xl font-semibold text-muted-foreground">$</span>
+              <div className="flex items-baseline gap-1">
+                <span className="mt-2 text-2xl font-semibold text-muted-foreground">$</span>
                 <span className="text-[4rem] font-extrabold leading-none tracking-[-0.06em]">49</span>
               </div>
               <p className="mb-8 mt-1 text-[0.8rem] text-muted-foreground">One-time purchase. Instant digital delivery.</p>
 
-              <ul className="mb-8 flex flex-col gap-3 text-left">
+              <ul className="mb-8 flex flex-col gap-3">
                 {[
                   `${totalPrompts} curated image-to-video transition prompts`,
                   `${totalStyles} motion styles: Temporal, Particle, Fluid, Energy`,
@@ -306,13 +276,29 @@ function HomePage() {
 
               <Link
                 to="/library"
-                className="block w-full rounded-[10px] bg-primary py-3.5 text-base font-bold tracking-[-0.01em] text-primary-foreground shadow-[0_0_36px_rgba(124,92,252,0.35),0_0_80px_rgba(124,92,252,0.18)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_50px_rgba(124,92,252,0.45),0_0_110px_rgba(124,92,252,0.25)]"
+                className="block w-full rounded-[10px] bg-primary py-3.5 text-center text-base font-bold tracking-[-0.01em] text-primary-foreground shadow-[0_0_36px_rgba(124,92,252,0.35),0_0_80px_rgba(124,92,252,0.18)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_50px_rgba(124,92,252,0.45),0_0_110px_rgba(124,92,252,0.25)]"
               >
                 Browse Library
               </Link>
-              <p className="mt-4 text-[0.73rem] text-muted-foreground">
+              <p className="mt-4 text-center text-[0.73rem] text-muted-foreground">
                 Secure checkout · Instant delivery · 30-day refund guarantee
               </p>
+            </div>
+
+            {/* Right: Image */}
+            <div className="relative min-h-[280px] flex-1 border-t border-border lg:min-h-0 lg:border-l lg:border-t-0">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(124,92,252,0.10),transparent_70%),linear-gradient(135deg,rgba(124,92,252,0.05),rgba(56,182,255,0.05))]" />
+              <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-4 p-8">
+                <div className="grid h-20 w-20 place-items-center rounded-[18px] border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.12)] shadow-[0_0_30px_rgba(124,92,252,0.15)]">
+                  <Sparkles className="h-9 w-9 text-[#a78bfa]" />
+                </div>
+                <p className="max-w-[220px] text-center text-sm font-medium text-muted-foreground">
+                  Product preview image
+                </p>
+                <p className="max-w-[260px] text-center text-xs text-muted-foreground/60">
+                  Replace this area with your product preview, mockup, or featured visual.
+                </p>
+              </div>
             </div>
           </div>
         </section>
