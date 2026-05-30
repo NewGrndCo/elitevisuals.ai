@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { useCategories, usePrompts } from "@/lib/queries";
+import { useCategories, usePrompts, useSiteContent, sc } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import { useMemo, useState } from "react";
