@@ -56,13 +56,8 @@ function LoginPage() {
             <h1 className="mt-5 font-display text-3xl font-semibold text-gradient">Welcome back</h1>
             <p className="mt-1 text-sm text-muted-foreground">Sign in to access the admin dashboard.</p>
 
-            <button onClick={google} disabled={loading} className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-60">
-              <GoogleIcon /> Continue with Google
-            </button>
 
-            <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-              <div className="h-px flex-1 bg-border" /> or email <div className="h-px flex-1 bg-border" />
-            </div>
+
 
             <form onSubmit={emailAuth} className="space-y-3">
               <div>
