@@ -1,5 +1,40 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+/* ─── Site Content (CMS) ─── */
+export type SiteContentMap = Record<string, Record<string, unknown>>;
+
+export const useSiteContent = () =>
+  useQuery({
+    queryKey: ["site_content"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as unknown as { from: (t: string) => { select: (c: string) => Promise<{ data: { key: string; value: Record<string, unknown> }[] | null; error: unknown }> } })
+        .from("site_content").select("key,value");
+      if (error) throw error as Error;
+      const map: SiteContentMap = {};
+      (data ?? []).forEach((r) => { map[r.key] = r.value ?? {}; });
+      return map;
+    },
+    staleTime: 30_000,
+  });
+
+export const useSiteContentMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: Record<string, unknown> }) => {
+      const { error } = await (supabase as unknown as { from: (t: string) => { upsert: (v: unknown) => Promise<{ error: unknown }> } })
+        .from("site_content").upsert({ key, value, updated_at: new Date().toISOString() });
+      if (error) throw error as Error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["site_content"] }),
+  });
+};
+
+export const sc = (m: SiteContentMap | undefined, key: string, field: string, fallback = ""): string => {
+  const v = m?.[key]?.[field];
+  return typeof v === "string" ? v : fallback;
+};
+
 
 export type AiLogo = {
   id: string; name: string; logo_url: string; link_url: string | null;
