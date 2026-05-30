@@ -693,3 +693,76 @@ function SectionHeader({ title, desc }: { title: string; desc?: string }) {
     </div>
   );
 }
+
+/* ──────────────────────────── Section order ─────────────────────────── */
+
+export const DEFAULT_SECTIONS = [
+  { id: "demo", label: "Demo Reel" },
+  { id: "compat", label: "AI Models Carousel" },
+  { id: "workflow", label: "Workflow + Motion Styles" },
+  { id: "pricing", label: "Pricing" },
+] as const;
+
+export type SectionId = typeof DEFAULT_SECTIONS[number]["id"];
+
+export function getSectionOrder(site: SiteContentMap | undefined): SectionId[] {
+  const raw = site?.layout?.sections;
+  const ids = DEFAULT_SECTIONS.map((s) => s.id);
+  if (!Array.isArray(raw)) return ids;
+  const valid = (raw as unknown[]).filter((x): x is SectionId => typeof x === "string" && (ids as string[]).includes(x));
+  // append any missing (newly added) sections at the end
+  ids.forEach((id) => { if (!valid.includes(id)) valid.push(id); });
+  return valid;
+}
+
+function SectionOrderManager() {
+  const { data: site } = useSiteContent();
+  const mut = useSiteContentMutation();
+  const [order, setOrder] = useState<SectionId[]>(DEFAULT_SECTIONS.map((s) => s.id));
+
+  useEffect(() => { if (site) setOrder(getSectionOrder(site)); }, [site]);
+
+  const move = (idx: number, dir: -1 | 1) => {
+    const next = [...order];
+    const j = idx + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[idx], next[j]] = [next[j], next[idx]];
+    setOrder(next);
+  };
+  const save = async () => {
+    await mut.mutateAsync({ key: "layout", value: { sections: order } });
+    toast.success("Section order saved — refresh the homepage to see it");
+  };
+  const reset = () => setOrder(DEFAULT_SECTIONS.map((s) => s.id));
+
+  const labelFor = (id: SectionId) => DEFAULT_SECTIONS.find((s) => s.id === id)?.label ?? id;
+
+  return (
+    <section className="glass rounded-3xl p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SectionHeader title="Landing section order" desc="Drag-free reorder — use the arrows to set how sections appear under the hero on the homepage." />
+        <div className="flex gap-2">
+          <button onClick={reset} className="rounded-full bg-white/5 px-4 py-2 text-sm hover:bg-white/10">Reset</button>
+          <button onClick={save} disabled={mut.isPending}
+            className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">
+            <Save className="h-4 w-4" /> Save order
+          </button>
+        </div>
+      </div>
+      <ol className="mt-5 space-y-2">
+        {order.map((id, i) => (
+          <li key={id} className="glass flex items-center gap-3 rounded-2xl p-3">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/5 font-mono text-xs">{i + 1}</span>
+            <span className="flex-1 text-sm font-semibold">{labelFor(id)}</span>
+            <code className="text-xs text-muted-foreground">{id}</code>
+            <div className="flex flex-col">
+              <button onClick={() => move(i, -1)} disabled={i === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30"><ArrowUp className="h-3.5 w-3.5" /></button>
+              <button onClick={() => move(i, 1)} disabled={i === order.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30"><ArrowDown className="h-3.5 w-3.5" /></button>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-4 text-xs text-muted-foreground">Hero stays pinned at the top. Footer stays pinned at the bottom.</p>
+    </section>
+  );
+}
