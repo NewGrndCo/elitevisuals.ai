@@ -1,44 +1,90 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-chrome";
 import { useAuth } from "@/lib/use-auth";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories, usePrompts, useAiLogos, type Prompt, type Category, type AiLogo } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, Upload, Mail, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Plus, Trash2, Save, Upload, Mail, ArrowUp, ArrowDown,
+  LayoutDashboard, FileText, FolderKanban, Image as ImageIcon, ShieldCheck,
+  Eye, EyeOff, Copy, Search, ExternalLink,
+} from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Elite Visuals" }] }),
   component: AdminPage,
 });
 
+type TabKey = "overview" | "prompts" | "categories" | "logos" | "whitelist";
+
+const TABS: { key: TabKey; label: string; icon: typeof LayoutDashboard }[] = [
+  { key: "overview", label: "Overview", icon: LayoutDashboard },
+  { key: "prompts", label: "Prompts", icon: FileText },
+  { key: "categories", label: "Categories", icon: FolderKanban },
+  { key: "logos", label: "AI Models", icon: ImageIcon },
+  { key: "whitelist", label: "Admins", icon: ShieldCheck },
+];
+
 function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
   const nav = useNavigate();
+  const [tab, setTab] = useState<TabKey>("overview");
+
   useEffect(() => { if (!loading && !user) nav({ to: "/login" }); }, [loading, user, nav]);
 
   if (loading) return <Shell><div className="glass animate-pulse rounded-3xl p-10">Loading…</div></Shell>;
   if (!user) return null;
   if (!isAdmin) return (
     <Shell>
-      <div className="glass rounded-3xl p-10 text-center">
-        <h1 className="font-display text-2xl">Not authorized</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Your account ({user.email}) isn't on the admin whitelist. Ask an existing admin to add you, or add your email to the admin_whitelist table from Lovable Cloud.</p>
+      <div className="glass mx-auto max-w-md rounded-3xl p-10 text-center">
+        <ShieldCheck className="mx-auto h-10 w-10 text-muted-foreground" />
+        <h1 className="mt-4 font-display text-2xl">Not authorized</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Your account ({user.email}) isn't on the admin whitelist.</p>
       </div>
     </Shell>
   );
 
   return (
     <Shell>
-      <h1 className="font-display text-4xl font-semibold sm:text-5xl text-gradient">Admin Dashboard</h1>
-      <p className="mt-2 text-muted-foreground">Manage prompts, categories, and media.</p>
+      <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Elite Visuals · CMS</p>
+          <h1 className="font-display text-4xl font-semibold sm:text-5xl text-gradient">Admin Dashboard</h1>
+        </div>
+        <div className="glass flex items-center gap-2 self-start rounded-full px-3 py-1.5 text-xs">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+          Signed in · {user.email}
+        </div>
+      </div>
 
-      <div className="mt-10 grid gap-8">
-        <WhitelistManager />
-        <CategoryManager />
-        <PromptManager />
-        <AiLogoManager />
+      <div className="grid gap-6 md:grid-cols-[220px_1fr]">
+        {/* Sidebar */}
+        <aside className="glass h-fit rounded-3xl p-3 md:sticky md:top-24">
+          <nav className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              const active = tab === t.key;
+              return (
+                <button key={t.key} onClick={() => setTab(t.key)}
+                  className={`flex items-center gap-3 whitespace-nowrap rounded-2xl px-4 py-2.5 text-sm transition-colors ${active ? "bg-white/10 text-foreground" : "text-muted-foreground hover:bg-white/5 hover:text-foreground"}`}>
+                  <Icon className="h-4 w-4" />
+                  {t.label}
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* Content */}
+        <div className="min-w-0 space-y-6">
+          {tab === "overview" && <Overview onJump={setTab} />}
+          {tab === "prompts" && <PromptManager />}
+          {tab === "categories" && <CategoryManager />}
+          {tab === "logos" && <AiLogoManager />}
+          {tab === "whitelist" && <WhitelistManager />}
+        </div>
       </div>
     </Shell>
   );
@@ -48,10 +94,82 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-6 pb-24 pt-28">{children}</main>
+      <main className="mx-auto max-w-7xl px-6 pb-24 pt-28">{children}</main>
     </>
   );
 }
+
+/* ──────────────────────────── Overview ─────────────────────────── */
+
+function Overview({ onJump }: { onJump: (t: TabKey) => void }) {
+  const { data: prompts } = usePrompts();
+  const { data: cats } = useCategories();
+  const { data: logos } = useAiLogos();
+
+  const totalCopies = useMemo(() => (prompts ?? []).reduce((s, p) => s + (p.copy_count ?? 0), 0), [prompts]);
+  const published = (prompts ?? []).filter((p) => p.is_published).length;
+  const top = useMemo(() => [...(prompts ?? [])].sort((a, b) => (b.copy_count ?? 0) - (a.copy_count ?? 0)).slice(0, 5), [prompts]);
+
+  const stats = [
+    { label: "Prompts", value: prompts?.length ?? 0, sub: `${published} live`, key: "prompts" as TabKey, icon: FileText },
+    { label: "Categories", value: cats?.length ?? 0, sub: "Active styles", key: "categories" as TabKey, icon: FolderKanban },
+    { label: "AI Logos", value: logos?.length ?? 0, sub: "On homepage", key: "logos" as TabKey, icon: ImageIcon },
+    { label: "Total copies", value: totalCopies, sub: "All-time", key: "prompts" as TabKey, icon: Copy },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((s) => {
+          const Icon = s.icon;
+          return (
+            <button key={s.label} onClick={() => onJump(s.key)}
+              className="glass group rounded-3xl p-5 text-left transition-transform hover:-translate-y-0.5">
+              <div className="flex items-start justify-between">
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">{s.label}</span>
+                <Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+              </div>
+              <div className="mt-3 font-display text-3xl font-semibold">{s.value.toLocaleString()}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{s.sub}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      <section className="glass rounded-3xl p-6">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-xl font-semibold">Top performing prompts</h2>
+          <button onClick={() => onJump("prompts")} className="text-xs text-muted-foreground hover:text-foreground">View all →</button>
+        </div>
+        {top.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">No prompts yet.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-border/40">
+            {top.map((p, i) => (
+              <li key={p.id} className="flex items-center gap-4 py-3">
+                <span className="w-6 text-center font-mono text-xs text-muted-foreground">{i + 1}</span>
+                <div className="h-10 w-10 overflow-hidden rounded-lg bg-white/5">
+                  {p.cover_image_url && <img src={p.cover_image_url} alt="" className="h-full w-full object-cover" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold">{p.title}</div>
+                  <div className="truncate text-xs text-muted-foreground">{p.categories.name}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-mono text-sm">{p.copy_count}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">copies</div>
+                </div>
+                <a href={`/prompt/${p.slug}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground"><ExternalLink className="h-4 w-4" /></a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
+/* ──────────────────────────── Whitelist ─────────────────────────── */
 
 function WhitelistManager() {
   const [emails, setEmails] = useState<{ email: string }[]>([]);
@@ -67,23 +185,28 @@ function WhitelistManager() {
     if (error) toast.error(error.message); else { toast.success("Added — they'll be admin on next sign-in"); setNewEmail(""); load(); }
   };
   const remove = async (email: string) => {
+    if (!confirm(`Remove ${email} from admins?`)) return;
     const { error } = await supabase.from("admin_whitelist").delete().eq("email", email);
     if (error) toast.error(error.message); else load();
   };
   return (
     <section className="glass rounded-3xl p-6">
-      <h2 className="font-display text-xl font-semibold">Admin whitelist</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Emails listed here become admins automatically when they sign up.</p>
-      <div className="mt-4 flex gap-2">
-        <div className="glass flex flex-1 items-center gap-2 rounded-xl px-3"><Mail className="h-4 w-4 text-muted-foreground" />
-          <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="email@studio.com" className="w-full bg-transparent py-2 text-sm outline-none" />
+      <SectionHeader title="Admin whitelist" desc="Emails listed here become admins automatically on next sign-in." />
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+        <div className="glass flex flex-1 items-center gap-2 rounded-xl px-3">
+          <Mail className="h-4 w-4 text-muted-foreground" />
+          <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()}
+            placeholder="email@studio.com" className="w-full bg-transparent py-2.5 text-sm outline-none" />
         </div>
-        <button onClick={add} className="rounded-full bg-primary px-4 py-2 text-sm text-primary-foreground"><Plus className="inline h-4 w-4" /></button>
+        <button onClick={add} className="ring-glow inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+          <Plus className="h-4 w-4" /> Add admin
+        </button>
       </div>
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-4 space-y-2">
+        {emails.length === 0 && <li className="py-6 text-center text-sm text-muted-foreground">No admins yet.</li>}
         {emails.map((e) => (
-          <li key={e.email} className="glass flex items-center justify-between rounded-xl px-3 py-2 text-sm">
-            <span>{e.email}</span>
+          <li key={e.email} className="glass flex items-center justify-between rounded-xl px-4 py-2.5 text-sm">
+            <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-400" />{e.email}</span>
             <button onClick={() => remove(e.email)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
           </li>
         ))}
@@ -92,6 +215,8 @@ function WhitelistManager() {
   );
 }
 
+/* ──────────────────────────── Categories ─────────────────────────── */
+
 function CategoryManager() {
   const { data: cats } = useCategories();
   const qc = useQueryClient();
@@ -99,7 +224,7 @@ function CategoryManager() {
   const refresh = () => qc.invalidateQueries({ queryKey: ["categories"] });
 
   const add = async () => {
-    if (!newCat.slug || !newCat.name) return;
+    if (!newCat.slug || !newCat.name) { toast.error("Slug and name required"); return; }
     const { error } = await supabase.from("categories").insert({ ...newCat, sort_order: (cats?.length ?? 0) + 1 });
     if (error) toast.error(error.message); else { setNewCat({ slug: "", name: "", accent_color: "#a78bfa" }); refresh(); toast.success("Category added"); }
   };
@@ -108,27 +233,37 @@ function CategoryManager() {
     if (error) toast.error(error.message); else refresh();
   };
   const remove = async (id: string) => {
-    if (!confirm("Delete this category?")) return;
+    if (!confirm("Delete this category? Prompts in it will become uncategorized.")) return;
     const { error } = await supabase.from("categories").delete().eq("id", id);
     if (error) toast.error(error.message); else refresh();
   };
 
   return (
     <section className="glass rounded-3xl p-6">
-      <h2 className="font-display text-xl font-semibold">Categories</h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-[120px_1fr_120px_auto]">
-        <input value={newCat.slug} onChange={(e) => setNewCat({ ...newCat, slug: e.target.value })} placeholder="slug" className="glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none" />
-        <input value={newCat.name} onChange={(e) => setNewCat({ ...newCat, name: e.target.value })} placeholder="Name" className="glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none" />
-        <input value={newCat.accent_color} onChange={(e) => setNewCat({ ...newCat, accent_color: e.target.value })} placeholder="#a78bfa" className="glass rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none" />
-        <button onClick={add} className="rounded-full bg-primary px-4 py-2 text-sm text-primary-foreground"><Plus className="inline h-4 w-4" /></button>
+      <SectionHeader title="Categories" desc="Style buckets used to group prompts on the library page." />
+
+      <div className="glass mt-5 rounded-2xl p-4">
+        <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">New category</div>
+        <div className="grid gap-2 sm:grid-cols-[140px_1fr_160px_auto]">
+          <input value={newCat.slug} onChange={(e) => setNewCat({ ...newCat, slug: e.target.value })} placeholder="slug" className="rounded-xl bg-white/5 px-3 py-2 text-sm font-mono outline-none focus:bg-white/10" />
+          <input value={newCat.name} onChange={(e) => setNewCat({ ...newCat, name: e.target.value })} placeholder="Display name" className="rounded-xl bg-white/5 px-3 py-2 text-sm outline-none focus:bg-white/10" />
+          <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3">
+            <input type="color" value={newCat.accent_color} onChange={(e) => setNewCat({ ...newCat, accent_color: e.target.value })} className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent" />
+            <input value={newCat.accent_color} onChange={(e) => setNewCat({ ...newCat, accent_color: e.target.value })} className="w-full bg-transparent py-2 font-mono text-xs outline-none" />
+          </div>
+          <button onClick={add} className="ring-glow inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Plus className="h-4 w-4" /> Add</button>
+        </div>
       </div>
+
       <div className="mt-4 space-y-2">
+        {cats?.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">No categories yet.</p>}
         {cats?.map((c) => (
-          <div key={c.id} className="glass grid items-center gap-2 rounded-xl p-3 sm:grid-cols-[120px_1fr_120px_auto]">
-            <code className="text-xs text-muted-foreground">{c.slug}</code>
-            <input defaultValue={c.name} onBlur={(e) => e.target.value !== c.name && update(c, { name: e.target.value })} className="rounded-lg bg-transparent px-2 py-1 text-sm outline-none focus:bg-white/5" />
-            <div className="flex items-center gap-2"><span className="h-4 w-4 rounded-full" style={{ background: c.accent_color ?? "" }} />
-              <input defaultValue={c.accent_color ?? ""} onBlur={(e) => e.target.value !== c.accent_color && update(c, { accent_color: e.target.value })} className="w-full rounded-lg bg-transparent px-2 py-1 font-mono text-xs outline-none focus:bg-white/5" />
+          <div key={c.id} className="glass grid items-center gap-2 rounded-2xl p-3 sm:grid-cols-[140px_1fr_180px_auto]">
+            <code className="rounded bg-white/5 px-2 py-1 text-xs text-muted-foreground">{c.slug}</code>
+            <input defaultValue={c.name} onBlur={(e) => e.target.value !== c.name && update(c, { name: e.target.value })} className="rounded-lg bg-transparent px-2 py-1.5 text-sm outline-none focus:bg-white/5" />
+            <div className="flex items-center gap-2 rounded-lg bg-white/5 px-2 py-1">
+              <span className="h-5 w-5 rounded-full ring-1 ring-white/20" style={{ background: c.accent_color ?? "" }} />
+              <input defaultValue={c.accent_color ?? ""} onBlur={(e) => e.target.value !== c.accent_color && update(c, { accent_color: e.target.value })} className="w-full bg-transparent font-mono text-xs outline-none" />
             </div>
             <button onClick={() => remove(c.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
           </div>
@@ -138,31 +273,65 @@ function CategoryManager() {
   );
 }
 
+/* ──────────────────────────── Prompts ─────────────────────────── */
+
 function PromptManager() {
   const { data: prompts } = usePrompts();
   const { data: cats } = useCategories();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [catFilter, setCatFilter] = useState<string>("");
+
+  const filtered = useMemo(() => (prompts ?? []).filter((p) => {
+    if (catFilter && p.category_id !== catFilter) return false;
+    if (search && !`${p.title} ${p.slug}`.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  }), [prompts, search, catFilter]);
 
   return (
     <section className="glass rounded-3xl p-6">
-      <div className="flex items-center justify-between">
-        <h2 className="font-display text-xl font-semibold">Prompts</h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SectionHeader title="Prompts" desc={`${prompts?.length ?? 0} total · ${filtered.length} shown`} />
         <NewPromptButton cats={cats ?? []} />
       </div>
+
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+        <div className="glass flex flex-1 items-center gap-2 rounded-xl px-3">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title or slug…" className="w-full bg-transparent py-2 text-sm outline-none" />
+        </div>
+        <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
+          <option value="" className="bg-background">All categories</option>
+          {cats?.map((c) => <option key={c.id} value={c.id} className="bg-background">{c.name}</option>)}
+        </select>
+      </div>
+
       <div className="mt-4 space-y-2">
-        {prompts?.map((p) => (
+        {filtered.length === 0 && (
+          <p className="py-10 text-center text-sm text-muted-foreground">No prompts match.</p>
+        )}
+        {filtered.map((p) => (
           <div key={p.id} className="glass rounded-2xl">
             <button onClick={() => setOpenId(openId === p.id ? null : p.id)} className="flex w-full items-center justify-between p-4 text-left">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 overflow-hidden rounded-lg bg-white/5">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-white/5">
                   {p.cover_image_url && <img src={p.cover_image_url} alt="" className="h-full w-full object-cover" />}
                 </div>
-                <div>
-                  <div className="text-sm font-semibold">{p.title}</div>
-                  <div className="text-xs text-muted-foreground">{p.categories.name} · /{p.slug}</div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="truncate text-sm font-semibold">{p.title}</div>
+                    {!p.is_published && <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-yellow-200">Draft</span>}
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    <span className="rounded-full px-2 py-0.5" style={{ background: `${p.categories.accent_color}33`, color: p.categories.accent_color ?? undefined }}>{p.categories.name}</span>
+                    <span className="ml-2 font-mono">/{p.slug}</span>
+                  </div>
                 </div>
               </div>
-              <span className="text-xs text-muted-foreground">{openId === p.id ? "Close" : "Edit"}</span>
+              <div className="flex flex-shrink-0 items-center gap-4 text-xs text-muted-foreground">
+                <span className="hidden sm:inline">{p.copy_count} copies</span>
+                <span className="text-foreground">{openId === p.id ? "Close" : "Edit"}</span>
+              </div>
             </button>
             {openId === p.id && <PromptEditor prompt={p} cats={cats ?? []} onClose={() => setOpenId(null)} />}
           </div>
@@ -177,10 +346,14 @@ function NewPromptButton({ cats }: { cats: Category[] }) {
   const create = async () => {
     if (cats.length === 0) { toast.error("Create a category first"); return; }
     const slug = `new-prompt-${Date.now()}`;
-    const { error } = await supabase.from("prompts").insert({ slug, title: "New prompt", description: "", prompt_text: "", category_id: cats[0].id });
-    if (error) toast.error(error.message); else { qc.invalidateQueries({ queryKey: ["prompts"] }); toast.success("Prompt created"); }
+    const { error } = await supabase.from("prompts").insert({ slug, title: "New prompt", description: "", prompt_text: "", category_id: cats[0].id, is_published: false });
+    if (error) toast.error(error.message); else { qc.invalidateQueries({ queryKey: ["prompts"] }); toast.success("Draft prompt created"); }
   };
-  return <button onClick={create} className="rounded-full bg-primary px-4 py-2 text-sm text-primary-foreground"><Plus className="inline h-4 w-4" /> New</button>;
+  return (
+    <button onClick={create} className="ring-glow inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+      <Plus className="h-4 w-4" /> New prompt
+    </button>
+  );
 }
 
 function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories: { slug: string; name: string; accent_color: string | null } }; cats: Category[]; onClose: () => void }) {
@@ -202,7 +375,7 @@ function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories
     if (error) toast.error(error.message); else { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["prompts"] }); qc.invalidateQueries({ queryKey: ["prompt", form.slug] }); }
   };
   const del = async () => {
-    if (!confirm("Delete this prompt?")) return;
+    if (!confirm("Delete this prompt? This cannot be undone.")) return;
     const { error } = await supabase.from("prompts").delete().eq("id", form.id);
     if (error) toast.error(error.message); else { qc.invalidateQueries({ queryKey: ["prompts"] }); onClose(); }
   };
@@ -217,7 +390,7 @@ function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories
   };
 
   return (
-    <div className="space-y-3 border-t border-border/40 p-4">
+    <div className="space-y-4 border-t border-border/40 bg-white/[0.02] p-5">
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Title"><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
         <Field label="Slug"><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none" /></Field>
@@ -226,37 +399,49 @@ function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories
             {cats.map((c) => <option key={c.id} value={c.id} className="bg-background">{c.name}</option>)}
           </select>
         </Field>
-        <Field label="Published">
-          <label className="glass flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm">
-            <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} /> Visible to public
-          </label>
+        <Field label="Visibility">
+          <button onClick={() => setForm({ ...form, is_published: !form.is_published })}
+            className={`glass flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors ${form.is_published ? "text-emerald-300" : "text-yellow-300"}`}>
+            {form.is_published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            {form.is_published ? "Published" : "Draft"}
+          </button>
         </Field>
       </div>
       <Field label="Description"><textarea value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
-      <Field label="Prompt text"><textarea value={form.prompt_text} onChange={(e) => setForm({ ...form, prompt_text: e.target.value })} rows={5} className="glass w-full rounded-xl bg-transparent px-3 py-2 font-mono text-sm outline-none" /></Field>
+      <Field label="Prompt text"><textarea value={form.prompt_text} onChange={(e) => setForm({ ...form, prompt_text: e.target.value })} rows={6} className="glass w-full rounded-xl bg-transparent px-3 py-2 font-mono text-sm outline-none" /></Field>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <MediaField label="Cover image" url={form.cover_image_url} accept="image/*" onUrl={(u) => setForm({ ...form, cover_image_url: u })} onFile={(f) => upload(f, "cover")} />
-        <MediaField label="Demo video" url={form.demo_video_url} accept="video/*" onUrl={(u) => setForm({ ...form, demo_video_url: u })} onFile={(f) => upload(f, "video")} />
+        <MediaField label="Cover image" url={form.cover_image_url} accept="image/*" onUrl={(u) => setForm({ ...form, cover_image_url: u })} onFile={(f) => upload(f, "cover")} preview="image" />
+        <MediaField label="Demo video" url={form.demo_video_url} accept="video/*" onUrl={(u) => setForm({ ...form, demo_video_url: u })} onFile={(f) => upload(f, "video")} preview="video" />
       </div>
       <Field label="Gallery URLs (one per line)"><textarea value={galleryText} onChange={(e) => setGalleryText(e.target.value)} rows={3} className="glass w-full rounded-xl bg-transparent px-3 py-2 font-mono text-xs outline-none" /></Field>
 
-      <div className="flex justify-between">
-        <button onClick={del} className="rounded-full border border-destructive/40 px-4 py-2 text-sm text-destructive hover:bg-destructive/10"><Trash2 className="inline h-4 w-4" /> Delete</button>
-        <button onClick={save} disabled={saving} className="ring-glow rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"><Save className="inline h-4 w-4" /> {saving ? "Saving…" : "Save"}</button>
+      <div className="flex items-center justify-between border-t border-border/40 pt-4">
+        <button onClick={del} className="inline-flex items-center gap-2 rounded-full border border-destructive/40 px-4 py-2 text-sm text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /> Delete</button>
+        <div className="flex items-center gap-2">
+          <a href={`/prompt/${form.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-border/60 px-4 py-2 text-sm text-muted-foreground hover:text-foreground"><ExternalLink className="h-4 w-4" /> Preview</a>
+          <button onClick={save} disabled={saving} className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"><Save className="h-4 w-4" /> {saving ? "Saving…" : "Save changes"}</button>
+        </div>
       </div>
     </div>
   );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div><label className="mb-1 block text-xs text-muted-foreground">{label}</label>{children}</div>;
+  return <div><label className="mb-1 block text-xs uppercase tracking-wider text-muted-foreground">{label}</label>{children}</div>;
 }
 
-function MediaField({ label, url, accept, onUrl, onFile }: { label: string; url: string | null; accept: string; onUrl: (u: string) => void; onFile: (f: File) => void }) {
+function MediaField({ label, url, accept, onUrl, onFile, preview }: { label: string; url: string | null; accept: string; onUrl: (u: string) => void; onFile: (f: File) => void; preview: "image" | "video" }) {
   return (
     <Field label={label}>
       <div className="space-y-2">
+        {url && (
+          <div className="glass aspect-video w-full overflow-hidden rounded-xl bg-black/40">
+            {preview === "image"
+              ? <img src={url} alt="" className="h-full w-full object-cover" />
+              : <video src={url} className="h-full w-full object-cover" muted playsInline />}
+          </div>
+        )}
         <input value={url ?? ""} onChange={(e) => onUrl(e.target.value)} placeholder="https://…" className="glass w-full rounded-xl bg-transparent px-3 py-2 text-xs outline-none" />
         <label className="glass flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs hover:bg-white/10">
           <Upload className="h-3.5 w-3.5" /> Upload file
@@ -266,6 +451,8 @@ function MediaField({ label, url, accept, onUrl, onFile }: { label: string; url:
     </Field>
   );
 }
+
+/* ──────────────────────────── AI Logos ─────────────────────────── */
 
 function AiLogoManager() {
   const { data: logos } = useAiLogos();
@@ -311,22 +498,23 @@ function AiLogoManager() {
 
   return (
     <section className="glass rounded-3xl p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display text-xl font-semibold">AI Models Carousel</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Upload logo images shown in the homepage carousel. Auto-scrolls and loops.</p>
-        </div>
-        <label className="ring-glow flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SectionHeader title="AI Models Carousel" desc="Logos that auto-scroll across the homepage. Hide individual ones with the toggle." />
+        <label className="ring-glow inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
           <Plus className="h-4 w-4" /> Upload logo
           <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" className="hidden"
             onChange={(e) => e.target.files?.[0] && addLogo(e.target.files[0])} />
         </label>
       </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+
+      <div className="mt-5 grid gap-2 sm:grid-cols-2">
+        {logos?.length === 0 && (
+          <p className="col-span-full py-10 text-center text-sm text-muted-foreground">No logos yet — upload your first one.</p>
+        )}
         {logos?.map((l) => (
-          <div key={l.id} className="glass flex items-center gap-3 rounded-2xl p-3">
-            <div className="grid h-12 w-20 flex-shrink-0 place-items-center rounded-lg bg-white/5">
-              <img src={l.logo_url} alt={l.name} className="max-h-9 max-w-[70px] object-contain" />
+          <div key={l.id} className={`glass flex items-center gap-3 rounded-2xl p-3 transition-opacity ${l.is_published ? "" : "opacity-50"}`}>
+            <div className="grid h-14 w-24 flex-shrink-0 place-items-center rounded-lg bg-white/5 p-2">
+              <img src={l.logo_url} alt={l.name} className="max-h-10 max-w-full object-contain" />
             </div>
             <div className="min-w-0 flex-1 space-y-1">
               <input defaultValue={l.name} onBlur={(e) => e.target.value !== l.name && update(l, { name: e.target.value })}
@@ -335,10 +523,10 @@ function AiLogoManager() {
                 onBlur={(e) => e.target.value !== (l.link_url ?? "") && update(l, { link_url: e.target.value || null })}
                 className="w-full rounded-lg bg-transparent px-2 py-1 text-xs text-muted-foreground outline-none focus:bg-white/5" />
             </div>
-            <label className="flex items-center gap-1 text-xs text-muted-foreground">
-              <input type="checkbox" checked={l.is_published} onChange={(e) => update(l, { is_published: e.target.checked })} />
-              live
-            </label>
+            <button onClick={() => update(l, { is_published: !l.is_published })}
+              className="text-muted-foreground hover:text-foreground" aria-label="Toggle visibility">
+              {l.is_published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            </button>
             <div className="flex flex-col">
               <button onClick={() => reorder(l, -1)} className="text-muted-foreground hover:text-foreground"><ArrowUp className="h-3.5 w-3.5" /></button>
               <button onClick={() => reorder(l, 1)} className="text-muted-foreground hover:text-foreground"><ArrowDown className="h-3.5 w-3.5" /></button>
@@ -346,10 +534,18 @@ function AiLogoManager() {
             <button onClick={() => remove(l.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
           </div>
         ))}
-        {logos?.length === 0 && (
-          <p className="col-span-full py-8 text-center text-sm text-muted-foreground">No logos yet — upload your first one.</p>
-        )}
       </div>
     </section>
+  );
+}
+
+/* ──────────────────────────── Helpers ─────────────────────────── */
+
+function SectionHeader({ title, desc }: { title: string; desc?: string }) {
+  return (
+    <div>
+      <h2 className="font-display text-xl font-semibold">{title}</h2>
+      {desc && <p className="mt-1 text-sm text-muted-foreground">{desc}</p>}
+    </div>
   );
 }
