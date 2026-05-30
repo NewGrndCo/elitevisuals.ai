@@ -37,11 +37,17 @@ function HomePage() {
   const { data: cats } = useCategories();
   const { data: prompts } = usePrompts();
   const { data: aiLogos } = useAiLogos();
+  const { data: site } = useSiteContent();
   const totalPrompts = prompts?.length ?? 20;
   const totalStyles = cats?.length ?? 4;
   const perStyle = totalStyles ? Math.round(totalPrompts / totalStyles) : 5;
   const publishedLogos = (aiLogos ?? []).filter((l) => l.is_published);
 
+  const badge = sc(site, "hero", "badge", "EVKT1");
+  const badgeLabel = sc(site, "hero", "badge_label", "Kinetic V1 Prompt Pack");
+  const headline = sc(site, "hero", "headline", "The best AI transitions for video editors.");
+  const subhead = sc(site, "hero", "subhead", `A curated library of ${totalPrompts} image-to-video prompts engineered to create cinematic motion and transformation effects across modern AI video generation platforms.`);
+  const ctaPrimary = sc(site, "hero", "cta_primary", "Explore Prompts");
 
   return (
     <>
@@ -51,22 +57,22 @@ function HomePage() {
         <section className="flex min-h-[100vh] flex-col items-center justify-center px-6 pb-20 pt-32 text-center">
           <div className="mb-8 inline-flex items-center gap-3">
             <span className="rounded-md border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.10)] px-3 py-1 text-[0.72rem] font-extrabold uppercase tracking-[0.1em] text-[#a78bfa]">
-              EVKT1
+              {badge}
             </span>
             <span className="h-[3px] w-[3px] rounded-full bg-muted-foreground/60" />
             <span className="text-xs font-medium uppercase tracking-[0.06em] text-muted-foreground">
-              Kinetic V1 Prompt Pack
+              {badgeLabel}
             </span>
           </div>
 
           <h1 className="mb-6 max-w-[860px] font-display text-[clamp(2.4rem,6vw,5rem)] font-extrabold leading-[1.05] tracking-[-0.04em]">
             <span className="bg-gradient-to-br from-[#f0f0f8] via-[#f0f0f8] to-[#a78bfa] bg-clip-text text-transparent">
-              The best AI transitions<br />for video editors.
+              {headline}
             </span>
           </h1>
 
           <p className="mb-10 max-w-[560px] text-[1.05rem] leading-[1.8] text-muted-foreground">
-            A curated library of {totalPrompts} image-to-video prompts engineered to create cinematic motion and transformation effects across modern AI video generation platforms.
+            {subhead}
           </p>
 
           <div className="mb-10 flex flex-wrap items-center justify-center gap-8">
@@ -90,7 +96,7 @@ function HomePage() {
             to="/library"
             className="inline-flex items-center gap-2 rounded-[10px] bg-primary px-9 py-3.5 text-base font-bold tracking-[-0.01em] text-primary-foreground shadow-[0_0_28px_rgba(124,92,252,0.35),0_0_60px_rgba(124,92,252,0.18)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_40px_rgba(124,92,252,0.45),0_0_90px_rgba(124,92,252,0.25)]"
           >
-            Explore Prompts <ArrowRight className="h-[18px] w-[18px]" />
+            {ctaPrimary} <ArrowRight className="h-[18px] w-[18px]" />
           </Link>
         </section>
 
