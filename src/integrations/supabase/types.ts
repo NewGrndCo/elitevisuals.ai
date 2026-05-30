@@ -65,6 +65,7 @@ export type Database = {
       prompts: {
         Row: {
           category_id: string | null
+          copy_count: number
           cover_image_url: string | null
           created_at: string
           demo_video_url: string | null
@@ -80,6 +81,7 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          copy_count?: number
           cover_image_url?: string | null
           created_at?: string
           demo_video_url?: string | null
@@ -95,6 +97,7 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          copy_count?: number
           cover_image_url?: string | null
           created_at?: string
           demo_video_url?: string | null
@@ -151,6 +154,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_prompt_copy: { Args: { _slug: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "user"

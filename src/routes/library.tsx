@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { useCategories, usePrompts } from "@/lib/queries";
+import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
-import { useMemo } from "react";
-import { Sparkles, UploadCloud, Wand2, Play } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Sparkles, UploadCloud, Play, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 
 const search = z.object({ category: z.string().optional() });
 
@@ -20,19 +22,73 @@ export const Route = createFileRoute("/library")({
   component: LibraryPage,
 });
 
-function WavyDivider() {
+type PromptRow = {
+  id: string; slug: string; title: string; description: string | null;
+  prompt_text: string; cover_image_url: string | null;
+  categories: { slug: string; name: string; accent_color: string | null };
+};
+
+function CopyButton({ slug, text }: { slug: string; text: string }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success("Prompt copied");
+      await supabase.rpc("increment_prompt_copy", { _slug: slug });
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      toast.error("Couldn't copy");
+    }
+  };
   return (
-    <svg
-      viewBox="0 0 1200 40"
-      preserveAspectRatio="none"
-      className="mx-auto h-8 w-full max-w-3xl text-white/30"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      aria-hidden
+    <button
+      onClick={onCopy}
+      aria-label="Copy prompt"
+      className="glass absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/40 backdrop-blur-md transition hover:bg-black/60"
     >
-      <path d="M0,20 Q50,0 100,20 T200,20 T300,20 T400,20 T500,20 T600,20 T700,20 T800,20 T900,20 T1000,20 T1100,20 T1200,20" />
-    </svg>
+      {copied ? <Check className="h-4 w-4 text-[#7dd3fc]" /> : <Copy className="h-4 w-4 text-white/90" />}
+    </button>
+  );
+}
+
+function PromptCard({ p, accent }: { p: PromptRow; accent: string }) {
+  return (
+    <div className="glass group relative w-[78vw] shrink-0 snap-start overflow-hidden rounded-3xl sm:w-[55vw] md:w-auto md:shrink">
+      <CopyButton slug={p.slug} text={p.prompt_text} />
+      <Link to="/prompt/$slug" params={{ slug: p.slug }} className="block">
+        <div className="relative aspect-[4/3] overflow-hidden">
+          {p.cover_image_url ? (
+            <img
+              src={p.cover_image_url}
+              alt={p.title}
+              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div
+              className="h-full w-full"
+              style={{
+                background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
+              }}
+            />
+          )}
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+        </div>
+      </Link>
+      <div className="p-5">
+        <Link
+          to="/prompt/$slug"
+          params={{ slug: p.slug }}
+          className="font-display text-lg font-semibold hover:text-[#a78bfa] focus:outline-none"
+        >
+          {p.title}
+        </Link>
+        <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
+      </div>
+    </div>
   );
 }
 
@@ -42,11 +98,11 @@ function LibraryPage() {
   const { data: prompts, isLoading } = usePrompts();
 
   const grouped = useMemo(() => {
-    const map = new Map<string, typeof prompts>();
+    const map = new Map<string, PromptRow[]>();
     prompts?.forEach((p) => {
       const key = p.categories.slug;
-      if (!map.has(key)) map.set(key, [] as any);
-      (map.get(key) as any).push(p);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(p as unknown as PromptRow);
     });
     return map;
   }, [prompts]);
@@ -59,7 +115,7 @@ function LibraryPage() {
       <main className="pt-28">
         {/* HERO */}
         <section className="mx-auto max-w-5xl px-6 text-center">
-          <div className="mx-auto mb-10 aspect-square w-44 overflow-hidden rounded-3xl glass sm:w-56">
+          <div className="mx-auto mb-8 aspect-square w-40 overflow-hidden rounded-3xl glass sm:w-52">
             <div
               className="h-full w-full"
               style={{
@@ -78,20 +134,21 @@ function LibraryPage() {
             EVKT1
           </div>
 
-          <div className="mt-8">
-            <WavyDivider />
-          </div>
+          <p className="mx-auto mt-8 max-w-2xl text-balance text-base text-muted-foreground sm:text-lg">
+            Twenty cinematic prompts across four motion styles — temporal, particle, fluid, and energy.
+            Paste into any modern AI video model to turn a still frame into a kinetic shot.
+          </p>
         </section>
 
-        {/* FILTERS */}
-        <section className="mx-auto mt-12 max-w-6xl px-6">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="mr-2 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {/* FILTERS — compact */}
+        <section className="mx-auto mt-10 max-w-6xl px-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Filter
             </span>
             <Link
               to="/library"
-              className={`glass rounded-full px-4 py-2 text-sm transition-colors ${!category ? "bg-white/15" : "hover:bg-white/10"}`}
+              className={`glass rounded-full px-3 py-1 text-xs transition-colors ${!category ? "bg-white/15" : "hover:bg-white/10"}`}
             >
               All
             </Link>
@@ -100,10 +157,10 @@ function LibraryPage() {
                 key={c.id}
                 to="/library"
                 search={{ category: c.slug }}
-                className={`glass rounded-full px-4 py-2 text-sm transition-colors ${category === c.slug ? "bg-white/15" : "hover:bg-white/10"}`}
+                className={`glass inline-flex items-center rounded-full px-3 py-1 text-xs transition-colors ${category === c.slug ? "bg-white/15" : "hover:bg-white/10"}`}
               >
                 <span
-                  className="mr-2 inline-block h-2 w-2 rounded-full"
+                  className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full"
                   style={{ background: c.accent_color ?? "#a78bfa" }}
                 />
                 {c.name}
@@ -113,7 +170,7 @@ function LibraryPage() {
         </section>
 
         {/* CATEGORY SECTIONS */}
-        <section className="mx-auto mt-14 max-w-6xl space-y-20 px-6">
+        <section className="mx-auto mt-12 max-w-6xl space-y-16 px-6">
           {isLoading && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -123,15 +180,16 @@ function LibraryPage() {
           )}
 
           {visibleCats?.map((c) => {
-            const items = (grouped.get(c.slug) ?? []) as NonNullable<typeof prompts>;
+            const items = grouped.get(c.slug) ?? [];
             if (items.length === 0) return null;
+            const accent = c.accent_color ?? "#a78bfa";
             return (
               <div key={c.id}>
-                <div className="mb-6 flex items-end justify-between">
-                  <h2 className="font-display text-3xl font-bold lowercase tracking-[-0.02em] sm:text-4xl">
+                <div className="mb-5 flex items-end justify-between">
+                  <h2 className="font-display text-2xl font-bold lowercase tracking-[-0.02em] sm:text-3xl">
                     <span
-                      className="mr-3 inline-block h-3 w-3 translate-y-[-4px] rounded-full"
-                      style={{ background: c.accent_color ?? "#a78bfa" }}
+                      className="mr-3 inline-block h-3 w-3 translate-y-[-3px] rounded-full"
+                      style={{ background: accent }}
                     />
                     {c.name}
                   </h2>
@@ -140,39 +198,10 @@ function LibraryPage() {
                   </span>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {/* Swipe on mobile/tablet, grid on desktop */}
+                <div className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:snap-none md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
                   {items.map((p) => (
-                    <Link
-                      key={p.id}
-                      to="/prompt/$slug"
-                      params={{ slug: p.slug }}
-                      className="glass group overflow-hidden rounded-3xl transition-transform hover:-translate-y-1"
-                    >
-                      <div className="relative aspect-[4/3] overflow-hidden">
-                        {p.cover_image_url ? (
-                          <img
-                            src={p.cover_image_url}
-                            alt={p.title}
-                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div
-                            className="h-full w-full"
-                            style={{
-                              background: `radial-gradient(circle at 30% 30%, ${c.accent_color ?? "#a78bfa"}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
-                            }}
-                          />
-                        )}
-                        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
-                      </div>
-                      <div className="p-5">
-                        <h3 className="font-display text-lg font-semibold">{p.title}</h3>
-                        <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
-                          {p.description}
-                        </p>
-                      </div>
-                    </Link>
+                    <PromptCard key={p.id} p={p} accent={accent} />
                   ))}
                 </div>
               </div>
