@@ -40,7 +40,7 @@ export function SiteHeader() {
       tapsRef.current = [];
       const pwd = window.prompt("Admin password");
       if (pwd == null) return;
-      if (pwd === ADMIN_PASSWORD) {
+      if (pwd.trim() === ADMIN_PASSWORD) {
         navigate({ to: "/admin" });
       } else {
         toast.error("Incorrect password");
