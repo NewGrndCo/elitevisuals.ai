@@ -303,20 +303,24 @@ function HomePage() {
             </div>
 
             {/* Right: Image */}
-            <div className="relative min-h-[280px] flex-1 border-t border-border lg:min-h-0 lg:border-l lg:border-t-0">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(124,92,252,0.10),transparent_70%),linear-gradient(135deg,rgba(124,92,252,0.05),rgba(56,182,255,0.05))]" />
-              <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-4 p-8">
-                <div className="grid h-20 w-20 place-items-center rounded-[18px] border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.12)] shadow-[0_0_30px_rgba(124,92,252,0.15)]">
-                  <Sparkles className="h-9 w-9 text-[#a78bfa]" />
-                </div>
-                <p className="max-w-[220px] text-center text-sm font-medium text-muted-foreground">
-                  Product preview image
-                </p>
-                <p className="max-w-[260px] text-center text-xs text-muted-foreground/60">
-                  Replace this area with your product preview, mockup, or featured visual.
-                </p>
-              </div>
+            <div className="relative min-h-[280px] flex-1 overflow-hidden border-t border-border lg:min-h-0 lg:border-l lg:border-t-0">
+              {productImage ? (
+                <img src={productImage} alt="Product preview" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+              ) : (
+                <>
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(124,92,252,0.10),transparent_70%),linear-gradient(135deg,rgba(124,92,252,0.05),rgba(56,182,255,0.05))]" />
+                  <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-4 p-8">
+                    <div className="grid h-20 w-20 place-items-center rounded-[18px] border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.12)] shadow-[0_0_30px_rgba(124,92,252,0.15)]">
+                      <Sparkles className="h-9 w-9 text-[#a78bfa]" />
+                    </div>
+                    <p className="max-w-[260px] text-center text-xs text-muted-foreground/60">
+                      Upload a product preview image from the Admin → Landing page tab.
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
+
           </div>
         </section>
 
