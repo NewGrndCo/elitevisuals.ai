@@ -3,7 +3,7 @@ import { SiteHeader } from "@/components/site-chrome";
 import { useAuth } from "@/lib/use-auth";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCategories, usePrompts, useAiLogos, useSiteContent, useSiteContentMutation, type Prompt, type Category, type AiLogo } from "@/lib/queries";
+import { useCategories, usePrompts, useAiLogos, useSiteContent, useSiteContentMutation, type Prompt, type Category, type AiLogo, type SiteContentMap } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
