@@ -1,6 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export type AiLogo = {
+  id: string; name: string; logo_url: string; link_url: string | null;
+  sort_order: number; is_published: boolean;
+};
+
+export const useAiLogos = () =>
+  useQuery({
+    queryKey: ["ai_logos"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("ai_logos").select("*").order("sort_order");
+      if (error) throw error;
+      return data as AiLogo[];
+    },
+  });
+
+
 export type Category = {
   id: string; slug: string; name: string; description: string | null;
   accent_color: string | null; sort_order: number;

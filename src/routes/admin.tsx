@@ -3,10 +3,10 @@ import { SiteHeader } from "@/components/site-chrome";
 import { useAuth } from "@/lib/use-auth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCategories, usePrompts, type Prompt, type Category } from "@/lib/queries";
+import { useCategories, usePrompts, useAiLogos, type Prompt, type Category, type AiLogo } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, Upload, Mail } from "lucide-react";
+import { Plus, Trash2, Save, Upload, Mail, ArrowUp, ArrowDown } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Elite Visuals" }] }),
@@ -38,6 +38,7 @@ function AdminPage() {
         <WhitelistManager />
         <CategoryManager />
         <PromptManager />
+        <AiLogoManager />
       </div>
     </Shell>
   );
@@ -263,5 +264,92 @@ function MediaField({ label, url, accept, onUrl, onFile }: { label: string; url:
         </label>
       </div>
     </Field>
+  );
+}
+
+function AiLogoManager() {
+  const { data: logos } = useAiLogos();
+  const qc = useQueryClient();
+  const refresh = () => qc.invalidateQueries({ queryKey: ["ai_logos"] });
+
+  const addLogo = async (file: File) => {
+    const path = `ai-logos/${Date.now()}-${file.name}`;
+    const { error: upErr } = await supabase.storage.from("elite-media").upload(path, file, { upsert: true });
+    if (upErr) { toast.error(upErr.message); return; }
+    const { data } = supabase.storage.from("elite-media").getPublicUrl(path);
+    const { error } = await supabase.from("ai_logos").insert({
+      name: file.name.replace(/\.[^.]+$/, ""),
+      logo_url: data.publicUrl,
+      sort_order: (logos?.length ?? 0) + 1,
+    });
+    if (error) toast.error(error.message); else { toast.success("Logo added"); refresh(); }
+  };
+
+  const update = async (l: AiLogo, patch: Partial<AiLogo>) => {
+    const { error } = await supabase.from("ai_logos").update(patch).eq("id", l.id);
+    if (error) toast.error(error.message); else refresh();
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Delete this logo?")) return;
+    const { error } = await supabase.from("ai_logos").delete().eq("id", id);
+    if (error) toast.error(error.message); else refresh();
+  };
+
+  const reorder = async (l: AiLogo, dir: -1 | 1) => {
+    if (!logos) return;
+    const sorted = [...logos].sort((a, b) => a.sort_order - b.sort_order);
+    const idx = sorted.findIndex((x) => x.id === l.id);
+    const swap = sorted[idx + dir];
+    if (!swap) return;
+    await Promise.all([
+      supabase.from("ai_logos").update({ sort_order: swap.sort_order }).eq("id", l.id),
+      supabase.from("ai_logos").update({ sort_order: l.sort_order }).eq("id", swap.id),
+    ]);
+    refresh();
+  };
+
+  return (
+    <section className="glass rounded-3xl p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-display text-xl font-semibold">AI Models Carousel</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Upload logo images shown in the homepage carousel. Auto-scrolls and loops.</p>
+        </div>
+        <label className="ring-glow flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+          <Plus className="h-4 w-4" /> Upload logo
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" className="hidden"
+            onChange={(e) => e.target.files?.[0] && addLogo(e.target.files[0])} />
+        </label>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        {logos?.map((l) => (
+          <div key={l.id} className="glass flex items-center gap-3 rounded-2xl p-3">
+            <div className="grid h-12 w-20 flex-shrink-0 place-items-center rounded-lg bg-white/5">
+              <img src={l.logo_url} alt={l.name} className="max-h-9 max-w-[70px] object-contain" />
+            </div>
+            <div className="min-w-0 flex-1 space-y-1">
+              <input defaultValue={l.name} onBlur={(e) => e.target.value !== l.name && update(l, { name: e.target.value })}
+                className="w-full rounded-lg bg-transparent px-2 py-1 text-sm font-semibold outline-none focus:bg-white/5" />
+              <input defaultValue={l.link_url ?? ""} placeholder="Optional link URL"
+                onBlur={(e) => e.target.value !== (l.link_url ?? "") && update(l, { link_url: e.target.value || null })}
+                className="w-full rounded-lg bg-transparent px-2 py-1 text-xs text-muted-foreground outline-none focus:bg-white/5" />
+            </div>
+            <label className="flex items-center gap-1 text-xs text-muted-foreground">
+              <input type="checkbox" checked={l.is_published} onChange={(e) => update(l, { is_published: e.target.checked })} />
+              live
+            </label>
+            <div className="flex flex-col">
+              <button onClick={() => reorder(l, -1)} className="text-muted-foreground hover:text-foreground"><ArrowUp className="h-3.5 w-3.5" /></button>
+              <button onClick={() => reorder(l, 1)} className="text-muted-foreground hover:text-foreground"><ArrowDown className="h-3.5 w-3.5" /></button>
+            </div>
+            <button onClick={() => remove(l.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+          </div>
+        ))}
+        {logos?.length === 0 && (
+          <p className="col-span-full py-8 text-center text-sm text-muted-foreground">No logos yet — upload your first one.</p>
+        )}
+      </div>
+    </section>
   );
 }
