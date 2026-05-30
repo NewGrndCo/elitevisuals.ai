@@ -25,11 +25,7 @@ function LoginPage() {
     return () => sub.subscription.unsubscribe();
   }, [nav]);
 
-  const google = async () => {
-    setLoading(true);
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (r.error) { toast.error(r.error.message ?? "Google sign-in failed"); setLoading(false); }
-  };
+
   const emailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
