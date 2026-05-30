@@ -96,6 +96,8 @@ function LibraryPage() {
   const { category } = Route.useSearch();
   const { data: cats } = useCategories();
   const { data: prompts, isLoading } = usePrompts();
+  const { data: site } = useSiteContent();
+  const heroImage = sc(site, "library", "hero_image", "");
 
   const grouped = useMemo(() => {
     const map = new Map<string, PromptRow[]>();
@@ -116,13 +118,17 @@ function LibraryPage() {
         {/* HERO */}
         <section className="mx-auto max-w-5xl px-6 text-center">
           <div className="mx-auto mb-8 aspect-square w-40 overflow-hidden rounded-3xl glass sm:w-52">
-            <div
-              className="h-full w-full"
-              style={{
-                background:
-                  "radial-gradient(circle at 30% 30%, rgba(167,139,250,0.55), transparent 60%), radial-gradient(circle at 70% 70%, rgba(34,211,238,0.45), transparent 60%), #0f0c1f",
-              }}
-            />
+            {heroImage ? (
+              <img src={heroImage} alt="Kinetic V1 Prompt Pack" className="h-full w-full object-cover" />
+            ) : (
+              <div
+                className="h-full w-full"
+                style={{
+                  background:
+                    "radial-gradient(circle at 30% 30%, rgba(167,139,250,0.55), transparent 60%), radial-gradient(circle at 70% 70%, rgba(34,211,238,0.45), transparent 60%), #0f0c1f",
+                }}
+              />
+            )}
           </div>
 
           <h1 className="font-display text-4xl font-extrabold tracking-[-0.04em] sm:text-6xl">
@@ -139,6 +145,7 @@ function LibraryPage() {
             Paste into any modern AI video model to turn a still frame into a kinetic shot.
           </p>
         </section>
+
 
         {/* FILTERS — compact */}
         <section className="mx-auto mt-10 max-w-6xl px-6">
