@@ -696,24 +696,9 @@ function SectionHeader({ title, desc }: { title: string; desc?: string }) {
 
 /* ──────────────────────────── Section order ─────────────────────────── */
 
-export const DEFAULT_SECTIONS = [
-  { id: "demo", label: "Demo Reel" },
-  { id: "compat", label: "AI Models Carousel" },
-  { id: "workflow", label: "Workflow + Motion Styles" },
-  { id: "pricing", label: "Pricing" },
-] as const;
-
-export type SectionId = typeof DEFAULT_SECTIONS[number]["id"];
-
-export function getSectionOrder(site: SiteContentMap | undefined): SectionId[] {
-  const raw = site?.layout?.sections;
-  const ids = DEFAULT_SECTIONS.map((s) => s.id);
-  if (!Array.isArray(raw)) return ids;
-  const valid = (raw as unknown[]).filter((x): x is SectionId => typeof x === "string" && (ids as string[]).includes(x));
-  // append any missing (newly added) sections at the end
-  ids.forEach((id) => { if (!valid.includes(id)) valid.push(id); });
-  return valid;
-}
+import { DEFAULT_SECTIONS, getSectionOrder, type SectionId } from "@/lib/sections";
+export { DEFAULT_SECTIONS, getSectionOrder };
+export type { SectionId };
 
 function SectionOrderManager() {
   const { data: site } = useSiteContent();
