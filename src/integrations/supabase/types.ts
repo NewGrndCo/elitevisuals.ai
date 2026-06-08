@@ -95,6 +95,42 @@ export type Database = {
         }
         Relationships: []
       }
+      packs: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prompts: {
         Row: {
           category_id: string | null
@@ -106,6 +142,7 @@ export type Database = {
           gallery_urls: string[]
           id: string
           is_published: boolean
+          pack_id: string | null
           prompt_text: string
           slug: string
           sort_order: number
@@ -122,6 +159,7 @@ export type Database = {
           gallery_urls?: string[]
           id?: string
           is_published?: boolean
+          pack_id?: string | null
           prompt_text?: string
           slug: string
           sort_order?: number
@@ -138,6 +176,7 @@ export type Database = {
           gallery_urls?: string[]
           id?: string
           is_published?: boolean
+          pack_id?: string | null
           prompt_text?: string
           slug?: string
           sort_order?: number
@@ -150,6 +189,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prompts_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "packs"
             referencedColumns: ["id"]
           },
         ]
