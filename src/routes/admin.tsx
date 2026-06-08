@@ -1,15 +1,16 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-chrome";
-import { useAuth } from "@/lib/use-auth";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCategories, usePrompts, useAiLogos, useSiteContent, useSiteContentMutation, type Prompt, type Category, type AiLogo, type SiteContentMap } from "@/lib/queries";
+import { useCategories, usePrompts, useAiLogos, usePacks, useSiteContent, useSiteContentMutation, type Prompt, type Category, type AiLogo, type Pack, type SiteContentMap } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { adminPinLogin } from "@/lib/admin-pin.functions";
 import { toast } from "sonner";
 import {
   Plus, Trash2, Save, Upload, Mail, ArrowUp, ArrowDown,
   LayoutDashboard, FileText, FolderKanban, Image as ImageIcon, ShieldCheck,
-  Eye, EyeOff, Copy, Search, ExternalLink, Type,
+  Eye, EyeOff, Copy, Search, ExternalLink, Type, Package, LogOut, Lock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -17,45 +18,62 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type TabKey = "overview" | "landing" | "sections" | "prompts" | "categories" | "logos" | "whitelist";
+type TabKey = "overview" | "landing" | "sections" | "packs" | "prompts" | "categories" | "logos" | "whitelist";
 
 const TABS: { key: TabKey; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
   { key: "landing", label: "Landing page", icon: Type },
   { key: "sections", label: "Section order", icon: LayoutDashboard },
+  { key: "packs", label: "Prompt Packs", icon: Package },
   { key: "prompts", label: "Prompts", icon: FileText },
-  { key: "categories", label: "Prompt Packs", icon: FolderKanban },
+  { key: "categories", label: "Categories", icon: FolderKanban },
   { key: "logos", label: "AI Models", icon: ImageIcon },
   { key: "whitelist", label: "Admins", icon: ShieldCheck },
 ];
 
+
+const PIN_STORAGE_KEY = "ev_admin_pin_ok";
+
 function AdminPage() {
-  const { user, isAdmin, loading } = useAuth();
-  const nav = useNavigate();
+  const [authed, setAuthed] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const flagged = typeof window !== "undefined" && sessionStorage.getItem(PIN_STORAGE_KEY) === "1";
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      setAuthed(flagged && !!data.session);
+      setChecking(false);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (!active) return;
+      setAuthed(!!session && sessionStorage.getItem(PIN_STORAGE_KEY) === "1");
+    });
+    return () => { active = false; sub.subscription.unsubscribe(); };
+  }, []);
+
+  const onUnlock = () => {
+    sessionStorage.setItem(PIN_STORAGE_KEY, "1");
+    setAuthed(true);
+  };
+
+  if (checking) {
+    return <Shell><div className="glass animate-pulse rounded-3xl p-10 text-center text-sm text-muted-foreground">Loading…</div></Shell>;
+  }
+  if (!authed) {
+    return <Shell><PinGate onUnlock={onUnlock} /></Shell>;
+  }
+  return <AdminDashboard />;
+}
+
+function AdminDashboard() {
   const [tab, setTab] = useState<TabKey>("overview");
 
-  if (loading) return <Shell><div className="glass animate-pulse rounded-3xl p-10">Loading…</div></Shell>;
-  if (!user) return (
-    <Shell>
-      <div className="glass mx-auto max-w-md rounded-3xl p-10 text-center">
-        <ShieldCheck className="mx-auto h-10 w-10 text-muted-foreground" />
-        <h1 className="mt-4 font-display text-2xl">Sign in required</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Admin tools require an authenticated session so changes pass the database security rules.</p>
-        <button onClick={() => nav({ to: "/login" })} className="ring-glow mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
-          Go to sign in
-        </button>
-      </div>
-    </Shell>
-  );
-  if (!isAdmin) return (
-    <Shell>
-      <div className="glass mx-auto max-w-md rounded-3xl p-10 text-center">
-        <ShieldCheck className="mx-auto h-10 w-10 text-muted-foreground" />
-        <h1 className="mt-4 font-display text-2xl">Not authorized</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Your account ({user.email}) isn't on the admin whitelist.</p>
-      </div>
-    </Shell>
-  );
+  const signOut = async () => {
+    sessionStorage.removeItem(PIN_STORAGE_KEY);
+    await supabase.auth.signOut();
+  };
 
   return (
     <Shell>
@@ -64,14 +82,18 @@ function AdminPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Elite Visuals · CMS</p>
           <h1 className="font-display text-4xl font-semibold sm:text-5xl text-gradient">Admin Dashboard</h1>
         </div>
-        <div className="glass flex items-center gap-2 self-start rounded-full px-3 py-1.5 text-xs">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-          Signed in · {user.email}
+        <div className="flex items-center gap-2 self-start">
+          <div className="glass flex items-center gap-2 rounded-full px-3 py-1.5 text-xs">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            PIN verified
+          </div>
+          <button onClick={signOut} className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground" aria-label="Lock admin">
+            <LogOut className="h-3.5 w-3.5" /> Lock
+          </button>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-[220px_1fr]">
-        {/* Sidebar */}
         <aside className="glass h-fit rounded-3xl p-3 md:sticky md:top-24">
           <nav className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
             {TABS.map((t) => {
@@ -88,11 +110,11 @@ function AdminPage() {
           </nav>
         </aside>
 
-        {/* Content */}
         <div className="min-w-0 space-y-6">
           {tab === "overview" && <Overview onJump={setTab} />}
           {tab === "landing" && <LandingEditor />}
           {tab === "sections" && <SectionOrderManager />}
+          {tab === "packs" && <PackManager />}
           {tab === "prompts" && <PromptManager />}
           {tab === "categories" && <CategoryManager />}
           {tab === "logos" && <AiLogoManager />}
@@ -100,6 +122,99 @@ function AdminPage() {
         </div>
       </div>
     </Shell>
+  );
+}
+
+function PinGate({ onUnlock }: { onUnlock: () => void }) {
+  const pinLogin = useServerFn(adminPinLogin);
+  const [digits, setDigits] = useState(["", "", "", ""]);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const inputs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => { inputs.current[0]?.focus(); }, []);
+
+  const setDigit = (i: number, v: string) => {
+    const clean = v.replace(/\D/g, "").slice(0, 1);
+    setDigits((d) => { const next = [...d]; next[i] = clean; return next; });
+    if (clean && i < 3) inputs.current[i + 1]?.focus();
+  };
+
+  const onKeyDown = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !digits[i] && i > 0) inputs.current[i - 1]?.focus();
+  };
+
+  const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const txt = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 4);
+    if (txt.length === 0) return;
+    e.preventDefault();
+    const next = ["", "", "", ""];
+    txt.split("").forEach((c, idx) => { next[idx] = c; });
+    setDigits(next);
+    inputs.current[Math.min(txt.length, 3)]?.focus();
+  };
+
+  const submit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const pin = digits.join("");
+    if (pin.length !== 4) { setError("Enter all 4 digits"); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const { token_hash } = await pinLogin({ data: { pin } });
+      const { error: otpErr } = await supabase.auth.verifyOtp({ token_hash, type: "magiclink" });
+      if (otpErr) throw otpErr;
+      onUnlock();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Incorrect PIN";
+      setError(msg);
+      setDigits(["", "", "", ""]);
+      inputs.current[0]?.focus();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto grid min-h-[60vh] max-w-md place-items-center">
+      <form onSubmit={submit} className="glass w-full rounded-3xl p-8 text-center">
+        <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-[oklch(0.72_0.20_295)] to-[oklch(0.82_0.16_200)]">
+          <Lock className="h-5 w-5 text-background" />
+        </div>
+        <h1 className="mt-5 font-display text-2xl font-semibold">Admin access</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Enter your 4-digit PIN to continue.</p>
+
+        <div className="mt-6 flex justify-center gap-3">
+          {digits.map((d, i) => (
+            <input
+              key={i}
+              ref={(el) => { inputs.current[i] = el; }}
+              value={d}
+              onChange={(e) => setDigit(i, e.target.value)}
+              onKeyDown={(e) => onKeyDown(i, e)}
+              onPaste={onPaste}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={1}
+              autoComplete="off"
+              type="password"
+              aria-label={`PIN digit ${i + 1}`}
+              className="glass h-14 w-12 rounded-2xl bg-transparent text-center font-display text-2xl outline-none focus:bg-white/5"
+            />
+          ))}
+        </div>
+
+        {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={submitting || digits.join("").length !== 4}
+          className="ring-glow mt-6 w-full rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+        >
+          {submitting ? "Unlocking…" : "Unlock"}
+        </button>
+      </form>
+    </div>
   );
 }
 
@@ -111,6 +226,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     </>
   );
 }
+
 
 /* ──────────────────────────── Overview ─────────────────────────── */
 
