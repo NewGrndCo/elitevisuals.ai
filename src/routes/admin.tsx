@@ -1,15 +1,16 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-chrome";
-import { useAuth } from "@/lib/use-auth";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCategories, usePrompts, useAiLogos, useSiteContent, useSiteContentMutation, type Prompt, type Category, type AiLogo, type SiteContentMap } from "@/lib/queries";
+import { useCategories, usePrompts, useAiLogos, usePacks, useSiteContent, useSiteContentMutation, type Prompt, type Category, type AiLogo, type Pack, type SiteContentMap } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { adminPinLogin } from "@/lib/admin-pin.functions";
 import { toast } from "sonner";
 import {
   Plus, Trash2, Save, Upload, Mail, ArrowUp, ArrowDown,
   LayoutDashboard, FileText, FolderKanban, Image as ImageIcon, ShieldCheck,
-  Eye, EyeOff, Copy, Search, ExternalLink, Type,
+  Eye, EyeOff, Copy, Search, ExternalLink, Type, Package, LogOut, Lock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -17,45 +18,62 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type TabKey = "overview" | "landing" | "sections" | "prompts" | "categories" | "logos" | "whitelist";
+type TabKey = "overview" | "landing" | "sections" | "packs" | "prompts" | "categories" | "logos" | "whitelist";
 
 const TABS: { key: TabKey; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
   { key: "landing", label: "Landing page", icon: Type },
   { key: "sections", label: "Section order", icon: LayoutDashboard },
+  { key: "packs", label: "Prompt Packs", icon: Package },
   { key: "prompts", label: "Prompts", icon: FileText },
-  { key: "categories", label: "Prompt Packs", icon: FolderKanban },
+  { key: "categories", label: "Categories", icon: FolderKanban },
   { key: "logos", label: "AI Models", icon: ImageIcon },
   { key: "whitelist", label: "Admins", icon: ShieldCheck },
 ];
 
+
+const PIN_STORAGE_KEY = "ev_admin_pin_ok";
+
 function AdminPage() {
-  const { user, isAdmin, loading } = useAuth();
-  const nav = useNavigate();
+  const [authed, setAuthed] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const flagged = typeof window !== "undefined" && sessionStorage.getItem(PIN_STORAGE_KEY) === "1";
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      setAuthed(flagged && !!data.session);
+      setChecking(false);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (!active) return;
+      setAuthed(!!session && sessionStorage.getItem(PIN_STORAGE_KEY) === "1");
+    });
+    return () => { active = false; sub.subscription.unsubscribe(); };
+  }, []);
+
+  const onUnlock = () => {
+    sessionStorage.setItem(PIN_STORAGE_KEY, "1");
+    setAuthed(true);
+  };
+
+  if (checking) {
+    return <Shell><div className="glass animate-pulse rounded-3xl p-10 text-center text-sm text-muted-foreground">Loading…</div></Shell>;
+  }
+  if (!authed) {
+    return <Shell><PinGate onUnlock={onUnlock} /></Shell>;
+  }
+  return <AdminDashboard />;
+}
+
+function AdminDashboard() {
   const [tab, setTab] = useState<TabKey>("overview");
 
-  if (loading) return <Shell><div className="glass animate-pulse rounded-3xl p-10">Loading…</div></Shell>;
-  if (!user) return (
-    <Shell>
-      <div className="glass mx-auto max-w-md rounded-3xl p-10 text-center">
-        <ShieldCheck className="mx-auto h-10 w-10 text-muted-foreground" />
-        <h1 className="mt-4 font-display text-2xl">Sign in required</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Admin tools require an authenticated session so changes pass the database security rules.</p>
-        <button onClick={() => nav({ to: "/login" })} className="ring-glow mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
-          Go to sign in
-        </button>
-      </div>
-    </Shell>
-  );
-  if (!isAdmin) return (
-    <Shell>
-      <div className="glass mx-auto max-w-md rounded-3xl p-10 text-center">
-        <ShieldCheck className="mx-auto h-10 w-10 text-muted-foreground" />
-        <h1 className="mt-4 font-display text-2xl">Not authorized</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Your account ({user.email}) isn't on the admin whitelist.</p>
-      </div>
-    </Shell>
-  );
+  const signOut = async () => {
+    sessionStorage.removeItem(PIN_STORAGE_KEY);
+    await supabase.auth.signOut();
+  };
 
   return (
     <Shell>
@@ -64,14 +82,18 @@ function AdminPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Elite Visuals · CMS</p>
           <h1 className="font-display text-4xl font-semibold sm:text-5xl text-gradient">Admin Dashboard</h1>
         </div>
-        <div className="glass flex items-center gap-2 self-start rounded-full px-3 py-1.5 text-xs">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-          Signed in · {user.email}
+        <div className="flex items-center gap-2 self-start">
+          <div className="glass flex items-center gap-2 rounded-full px-3 py-1.5 text-xs">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            PIN verified
+          </div>
+          <button onClick={signOut} className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground" aria-label="Lock admin">
+            <LogOut className="h-3.5 w-3.5" /> Lock
+          </button>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-[220px_1fr]">
-        {/* Sidebar */}
         <aside className="glass h-fit rounded-3xl p-3 md:sticky md:top-24">
           <nav className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
             {TABS.map((t) => {
@@ -88,11 +110,11 @@ function AdminPage() {
           </nav>
         </aside>
 
-        {/* Content */}
         <div className="min-w-0 space-y-6">
           {tab === "overview" && <Overview onJump={setTab} />}
           {tab === "landing" && <LandingEditor />}
           {tab === "sections" && <SectionOrderManager />}
+          {tab === "packs" && <PackManager />}
           {tab === "prompts" && <PromptManager />}
           {tab === "categories" && <CategoryManager />}
           {tab === "logos" && <AiLogoManager />}
@@ -100,6 +122,99 @@ function AdminPage() {
         </div>
       </div>
     </Shell>
+  );
+}
+
+function PinGate({ onUnlock }: { onUnlock: () => void }) {
+  const pinLogin = useServerFn(adminPinLogin);
+  const [digits, setDigits] = useState(["", "", "", ""]);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const inputs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => { inputs.current[0]?.focus(); }, []);
+
+  const setDigit = (i: number, v: string) => {
+    const clean = v.replace(/\D/g, "").slice(0, 1);
+    setDigits((d) => { const next = [...d]; next[i] = clean; return next; });
+    if (clean && i < 3) inputs.current[i + 1]?.focus();
+  };
+
+  const onKeyDown = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !digits[i] && i > 0) inputs.current[i - 1]?.focus();
+  };
+
+  const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const txt = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 4);
+    if (txt.length === 0) return;
+    e.preventDefault();
+    const next = ["", "", "", ""];
+    txt.split("").forEach((c, idx) => { next[idx] = c; });
+    setDigits(next);
+    inputs.current[Math.min(txt.length, 3)]?.focus();
+  };
+
+  const submit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const pin = digits.join("");
+    if (pin.length !== 4) { setError("Enter all 4 digits"); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const { token_hash } = await pinLogin({ data: { pin } });
+      const { error: otpErr } = await supabase.auth.verifyOtp({ token_hash, type: "magiclink" });
+      if (otpErr) throw otpErr;
+      onUnlock();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Incorrect PIN";
+      setError(msg);
+      setDigits(["", "", "", ""]);
+      inputs.current[0]?.focus();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto grid min-h-[60vh] max-w-md place-items-center">
+      <form onSubmit={submit} className="glass w-full rounded-3xl p-8 text-center">
+        <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-[oklch(0.72_0.20_295)] to-[oklch(0.82_0.16_200)]">
+          <Lock className="h-5 w-5 text-background" />
+        </div>
+        <h1 className="mt-5 font-display text-2xl font-semibold">Admin access</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Enter your 4-digit PIN to continue.</p>
+
+        <div className="mt-6 flex justify-center gap-3">
+          {digits.map((d, i) => (
+            <input
+              key={i}
+              ref={(el) => { inputs.current[i] = el; }}
+              value={d}
+              onChange={(e) => setDigit(i, e.target.value)}
+              onKeyDown={(e) => onKeyDown(i, e)}
+              onPaste={onPaste}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={1}
+              autoComplete="off"
+              type="password"
+              aria-label={`PIN digit ${i + 1}`}
+              className="glass h-14 w-12 rounded-2xl bg-transparent text-center font-display text-2xl outline-none focus:bg-white/5"
+            />
+          ))}
+        </div>
+
+        {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={submitting || digits.join("").length !== 4}
+          className="ring-glow mt-6 w-full rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+        >
+          {submitting ? "Unlocking…" : "Unlock"}
+        </button>
+      </form>
+    </div>
   );
 }
 
@@ -111,6 +226,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     </>
   );
 }
+
 
 /* ──────────────────────────── Overview ─────────────────────────── */
 
@@ -291,21 +407,24 @@ function CategoryManager() {
 function PromptManager() {
   const { data: prompts } = usePrompts();
   const { data: cats } = useCategories();
+  const { data: packs } = usePacks(true);
   const [openId, setOpenId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<string>("");
+  const [packFilter, setPackFilter] = useState<string>("");
 
   const filtered = useMemo(() => (prompts ?? []).filter((p) => {
     if (catFilter && p.category_id !== catFilter) return false;
+    if (packFilter && p.pack_id !== packFilter) return false;
     if (search && !`${p.title} ${p.slug}`.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
-  }), [prompts, search, catFilter]);
+  }), [prompts, search, catFilter, packFilter]);
 
   return (
     <section className="glass rounded-3xl p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SectionHeader title="Prompts" desc={`${prompts?.length ?? 0} total · ${filtered.length} shown`} />
-        <NewPromptButton cats={cats ?? []} />
+        <NewPromptButton cats={cats ?? []} packs={packs ?? []} />
       </div>
 
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
@@ -313,6 +432,10 @@ function PromptManager() {
           <Search className="h-4 w-4 text-muted-foreground" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title or slug…" className="w-full bg-transparent py-2 text-sm outline-none" />
         </div>
+        <select value={packFilter} onChange={(e) => setPackFilter(e.target.value)} className="glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
+          <option value="" className="bg-background">All packs</option>
+          {packs?.map((p) => <option key={p.id} value={p.id} className="bg-background">{p.title}</option>)}
+        </select>
         <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
           <option value="" className="bg-background">All categories</option>
           {cats?.map((c) => <option key={c.id} value={c.id} className="bg-background">{c.name}</option>)}
@@ -346,7 +469,7 @@ function PromptManager() {
                 <span className="text-foreground">{openId === p.id ? "Close" : "Edit"}</span>
               </div>
             </button>
-            {openId === p.id && <PromptEditor prompt={p} cats={cats ?? []} onClose={() => setOpenId(null)} />}
+            {openId === p.id && <PromptEditor prompt={p} cats={cats ?? []} packs={packs ?? []} onClose={() => setOpenId(null)} />}
           </div>
         ))}
       </div>
@@ -354,12 +477,13 @@ function PromptManager() {
   );
 }
 
-function NewPromptButton({ cats }: { cats: Category[] }) {
+function NewPromptButton({ cats, packs }: { cats: Category[]; packs: Pack[] }) {
   const qc = useQueryClient();
   const create = async () => {
     if (cats.length === 0) { toast.error("Create a category first"); return; }
+    if (packs.length === 0) { toast.error("Create a pack first"); return; }
     const slug = `new-prompt-${Date.now()}`;
-    const { error } = await supabase.from("prompts").insert({ slug, title: "New prompt", description: "", prompt_text: "", category_id: cats[0].id, is_published: false });
+    const { error } = await supabase.from("prompts").insert({ slug, title: "New prompt", description: "", prompt_text: "", category_id: cats[0].id, pack_id: packs[0].id, is_published: false });
     if (error) toast.error(error.message); else { qc.invalidateQueries({ queryKey: ["prompts"] }); toast.success("Draft prompt created"); }
   };
   return (
@@ -369,7 +493,7 @@ function NewPromptButton({ cats }: { cats: Category[] }) {
   );
 }
 
-function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories: { slug: string; name: string; accent_color: string | null } }; cats: Category[]; onClose: () => void }) {
+function PromptEditor({ prompt, cats, packs, onClose }: { prompt: Prompt & { categories: { slug: string; name: string; accent_color: string | null } }; cats: Category[]; packs: Pack[]; onClose: () => void }) {
   const qc = useQueryClient();
   const [form, setForm] = useState<Prompt>(prompt);
   const [galleryText, setGalleryText] = useState(prompt.gallery_urls.join("\n"));
@@ -380,7 +504,7 @@ function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories
     const payload = { ...form, gallery_urls: galleryText.split("\n").map((s) => s.trim()).filter(Boolean) };
     const { error } = await supabase.from("prompts").update({
       title: payload.title, slug: payload.slug, description: payload.description,
-      prompt_text: payload.prompt_text, category_id: payload.category_id,
+      prompt_text: payload.prompt_text, category_id: payload.category_id, pack_id: payload.pack_id,
       cover_image_url: payload.cover_image_url, demo_video_url: payload.demo_video_url,
       gallery_urls: payload.gallery_urls, is_published: payload.is_published,
     }).eq("id", form.id);
@@ -407,6 +531,12 @@ function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Title"><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
         <Field label="Slug"><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none" /></Field>
+        <Field label="Pack">
+          <select value={form.pack_id ?? ""} onChange={(e) => setForm({ ...form, pack_id: e.target.value || null })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
+            <option value="" className="bg-background">— unassigned —</option>
+            {packs.map((p) => <option key={p.id} value={p.id} className="bg-background">{p.title}</option>)}
+          </select>
+        </Field>
         <Field label="Category">
           <select value={form.category_id ?? ""} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
             {cats.map((c) => <option key={c.id} value={c.id} className="bg-background">{c.name}</option>)}
@@ -749,5 +879,154 @@ function SectionOrderManager() {
       </ol>
       <p className="mt-4 text-xs text-muted-foreground">Hero stays pinned at the top. Footer stays pinned at the bottom.</p>
     </section>
+  );
+}
+
+/* ──────────────────────────── Pack Manager ─────────────────────────── */
+
+function PackManager() {
+  const { data: packs } = usePacks(true);
+  const { data: prompts } = usePrompts();
+  const qc = useQueryClient();
+  const [openId, setOpenId] = useState<string | null>(null);
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["packs"] }); qc.invalidateQueries({ queryKey: ["prompts"] }); };
+
+  const create = async () => {
+    const slug = `new-pack-${Date.now()}`;
+    const { error } = await supabase.from("packs").insert({ slug, title: "New Pack", description: "", sort_order: (packs?.length ?? 0) + 1, is_published: false });
+    if (error) toast.error(error.message); else { refresh(); toast.success("Draft pack created"); }
+  };
+
+  const remove = async (p: Pack) => {
+    if (!confirm(`Delete "${p.title}"? Prompts in this pack will become unassigned.`)) return;
+    const { error } = await supabase.from("packs").delete().eq("id", p.id);
+    if (error) toast.error(error.message); else refresh();
+  };
+
+  const countFor = (id: string) => (prompts ?? []).filter((p) => p.pack_id === id).length;
+
+  return (
+    <section className="glass rounded-3xl p-6">
+      <div className="flex items-center justify-between">
+        <SectionHeader title="Prompt Packs" desc="Each pack appears as a card on the library page. Click to edit details or manage prompts." />
+        <button onClick={create} className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+          <Plus className="h-4 w-4" /> New pack
+        </button>
+      </div>
+
+      <div className="mt-5 space-y-2">
+        {packs?.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">No packs yet. Create your first one above.</p>}
+        {packs?.map((p) => (
+          <div key={p.id} className="glass rounded-2xl">
+            <button onClick={() => setOpenId(openId === p.id ? null : p.id)} className="flex w-full items-center justify-between p-4 text-left">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-white/5">
+                  {p.cover_image_url && <img src={p.cover_image_url} alt="" className="h-full w-full object-cover" />}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="truncate text-sm font-semibold">{p.title}</div>
+                    {!p.is_published && <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-yellow-200">Draft</span>}
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground"><span className="font-mono">/{p.slug}</span> · {countFor(p.id)} prompts</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <a href={`/pack/${p.slug}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="hover:text-foreground"><ExternalLink className="h-4 w-4" /></a>
+                <span className="text-foreground">{openId === p.id ? "Close" : "Edit"}</span>
+              </div>
+            </button>
+            {openId === p.id && <PackEditor pack={p} onDelete={() => { remove(p); setOpenId(null); }} onClose={() => setOpenId(null)} />}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => void; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [form, setForm] = useState<Pack>(pack);
+  const [saving, setSaving] = useState(false);
+  const { data: prompts } = usePrompts();
+  const { data: cats } = useCategories();
+  const inPack = (prompts ?? []).filter((p) => p.pack_id === pack.id);
+  const others = (prompts ?? []).filter((p) => p.pack_id !== pack.id);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("packs").update({
+      title: form.title, slug: form.slug, description: form.description,
+      cover_image_url: form.cover_image_url, is_published: form.is_published,
+    }).eq("id", form.id);
+    setSaving(false);
+    if (error) toast.error(error.message);
+    else { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["packs"] }); }
+  };
+
+  const upload = async (file: File) => {
+    const path = `packs/${form.slug}-${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("elite-media").upload(path, file, { upsert: true });
+    if (error) { toast.error(error.message); return; }
+    const { data } = supabase.storage.from("elite-media").getPublicUrl(path);
+    setForm({ ...form, cover_image_url: data.publicUrl });
+    toast.success("Uploaded — remember to Save");
+  };
+
+  const assign = async (promptId: string, packId: string | null) => {
+    const { error } = await supabase.from("prompts").update({ pack_id: packId }).eq("id", promptId);
+    if (error) toast.error(error.message);
+    else { qc.invalidateQueries({ queryKey: ["prompts"] }); qc.invalidateQueries({ queryKey: ["prompts_by_pack", pack.id] }); }
+  };
+
+  return (
+    <div className="space-y-4 border-t border-border/40 bg-white/[0.02] p-5">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Title"><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
+        <Field label="Slug"><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none" /></Field>
+      </div>
+      <Field label="Description"><textarea value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
+      <MediaField label="Cover image" url={form.cover_image_url} accept="image/*" onUrl={(u) => setForm({ ...form, cover_image_url: u })} onFile={upload} preview="image" />
+
+      <Field label="Visibility">
+        <button onClick={() => setForm({ ...form, is_published: !form.is_published })}
+          className={`glass flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors ${form.is_published ? "text-emerald-300" : "text-yellow-300"}`}>
+          {form.is_published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          {form.is_published ? "Published" : "Draft"}
+        </button>
+      </Field>
+
+      <div className="rounded-2xl bg-white/[0.02] p-4">
+        <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Prompts in this pack ({inPack.length})</div>
+        <ul className="space-y-1">
+          {inPack.length === 0 && <li className="py-2 text-sm text-muted-foreground">None yet — add one from the picker below.</li>}
+          {inPack.map((p) => {
+            const cat = cats?.find((c) => c.id === p.category_id);
+            return (
+              <li key={p.id} className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-white/5">
+                <span className="truncate"><span className="font-semibold">{p.title}</span> <span className="text-xs text-muted-foreground">· {cat?.name ?? "uncategorized"}</span></span>
+                <button onClick={() => assign(p.id, null)} className="text-xs text-muted-foreground hover:text-destructive">Remove</button>
+              </li>
+            );
+          })}
+        </ul>
+        {others.length > 0 && (
+          <div className="mt-3">
+            <select defaultValue="" onChange={(e) => { if (e.target.value) { assign(e.target.value, pack.id); e.target.value = ""; } }} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
+              <option value="" className="bg-background">+ Add a prompt to this pack…</option>
+              {others.map((p) => <option key={p.id} value={p.id} className="bg-background">{p.title}</option>)}
+            </select>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between border-t border-border/40 pt-4">
+        <button onClick={onDelete} className="inline-flex items-center gap-2 rounded-full border border-destructive/40 px-4 py-2 text-sm text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /> Delete pack</button>
+        <div className="flex items-center gap-2">
+          <button onClick={onClose} className="rounded-full border border-border/60 px-4 py-2 text-sm text-muted-foreground hover:text-foreground">Close</button>
+          <button onClick={save} disabled={saving} className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"><Save className="h-4 w-4" /> {saving ? "Saving…" : "Save changes"}</button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -56,9 +56,15 @@ export type Category = {
   id: string; slug: string; name: string; description: string | null;
   accent_color: string | null; sort_order: number;
 };
+
+export type Pack = {
+  id: string; slug: string; title: string; description: string | null;
+  cover_image_url: string | null; sort_order: number; is_published: boolean;
+};
+
 export type Prompt = {
   id: string; slug: string; title: string; description: string | null;
-  prompt_text: string; category_id: string | null;
+  prompt_text: string; category_id: string | null; pack_id: string | null;
   cover_image_url: string | null; demo_video_url: string | null;
   gallery_urls: string[]; is_published: boolean; sort_order: number;
   copy_count: number;
@@ -74,6 +80,32 @@ export const useCategories = () =>
     },
   });
 
+/* ─── Packs ─── */
+
+export const usePacks = (includeUnpublished = false) =>
+  useQuery({
+    queryKey: ["packs", includeUnpublished ? "all" : "published"],
+    queryFn: async () => {
+      let q = supabase.from("packs").select("*").order("sort_order");
+      if (!includeUnpublished) q = q.eq("is_published", true);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as Pack[];
+    },
+  });
+
+export const usePack = (slug: string) =>
+  useQuery({
+    queryKey: ["pack", slug],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("packs").select("*").eq("slug", slug).maybeSingle();
+      if (error) throw error;
+      return data as Pack | null;
+    },
+  });
+
+/* ─── Prompts ─── */
+
 export const usePrompts = (categorySlug?: string) =>
   useQuery({
     queryKey: ["prompts", categorySlug ?? "all"],
@@ -83,6 +115,21 @@ export const usePrompts = (categorySlug?: string) =>
       const { data, error } = await q;
       if (error) throw error;
       return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } })[];
+    },
+  });
+
+export const usePromptsByPack = (packId: string | undefined) =>
+  useQuery({
+    enabled: !!packId,
+    queryKey: ["prompts_by_pack", packId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("prompts")
+        .select("*, categories(slug,name,accent_color)")
+        .eq("pack_id", packId!)
+        .order("sort_order");
+      if (error) throw error;
+      return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null })[];
     },
   });
 
