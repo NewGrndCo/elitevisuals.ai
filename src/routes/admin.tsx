@@ -407,21 +407,24 @@ function CategoryManager() {
 function PromptManager() {
   const { data: prompts } = usePrompts();
   const { data: cats } = useCategories();
+  const { data: packs } = usePacks(true);
   const [openId, setOpenId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<string>("");
+  const [packFilter, setPackFilter] = useState<string>("");
 
   const filtered = useMemo(() => (prompts ?? []).filter((p) => {
     if (catFilter && p.category_id !== catFilter) return false;
+    if (packFilter && p.pack_id !== packFilter) return false;
     if (search && !`${p.title} ${p.slug}`.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
-  }), [prompts, search, catFilter]);
+  }), [prompts, search, catFilter, packFilter]);
 
   return (
     <section className="glass rounded-3xl p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SectionHeader title="Prompts" desc={`${prompts?.length ?? 0} total · ${filtered.length} shown`} />
-        <NewPromptButton cats={cats ?? []} />
+        <NewPromptButton cats={cats ?? []} packs={packs ?? []} />
       </div>
 
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
@@ -429,6 +432,10 @@ function PromptManager() {
           <Search className="h-4 w-4 text-muted-foreground" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title or slug…" className="w-full bg-transparent py-2 text-sm outline-none" />
         </div>
+        <select value={packFilter} onChange={(e) => setPackFilter(e.target.value)} className="glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
+          <option value="" className="bg-background">All packs</option>
+          {packs?.map((p) => <option key={p.id} value={p.id} className="bg-background">{p.title}</option>)}
+        </select>
         <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="glass rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
           <option value="" className="bg-background">All categories</option>
           {cats?.map((c) => <option key={c.id} value={c.id} className="bg-background">{c.name}</option>)}
@@ -462,7 +469,7 @@ function PromptManager() {
                 <span className="text-foreground">{openId === p.id ? "Close" : "Edit"}</span>
               </div>
             </button>
-            {openId === p.id && <PromptEditor prompt={p} cats={cats ?? []} onClose={() => setOpenId(null)} />}
+            {openId === p.id && <PromptEditor prompt={p} cats={cats ?? []} packs={packs ?? []} onClose={() => setOpenId(null)} />}
           </div>
         ))}
       </div>
@@ -470,12 +477,13 @@ function PromptManager() {
   );
 }
 
-function NewPromptButton({ cats }: { cats: Category[] }) {
+function NewPromptButton({ cats, packs }: { cats: Category[]; packs: Pack[] }) {
   const qc = useQueryClient();
   const create = async () => {
     if (cats.length === 0) { toast.error("Create a category first"); return; }
+    if (packs.length === 0) { toast.error("Create a pack first"); return; }
     const slug = `new-prompt-${Date.now()}`;
-    const { error } = await supabase.from("prompts").insert({ slug, title: "New prompt", description: "", prompt_text: "", category_id: cats[0].id, is_published: false });
+    const { error } = await supabase.from("prompts").insert({ slug, title: "New prompt", description: "", prompt_text: "", category_id: cats[0].id, pack_id: packs[0].id, is_published: false });
     if (error) toast.error(error.message); else { qc.invalidateQueries({ queryKey: ["prompts"] }); toast.success("Draft prompt created"); }
   };
   return (
@@ -485,7 +493,7 @@ function NewPromptButton({ cats }: { cats: Category[] }) {
   );
 }
 
-function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories: { slug: string; name: string; accent_color: string | null } }; cats: Category[]; onClose: () => void }) {
+function PromptEditor({ prompt, cats, packs, onClose }: { prompt: Prompt & { categories: { slug: string; name: string; accent_color: string | null } }; cats: Category[]; packs: Pack[]; onClose: () => void }) {
   const qc = useQueryClient();
   const [form, setForm] = useState<Prompt>(prompt);
   const [galleryText, setGalleryText] = useState(prompt.gallery_urls.join("\n"));
@@ -496,7 +504,7 @@ function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories
     const payload = { ...form, gallery_urls: galleryText.split("\n").map((s) => s.trim()).filter(Boolean) };
     const { error } = await supabase.from("prompts").update({
       title: payload.title, slug: payload.slug, description: payload.description,
-      prompt_text: payload.prompt_text, category_id: payload.category_id,
+      prompt_text: payload.prompt_text, category_id: payload.category_id, pack_id: payload.pack_id,
       cover_image_url: payload.cover_image_url, demo_video_url: payload.demo_video_url,
       gallery_urls: payload.gallery_urls, is_published: payload.is_published,
     }).eq("id", form.id);
@@ -523,6 +531,12 @@ function PromptEditor({ prompt, cats, onClose }: { prompt: Prompt & { categories
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Title"><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
         <Field label="Slug"><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none" /></Field>
+        <Field label="Pack">
+          <select value={form.pack_id ?? ""} onChange={(e) => setForm({ ...form, pack_id: e.target.value || null })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
+            <option value="" className="bg-background">— unassigned —</option>
+            {packs.map((p) => <option key={p.id} value={p.id} className="bg-background">{p.title}</option>)}
+          </select>
+        </Field>
         <Field label="Category">
           <select value={form.category_id ?? ""} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
             {cats.map((c) => <option key={c.id} value={c.id} className="bg-background">{c.name}</option>)}
