@@ -1,7 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { LogOut } from "lucide-react";
+import { useRef } from "react";
 import logoUrl from "@/assets/logo.png";
 
 const ADMIN_TAP_COUNT = 4;
@@ -9,27 +7,9 @@ const ADMIN_TAP_WINDOW_MS = 1500;
 
 export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [email, setEmail] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!mounted) return;
-      setEmail(data.user?.email ?? null);
-      if (data.user) {
-        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
-        setIsAdmin(!!roles?.some((r) => r.role === "admin"));
-      } else { setIsAdmin(false); }
-    };
-    load();
-    const { data: sub } = supabase.auth.onAuthStateChange(() => load());
-    return () => { mounted = false; sub.subscription.unsubscribe(); };
-  }, []);
-
   const navigate = useNavigate();
   const tapsRef = useRef<number[]>([]);
+
   const handleLogoTap = (e: React.MouseEvent) => {
     const now = Date.now();
     tapsRef.current = [...tapsRef.current.filter((t) => now - t < ADMIN_TAP_WINDOW_MS), now];
@@ -52,31 +32,20 @@ export function SiteHeader() {
           <img src={logoUrl} alt="ELITEVISUALS logo" className="h-8 w-8 select-none object-contain sm:h-9 sm:w-9" draggable={false} />
           <span className="tracking-[0.18em] text-white">ELITEVISUALS</span>
         </Link>
-        <nav className="hidden items-center gap-1 sm:flex">
+        <nav className="flex items-center gap-1">
           {nav.map((n) => {
             const active = pathname === n.to || (n.to !== "/" && pathname.startsWith(n.to));
             return (
-              <Link key={n.to} to={n.to} className={`rounded-full px-4 py-1.5 text-sm transition-colors ${active ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <Link
+                key={n.to}
+                to={n.to}
+                className={`rounded-full px-4 py-1.5 text-sm transition-colors ${active ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
                 {n.label}
               </Link>
             );
           })}
-          {isAdmin && (
-            <Link to="/admin" className={`rounded-full px-4 py-1.5 text-sm transition-colors ${pathname.startsWith("/admin") ? "bg-white/10" : "text-muted-foreground hover:text-foreground"}`}>Admin</Link>
-          )}
         </nav>
-        <div className="flex items-center gap-2">
-          {email ? (
-            <>
-              <span className="hidden text-xs text-muted-foreground sm:inline">{email}</span>
-              <button onClick={() => supabase.auth.signOut()} className="grid h-8 w-8 place-items-center rounded-full border border-border/60 text-muted-foreground hover:text-foreground" aria-label="Sign out">
-                <LogOut className="h-3.5 w-3.5" />
-              </button>
-            </>
-          ) : (
-            <Link to="/login" className="rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium hover:bg-white/15">Sign in</Link>
-          )}
-        </div>
       </div>
     </header>
   );

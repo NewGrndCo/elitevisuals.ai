@@ -14,6 +14,7 @@ import { Route as LibraryRouteImport } from './routes/library'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PromptSlugRouteImport } from './routes/prompt.$slug'
+import { Route as PackSlugRouteImport } from './routes/pack.$slug'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -40,12 +41,18 @@ const PromptSlugRoute = PromptSlugRouteImport.update({
   path: '/prompt/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PackSlugRoute = PackSlugRouteImport.update({
+  id: '/pack/$slug',
+  path: '/pack/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,28 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/library' | '/login' | '/prompt/$slug'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/library'
+    | '/login'
+    | '/pack/$slug'
+    | '/prompt/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/library' | '/login' | '/prompt/$slug'
-  id: '__root__' | '/' | '/admin' | '/library' | '/login' | '/prompt/$slug'
+  to: '/' | '/admin' | '/library' | '/login' | '/pack/$slug' | '/prompt/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/library'
+    | '/login'
+    | '/pack/$slug'
+    | '/prompt/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +98,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   LibraryRoute: typeof LibraryRoute
   LoginRoute: typeof LoginRoute
+  PackSlugRoute: typeof PackSlugRoute
   PromptSlugRoute: typeof PromptSlugRoute
 }
 
@@ -116,6 +139,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PromptSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pack/$slug': {
+      id: '/pack/$slug'
+      path: '/pack/$slug'
+      fullPath: '/pack/$slug'
+      preLoaderRoute: typeof PackSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -124,8 +154,19 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   LibraryRoute: LibraryRoute,
   LoginRoute: LoginRoute,
+  PackSlugRoute: PackSlugRoute,
   PromptSlugRoute: PromptSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
