@@ -881,3 +881,152 @@ function SectionOrderManager() {
     </section>
   );
 }
+
+/* ──────────────────────────── Pack Manager ─────────────────────────── */
+
+function PackManager() {
+  const { data: packs } = usePacks(true);
+  const { data: prompts } = usePrompts();
+  const qc = useQueryClient();
+  const [openId, setOpenId] = useState<string | null>(null);
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["packs"] }); qc.invalidateQueries({ queryKey: ["prompts"] }); };
+
+  const create = async () => {
+    const slug = `new-pack-${Date.now()}`;
+    const { error } = await supabase.from("packs").insert({ slug, title: "New Pack", description: "", sort_order: (packs?.length ?? 0) + 1, is_published: false });
+    if (error) toast.error(error.message); else { refresh(); toast.success("Draft pack created"); }
+  };
+
+  const remove = async (p: Pack) => {
+    if (!confirm(`Delete "${p.title}"? Prompts in this pack will become unassigned.`)) return;
+    const { error } = await supabase.from("packs").delete().eq("id", p.id);
+    if (error) toast.error(error.message); else refresh();
+  };
+
+  const countFor = (id: string) => (prompts ?? []).filter((p) => p.pack_id === id).length;
+
+  return (
+    <section className="glass rounded-3xl p-6">
+      <div className="flex items-center justify-between">
+        <SectionHeader title="Prompt Packs" desc="Each pack appears as a card on the library page. Click to edit details or manage prompts." />
+        <button onClick={create} className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+          <Plus className="h-4 w-4" /> New pack
+        </button>
+      </div>
+
+      <div className="mt-5 space-y-2">
+        {packs?.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">No packs yet. Create your first one above.</p>}
+        {packs?.map((p) => (
+          <div key={p.id} className="glass rounded-2xl">
+            <button onClick={() => setOpenId(openId === p.id ? null : p.id)} className="flex w-full items-center justify-between p-4 text-left">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-white/5">
+                  {p.cover_image_url && <img src={p.cover_image_url} alt="" className="h-full w-full object-cover" />}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="truncate text-sm font-semibold">{p.title}</div>
+                    {!p.is_published && <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-yellow-200">Draft</span>}
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground"><span className="font-mono">/{p.slug}</span> · {countFor(p.id)} prompts</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <a href={`/pack/${p.slug}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="hover:text-foreground"><ExternalLink className="h-4 w-4" /></a>
+                <span className="text-foreground">{openId === p.id ? "Close" : "Edit"}</span>
+              </div>
+            </button>
+            {openId === p.id && <PackEditor pack={p} onDelete={() => { remove(p); setOpenId(null); }} onClose={() => setOpenId(null)} />}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => void; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [form, setForm] = useState<Pack>(pack);
+  const [saving, setSaving] = useState(false);
+  const { data: prompts } = usePrompts();
+  const { data: cats } = useCategories();
+  const inPack = (prompts ?? []).filter((p) => p.pack_id === pack.id);
+  const others = (prompts ?? []).filter((p) => p.pack_id !== pack.id);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("packs").update({
+      title: form.title, slug: form.slug, description: form.description,
+      cover_image_url: form.cover_image_url, is_published: form.is_published,
+    }).eq("id", form.id);
+    setSaving(false);
+    if (error) toast.error(error.message);
+    else { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["packs"] }); }
+  };
+
+  const upload = async (file: File) => {
+    const path = `packs/${form.slug}-${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("elite-media").upload(path, file, { upsert: true });
+    if (error) { toast.error(error.message); return; }
+    const { data } = supabase.storage.from("elite-media").getPublicUrl(path);
+    setForm({ ...form, cover_image_url: data.publicUrl });
+    toast.success("Uploaded — remember to Save");
+  };
+
+  const assign = async (promptId: string, packId: string | null) => {
+    const { error } = await supabase.from("prompts").update({ pack_id: packId }).eq("id", promptId);
+    if (error) toast.error(error.message);
+    else { qc.invalidateQueries({ queryKey: ["prompts"] }); qc.invalidateQueries({ queryKey: ["prompts_by_pack", pack.id] }); }
+  };
+
+  return (
+    <div className="space-y-4 border-t border-border/40 bg-white/[0.02] p-5">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Title"><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
+        <Field label="Slug"><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none" /></Field>
+      </div>
+      <Field label="Description"><textarea value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
+      <MediaField label="Cover image" url={form.cover_image_url} accept="image/*" onUrl={(u) => setForm({ ...form, cover_image_url: u })} onFile={upload} preview="image" />
+
+      <Field label="Visibility">
+        <button onClick={() => setForm({ ...form, is_published: !form.is_published })}
+          className={`glass flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors ${form.is_published ? "text-emerald-300" : "text-yellow-300"}`}>
+          {form.is_published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          {form.is_published ? "Published" : "Draft"}
+        </button>
+      </Field>
+
+      <div className="rounded-2xl bg-white/[0.02] p-4">
+        <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Prompts in this pack ({inPack.length})</div>
+        <ul className="space-y-1">
+          {inPack.length === 0 && <li className="py-2 text-sm text-muted-foreground">None yet — add one from the picker below.</li>}
+          {inPack.map((p) => {
+            const cat = cats?.find((c) => c.id === p.category_id);
+            return (
+              <li key={p.id} className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-white/5">
+                <span className="truncate"><span className="font-semibold">{p.title}</span> <span className="text-xs text-muted-foreground">· {cat?.name ?? "uncategorized"}</span></span>
+                <button onClick={() => assign(p.id, null)} className="text-xs text-muted-foreground hover:text-destructive">Remove</button>
+              </li>
+            );
+          })}
+        </ul>
+        {others.length > 0 && (
+          <div className="mt-3">
+            <select defaultValue="" onChange={(e) => { if (e.target.value) { assign(e.target.value, pack.id); e.target.value = ""; } }} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
+              <option value="" className="bg-background">+ Add a prompt to this pack…</option>
+              {others.map((p) => <option key={p.id} value={p.id} className="bg-background">{p.title}</option>)}
+            </select>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between border-t border-border/40 pt-4">
+        <button onClick={onDelete} className="inline-flex items-center gap-2 rounded-full border border-destructive/40 px-4 py-2 text-sm text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /> Delete pack</button>
+        <div className="flex items-center gap-2">
+          <button onClick={onClose} className="rounded-full border border-border/60 px-4 py-2 text-sm text-muted-foreground hover:text-foreground">Close</button>
+          <button onClick={save} disabled={saving} className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"><Save className="h-4 w-4" /> {saving ? "Saving…" : "Save changes"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
