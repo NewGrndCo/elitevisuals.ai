@@ -696,8 +696,8 @@ function SectionHeader({ title, desc }: { title: string; desc?: string }) {
 
 /* ──────────────────────────── Section order ─────────────────────────── */
 
-export { DEFAULT_SECTIONS, getSectionOrder } from "@/lib/sections";
 import { DEFAULT_SECTIONS, getSectionOrder, type SectionId } from "@/lib/sections";
+export { DEFAULT_SECTIONS, getSectionOrder };
 export type { SectionId };
 
 function SectionOrderManager() {
