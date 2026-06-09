@@ -74,7 +74,7 @@ function LibraryPage() {
                 >
                   <div className="relative aspect-[4/3] overflow-hidden">
                     {p.cover_image_url ? (
-                      <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+                      <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
                     ) : (
                       <div className="h-full w-full" style={{
                         background: "radial-gradient(circle at 30% 30%, rgba(167,139,250,0.55), transparent 60%), radial-gradient(circle at 70% 70%, rgba(34,211,238,0.45), transparent 60%), #0f0c1f",
