@@ -5,7 +5,7 @@ import { getSectionOrder } from "@/lib/sections";
 import {
   ArrowRight, Play, Monitor, UploadCloud, CheckCircle2, Timer, Sparkles, Waves, Zap, Check,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
