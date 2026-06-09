@@ -66,7 +66,7 @@ function PromptCard({ p, accent }: { p: PromptRow; accent: string }) {
       <Link to="/prompt/$slug" params={{ slug: p.slug }} className="block">
         <div className="relative aspect-[4/3] overflow-hidden">
           {p.cover_image_url ? (
-            <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+            <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
           ) : (
             <div className="h-full w-full" style={{
               background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
