@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { usePacks, usePrompts } from "@/lib/queries";
+import { usePacks, usePrompts, useSiteContent, sc } from "@/lib/queries";
 import { useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 
@@ -19,6 +19,11 @@ export const Route = createFileRoute("/library")({
 function LibraryPage() {
   const { data: packs, isLoading } = usePacks();
   const { data: prompts } = usePrompts();
+  const { data: site } = useSiteContent();
+
+  const heroImage = sc(site, "library", "hero_image", "");
+  const title = sc(site, "library", "title", "Prompt Packs");
+  const description = sc(site, "library", "description", "Curated collections of cinematic AI prompts. Pick a pack to explore its prompts.");
 
   const countsByPack = useMemo(() => {
     const m = new Map<string, number>();
@@ -34,16 +39,21 @@ function LibraryPage() {
       <SiteHeader />
       <main className="pt-28">
         <section className="mx-auto max-w-5xl px-6 text-center">
+          {heroImage && (
+            <div className="mx-auto mb-8 max-w-3xl overflow-hidden rounded-3xl border border-border/60">
+              <img src={heroImage} alt="" className="h-full w-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
+            </div>
+          )}
           <div className="mb-4 inline-block rounded-md border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.10)] px-3 py-1 text-xs font-extrabold uppercase tracking-[0.18em] text-[#a78bfa]">
             Library
           </div>
           <h1 className="font-display text-4xl font-extrabold tracking-[-0.04em] sm:text-6xl">
             <span className="bg-gradient-to-br from-[#f0f0f8] via-[#f0f0f8] to-[#a78bfa] bg-clip-text text-transparent">
-              Prompt Packs
+              {title}
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-balance text-base text-muted-foreground sm:text-lg">
-            Curated collections of cinematic AI prompts. Pick a pack to explore its prompts.
+            {description}
           </p>
         </section>
 

@@ -586,14 +586,27 @@ const LANDING_BLOCKS: Block[] = [
     { name: "cta_secondary", label: "Secondary CTA button", type: "text" },
     { name: "product_image", label: "Product preview image (pricing card)", type: "image" },
   ]},
+  { key: "demo", label: "Demo Reel", fields: [
+    { name: "video_url", label: "Demo reel video URL (mp4/webm)", type: "text" },
+    { name: "poster_image", label: "Poster image (shown before play)", type: "image" },
+    { name: "caption", label: "Caption (small label under top-left dot)", type: "text" },
+  ]},
   { key: "library", label: "Library page", fields: [
     { name: "title", label: "Page title", type: "text" },
     { name: "description", label: "Page description", type: "textarea" },
-    { name: "hero_image", label: "Image above 'Kinetic V1 Prompt Pack' title", type: "image" },
+    { name: "hero_image", label: "Image above page title", type: "image" },
   ]},
   { key: "footer", label: "Footer", fields: [
     { name: "copyright", label: "Copyright text", type: "text" },
-    { name: "tagline", label: "Tagline", type: "text" },
+    { name: "tagline", label: "Tagline (after copyright)", type: "text" },
+    { name: "link1_label", label: "Link 1 label", type: "text" },
+    { name: "link1_url", label: "Link 1 URL", type: "text" },
+    { name: "link2_label", label: "Link 2 label", type: "text" },
+    { name: "link2_url", label: "Link 2 URL", type: "text" },
+    { name: "link3_label", label: "Link 3 label", type: "text" },
+    { name: "link3_url", label: "Link 3 URL", type: "text" },
+    { name: "link4_label", label: "Link 4 label", type: "text" },
+    { name: "link4_url", label: "Link 4 URL", type: "text" },
   ]},
 ];
 

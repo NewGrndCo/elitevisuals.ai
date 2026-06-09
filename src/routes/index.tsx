@@ -5,7 +5,7 @@ import { getSectionOrder } from "@/lib/sections";
 import {
   ArrowRight, Play, Monitor, UploadCloud, CheckCircle2, Timer, Sparkles, Waves, Zap, Check,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -116,7 +116,11 @@ function HomePage() {
                   Witness the capabilities of our AI motion prompts. See real-world examples of how these transitions elevate standard editing workflows.
                 </p>
               </div>
-              <DemoPlayer />
+              <DemoPlayer
+                videoUrl={sc(site, "demo", "video_url", "")}
+                poster={sc(site, "demo", "poster_image", "")}
+                caption={sc(site, "demo", "caption", "Elite Visuals Demo Reel — All 4 Styles")}
+              />
             </section>
           );
 
@@ -360,51 +364,50 @@ function SectionDivider() {
   );
 }
 
-function DemoPlayer() {
-  const TOTAL = 167;
-  const [elapsed, setElapsed] = useState(0);
+function DemoPlayer({ videoUrl, poster, caption }: { videoUrl: string; poster: string; caption: string }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [playing, setPlaying] = useState(false);
-  const tickRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (!playing) return;
-    tickRef.current = window.setInterval(() => {
-      setElapsed((e) => {
-        const next = Math.min(e + 0.25, TOTAL);
-        if (next >= TOTAL) setPlaying(false);
-        return next;
-      });
-    }, 250);
-    return () => { if (tickRef.current) window.clearInterval(tickRef.current); };
-  }, [playing]);
-
-  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  const toggle = () => {
+    const v = videoRef.current;
+    if (!v) { setPlaying((p) => !p); return; }
+    if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); }
+  };
 
   return (
     <div
-      onClick={() => setPlaying((p) => !p)}
+      onClick={toggle}
       className="group relative aspect-video w-full cursor-pointer overflow-hidden rounded-[14px] border border-border bg-[oklch(0.18_0.03_270)] transition-colors hover:border-[rgba(124,92,252,0.3)]"
     >
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "repeating-linear-gradient(0deg, rgba(255,255,255,0.008) 0px, transparent 1px, transparent 4px), radial-gradient(ellipse 70% 60% at 50% 50%, rgba(124,92,252,0.07), transparent 70%)",
-        }}
-      />
+      {videoUrl ? (
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          poster={poster || undefined}
+          className="absolute inset-0 h-full w-full object-cover"
+          playsInline
+          preload="metadata"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+        />
+      ) : poster ? (
+        <img src={poster} alt="Demo reel poster" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" />
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "repeating-linear-gradient(0deg, rgba(255,255,255,0.008) 0px, transparent 1px, transparent 4px), radial-gradient(ellipse 70% 60% at 50% 50%, rgba(124,92,252,0.07), transparent 70%)",
+          }}
+        />
+      )}
       <div className="absolute left-6 top-5 flex items-center gap-2 text-[0.7rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
-        Elite Visuals Demo Reel — All 4 Styles
+        {caption}
       </div>
       <div className={`absolute inset-0 grid place-items-center transition-opacity ${playing ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>
         <div className="grid h-[72px] w-[72px] place-items-center rounded-full border-[1.5px] border-[rgba(124,92,252,0.4)] bg-[rgba(124,92,252,0.15)] shadow-[0_0_30px_rgba(124,92,252,0.2)] backdrop-blur-md transition-transform hover:scale-110">
           <Play className="ml-1 h-7 w-7 text-white" fill="currentColor" />
-        </div>
-      </div>
-      <div className="absolute inset-x-0 bottom-0 flex items-center gap-4 bg-gradient-to-t from-black/90 to-transparent px-6 py-4">
-        <span className="whitespace-nowrap text-[0.7rem] font-medium text-muted-foreground">{fmt(elapsed)} / {fmt(TOTAL)}</span>
-        <div className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/10">
-          <div className="h-full rounded-full bg-gradient-to-r from-primary to-[#a78bfa] transition-[width]" style={{ width: `${(elapsed / TOTAL) * 100}%` }} />
         </div>
       </div>
     </div>
