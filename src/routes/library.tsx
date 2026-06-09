@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { usePacks, usePrompts } from "@/lib/queries";
+import { usePacks, usePrompts, useSiteContent, sc } from "@/lib/queries";
 import { useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 
