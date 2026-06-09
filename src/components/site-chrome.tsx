@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useRef } from "react";
 import logoUrl from "@/assets/logo.png";
+import { useSiteContent, sc } from "@/lib/queries";
 
 const ADMIN_TAP_COUNT = 4;
 const ADMIN_TAP_WINDOW_MS = 1500;
@@ -52,14 +53,40 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
+  const { data: site } = useSiteContent();
+  const year = new Date().getFullYear();
+  const copyright = sc(site, "footer", "copyright", `© ${year} Elite Visuals.`);
+  const tagline = sc(site, "footer", "tagline", "All prompts crafted in the dark.");
+
+  const cmsLinks = [1, 2, 3, 4]
+    .map((i) => ({
+      label: sc(site, "footer", `link${i}_label`, ""),
+      url: sc(site, "footer", `link${i}_url`, ""),
+    }))
+    .filter((l) => l.label && l.url);
+
+  const links = cmsLinks.length > 0
+    ? cmsLinks
+    : [
+        { label: "Library", url: "/library" },
+        { label: "Discord", url: "#" },
+        { label: "Twitter", url: "#" },
+      ];
+
   return (
     <footer className="mt-24 border-t border-border/40 px-6 py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
-        <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Elite Visuals. All prompts crafted in the dark.</p>
+        <p className="text-xs text-muted-foreground">
+          {copyright} {tagline}
+        </p>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <Link to="/library" className="hover:text-foreground">Library</Link>
-          <a href="#" className="hover:text-foreground">Discord</a>
-          <a href="#" className="hover:text-foreground">Twitter</a>
+          {links.map((l) =>
+            l.url.startsWith("/") ? (
+              <Link key={l.label} to={l.url} className="hover:text-foreground">{l.label}</Link>
+            ) : (
+              <a key={l.label} href={l.url} target="_blank" rel="noreferrer" className="hover:text-foreground">{l.label}</a>
+            )
+          )}
         </div>
       </div>
     </footer>
