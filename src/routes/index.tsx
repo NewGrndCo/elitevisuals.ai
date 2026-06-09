@@ -297,7 +297,7 @@ function HomePage() {
                 </div>
                 <div className="relative min-h-[280px] flex-1 overflow-hidden border-t border-border lg:min-h-0 lg:border-l lg:border-t-0">
                   {productImage ? (
-                    <img src={productImage} alt="Product preview" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+                    <img src={productImage} alt="Product preview" className="absolute inset-0 h-full w-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
                   ) : (
                     <>
                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(124,92,252,0.10),transparent_70%),linear-gradient(135deg,rgba(124,92,252,0.05),rgba(56,182,255,0.05))]" />

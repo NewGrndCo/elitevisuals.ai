@@ -66,7 +66,7 @@ function PromptCard({ p, accent }: { p: PromptRow; accent: string }) {
       <Link to="/prompt/$slug" params={{ slug: p.slug }} className="block">
         <div className="relative aspect-[4/3] overflow-hidden">
           {p.cover_image_url ? (
-            <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+            <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
           ) : (
             <div className="h-full w-full" style={{
               background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
@@ -114,7 +114,7 @@ function PackPage() {
 
           <div className="mx-auto mb-8 aspect-square w-40 overflow-hidden rounded-3xl glass sm:w-52">
             {pack?.cover_image_url ? (
-              <img src={pack.cover_image_url} alt={pack.title} className="h-full w-full object-cover" />
+              <img src={pack.cover_image_url} alt={pack.title} className="h-full w-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
             ) : (
               <div className="h-full w-full" style={{
                 background: "radial-gradient(circle at 30% 30%, rgba(167,139,250,0.55), transparent 60%), radial-gradient(circle at 70% 70%, rgba(34,211,238,0.45), transparent 60%), #0f0c1f",
