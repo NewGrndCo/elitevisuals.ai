@@ -57,7 +57,13 @@ function HomePage() {
       <SiteHeader />
       <main className="pt-16">
         {/* HERO */}
-        <section className="flex min-h-[100vh] flex-col items-center justify-center px-6 pb-20 pt-32 text-center">
+        <section className="relative flex min-h-[100vh] flex-col items-center justify-center overflow-hidden px-6 pb-20 pt-32 text-center">
+          {heroBg && (
+            <>
+              <img src={heroBg} alt="" aria-hidden className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-50" />
+              <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/70 to-background" />
+            </>
+          )}
           <div className="mb-8 inline-flex items-center gap-3">
             <span className="rounded-md border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.10)] px-3 py-1 text-[0.72rem] font-extrabold uppercase tracking-[0.1em] text-[#a78bfa]">
               {badge}
