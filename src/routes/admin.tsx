@@ -556,7 +556,7 @@ function PromptEditor({ prompt, cats, packs, onClose }: { prompt: Prompt & { cat
 
       <div className="grid gap-3 sm:grid-cols-2">
         <MediaField label="Cover image" url={form.cover_image_url} accept="image/*" onUrl={(u) => setForm({ ...form, cover_image_url: u })} onFile={(f) => upload(f, "cover")} preview="image" />
-        <MediaField label="Demo video" url={form.demo_video_url} accept="video/*" onUrl={(u) => setForm({ ...form, demo_video_url: u })} onFile={(f) => upload(f, "video")} preview="video" />
+        <MediaField label="Demo video / GIF" url={form.demo_video_url} accept="video/*,image/gif,image/*" onUrl={(u) => setForm({ ...form, demo_video_url: u })} onFile={(f) => upload(f, "video")} preview="auto" />
       </div>
       <Field label="Gallery URLs (one per line)"><textarea value={galleryText} onChange={(e) => setGalleryText(e.target.value)} rows={3} className="glass w-full rounded-xl bg-transparent px-3 py-2 font-mono text-xs outline-none" /></Field>
 
