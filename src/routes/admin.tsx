@@ -719,13 +719,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <div><label className="mb-1 block text-xs uppercase tracking-wider text-muted-foreground">{label}</label>{children}</div>;
 }
 
-function MediaField({ label, url, accept, onUrl, onFile, preview }: { label: string; url: string | null; accept: string; onUrl: (u: string) => void; onFile: (f: File) => void; preview: "image" | "video" }) {
+function MediaField({ label, url, accept, onUrl, onFile, preview }: { label: string; url: string | null; accept: string; onUrl: (u: string) => void; onFile: (f: File) => void; preview: "image" | "video" | "auto" }) {
+  const isImageUrl = (u: string) => /\.(gif|png|jpe?g|webp|avif|svg)(\?|$)/i.test(u);
+  const renderAs = preview === "auto" ? (url && isImageUrl(url) ? "image" : "video") : preview;
   return (
     <Field label={label}>
       <div className="space-y-2">
         {url && (
           <div className="glass aspect-video w-full overflow-hidden rounded-xl bg-black/40">
-            {preview === "image"
+            {renderAs === "image"
               ? <img src={url} alt="" className="h-full w-full object-cover" />
               : <video src={url} className="h-full w-full object-cover" muted playsInline />}
           </div>
