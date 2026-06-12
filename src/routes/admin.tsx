@@ -538,7 +538,8 @@ function PromptEditor({ prompt, cats, packs, onClose }: { prompt: Prompt & { cat
           </select>
         </Field>
         <Field label="Category">
-          <select value={form.category_id ?? ""} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
+          <select value={form.category_id ?? ""} onChange={(e) => setForm({ ...form, category_id: e.target.value || null })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
+            <option value="" className="bg-background">— uncategorized —</option>
             {cats.map((c) => <option key={c.id} value={c.id} className="bg-background">{c.name}</option>)}
           </select>
         </Field>
