@@ -110,11 +110,12 @@ export const usePrompts = (categorySlug?: string) =>
   useQuery({
     queryKey: ["prompts", categorySlug ?? "all"],
     queryFn: async () => {
-      let q = supabase.from("prompts").select("*, categories!inner(slug,name,accent_color)").order("sort_order");
-      if (categorySlug) q = q.eq("categories.slug", categorySlug);
+      let q = categorySlug
+        ? supabase.from("prompts").select("*, categories!inner(slug,name,accent_color)").order("sort_order").eq("categories.slug", categorySlug)
+        : supabase.from("prompts").select("*, categories(slug,name,accent_color)").order("sort_order");
       const { data, error } = await q;
       if (error) throw error;
-      return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } })[];
+      return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null })[];
     },
   });
 
