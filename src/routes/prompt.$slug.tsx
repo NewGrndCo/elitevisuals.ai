@@ -145,7 +145,8 @@ function PromptPage() {
               </div>
             </aside>
           </div>
-          </div>
+
+
 
           {more.length > 0 && (
             <section className="mt-24">
