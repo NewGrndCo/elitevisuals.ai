@@ -586,6 +586,7 @@ const LANDING_BLOCKS: Block[] = [
     { name: "cta_primary", label: "Primary CTA button", type: "text" },
     { name: "cta_secondary", label: "Secondary CTA button", type: "text" },
     { name: "product_image", label: "Product preview image (pricing card)", type: "image" },
+    { name: "background_image", label: "Hero background image / GIF", type: "image" },
   ]},
   { key: "demo", label: "Demo Reel", fields: [
     { name: "video_url", label: "Demo reel video URL (mp4/webm)", type: "text" },
