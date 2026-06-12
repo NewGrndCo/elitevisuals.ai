@@ -282,7 +282,7 @@ function Overview({ onJump }: { onJump: (t: TabKey) => void }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold">{p.title}</div>
-                  <div className="truncate text-xs text-muted-foreground">{p.categories.name}</div>
+                  <div className="truncate text-xs text-muted-foreground">{p.categories?.name ?? "Uncategorized"}</div>
                 </div>
                 <div className="text-right">
                   <div className="font-mono text-sm">{p.copy_count}</div>
