@@ -493,7 +493,7 @@ function NewPromptButton({ cats, packs }: { cats: Category[]; packs: Pack[] }) {
   );
 }
 
-function PromptEditor({ prompt, cats, packs, onClose }: { prompt: Prompt & { categories: { slug: string; name: string; accent_color: string | null } }; cats: Category[]; packs: Pack[]; onClose: () => void }) {
+function PromptEditor({ prompt, cats, packs, onClose }: { prompt: Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null }; cats: Category[]; packs: Pack[]; onClose: () => void }) {
   const qc = useQueryClient();
   const [form, setForm] = useState<Prompt>(prompt);
   const [galleryText, setGalleryText] = useState(prompt.gallery_urls.join("\n"));
