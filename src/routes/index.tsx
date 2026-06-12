@@ -374,12 +374,16 @@ function DemoPlayer({ videoUrl, poster, caption }: { videoUrl: string; poster: s
     if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); }
   };
 
+  const isImage = /\.(gif|png|jpe?g|webp|avif)(\?|$)/i.test(videoUrl);
+
   return (
     <div
       onClick={toggle}
       className="group relative aspect-video w-full cursor-pointer overflow-hidden rounded-[14px] border border-border bg-[oklch(0.18_0.03_270)] transition-colors hover:border-[rgba(124,92,252,0.3)]"
     >
-      {videoUrl ? (
+      {videoUrl && isImage ? (
+        <img src={videoUrl} alt="Demo reel" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" />
+      ) : videoUrl ? (
         <video
           ref={videoRef}
           src={videoUrl}
@@ -405,11 +409,13 @@ function DemoPlayer({ videoUrl, poster, caption }: { videoUrl: string; poster: s
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
         {caption}
       </div>
-      <div className={`absolute inset-0 grid place-items-center transition-opacity ${playing ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>
-        <div className="grid h-[72px] w-[72px] place-items-center rounded-full border-[1.5px] border-[rgba(124,92,252,0.4)] bg-[rgba(124,92,252,0.15)] shadow-[0_0_30px_rgba(124,92,252,0.2)] backdrop-blur-md transition-transform hover:scale-110">
-          <Play className="ml-1 h-7 w-7 text-white" fill="currentColor" />
+      {!isImage && (
+        <div className={`absolute inset-0 grid place-items-center transition-opacity ${playing ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>
+          <div className="grid h-[72px] w-[72px] place-items-center rounded-full border-[1.5px] border-[rgba(124,92,252,0.4)] bg-[rgba(124,92,252,0.15)] shadow-[0_0_30px_rgba(124,92,252,0.2)] backdrop-blur-md transition-transform hover:scale-110">
+            <Play className="ml-1 h-7 w-7 text-white" fill="currentColor" />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
