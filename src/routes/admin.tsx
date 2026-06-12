@@ -459,7 +459,7 @@ function PromptManager() {
                     {!p.is_published && <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-yellow-200">Draft</span>}
                   </div>
                   <div className="truncate text-xs text-muted-foreground">
-                    <span className="rounded-full px-2 py-0.5" style={{ background: `${p.categories.accent_color}33`, color: p.categories.accent_color ?? undefined }}>{p.categories.name}</span>
+                    <span className="rounded-full px-2 py-0.5" style={{ background: `${p.categories?.accent_color ?? "#a78bfa"}33`, color: p.categories?.accent_color ?? undefined }}>{p.categories?.name ?? "Uncategorized"}</span>
                     <span className="ml-2 font-mono">/{p.slug}</span>
                   </div>
                 </div>
