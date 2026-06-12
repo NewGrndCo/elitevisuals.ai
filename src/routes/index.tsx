@@ -50,13 +50,20 @@ function HomePage() {
   const subhead = sc(site, "hero", "subhead", `A curated library of ${totalPrompts} image-to-video prompts engineered to create cinematic motion and transformation effects across modern AI video generation platforms.`);
   const ctaPrimary = sc(site, "hero", "cta_primary", "Explore Prompts");
   const productImage = sc(site, "hero", "product_image", "");
+  const heroBg = sc(site, "hero", "background_image", "");
 
   return (
     <>
       <SiteHeader />
       <main className="pt-16">
         {/* HERO */}
-        <section className="flex min-h-[100vh] flex-col items-center justify-center px-6 pb-20 pt-32 text-center">
+        <section className="relative flex min-h-[100vh] flex-col items-center justify-center overflow-hidden px-6 pb-20 pt-32 text-center">
+          {heroBg && (
+            <>
+              <img src={heroBg} alt="" aria-hidden className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-50" />
+              <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/70 to-background" />
+            </>
+          )}
           <div className="mb-8 inline-flex items-center gap-3">
             <span className="rounded-md border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.10)] px-3 py-1 text-[0.72rem] font-extrabold uppercase tracking-[0.1em] text-[#a78bfa]">
               {badge}
@@ -374,12 +381,16 @@ function DemoPlayer({ videoUrl, poster, caption }: { videoUrl: string; poster: s
     if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); }
   };
 
+  const isImage = /\.(gif|png|jpe?g|webp|avif)(\?|$)/i.test(videoUrl);
+
   return (
     <div
       onClick={toggle}
       className="group relative aspect-video w-full cursor-pointer overflow-hidden rounded-[14px] border border-border bg-[oklch(0.18_0.03_270)] transition-colors hover:border-[rgba(124,92,252,0.3)]"
     >
-      {videoUrl ? (
+      {videoUrl && isImage ? (
+        <img src={videoUrl} alt="Demo reel" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" />
+      ) : videoUrl ? (
         <video
           ref={videoRef}
           src={videoUrl}
@@ -405,11 +416,13 @@ function DemoPlayer({ videoUrl, poster, caption }: { videoUrl: string; poster: s
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
         {caption}
       </div>
-      <div className={`absolute inset-0 grid place-items-center transition-opacity ${playing ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>
-        <div className="grid h-[72px] w-[72px] place-items-center rounded-full border-[1.5px] border-[rgba(124,92,252,0.4)] bg-[rgba(124,92,252,0.15)] shadow-[0_0_30px_rgba(124,92,252,0.2)] backdrop-blur-md transition-transform hover:scale-110">
-          <Play className="ml-1 h-7 w-7 text-white" fill="currentColor" />
+      {!isImage && (
+        <div className={`absolute inset-0 grid place-items-center transition-opacity ${playing ? "opacity-0 group-hover:opacity-100" : "opacity-100"}`}>
+          <div className="grid h-[72px] w-[72px] place-items-center rounded-full border-[1.5px] border-[rgba(124,92,252,0.4)] bg-[rgba(124,92,252,0.15)] shadow-[0_0_30px_rgba(124,92,252,0.2)] backdrop-blur-md transition-transform hover:scale-110">
+            <Play className="ml-1 h-7 w-7 text-white" fill="currentColor" />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

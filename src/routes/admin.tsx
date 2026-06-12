@@ -282,7 +282,7 @@ function Overview({ onJump }: { onJump: (t: TabKey) => void }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold">{p.title}</div>
-                  <div className="truncate text-xs text-muted-foreground">{p.categories.name}</div>
+                  <div className="truncate text-xs text-muted-foreground">{p.categories?.name ?? "Uncategorized"}</div>
                 </div>
                 <div className="text-right">
                   <div className="font-mono text-sm">{p.copy_count}</div>
@@ -459,7 +459,7 @@ function PromptManager() {
                     {!p.is_published && <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-yellow-200">Draft</span>}
                   </div>
                   <div className="truncate text-xs text-muted-foreground">
-                    <span className="rounded-full px-2 py-0.5" style={{ background: `${p.categories.accent_color}33`, color: p.categories.accent_color ?? undefined }}>{p.categories.name}</span>
+                    <span className="rounded-full px-2 py-0.5" style={{ background: `${p.categories?.accent_color ?? "#a78bfa"}33`, color: p.categories?.accent_color ?? undefined }}>{p.categories?.name ?? "Uncategorized"}</span>
                     <span className="ml-2 font-mono">/{p.slug}</span>
                   </div>
                 </div>
@@ -480,10 +480,8 @@ function PromptManager() {
 function NewPromptButton({ cats, packs }: { cats: Category[]; packs: Pack[] }) {
   const qc = useQueryClient();
   const create = async () => {
-    if (cats.length === 0) { toast.error("Create a category first"); return; }
-    if (packs.length === 0) { toast.error("Create a pack first"); return; }
     const slug = `new-prompt-${Date.now()}`;
-    const { error } = await supabase.from("prompts").insert({ slug, title: "New prompt", description: "", prompt_text: "", category_id: cats[0].id, pack_id: packs[0].id, is_published: false });
+    const { error } = await supabase.from("prompts").insert({ slug, title: "New prompt", description: "", prompt_text: "", category_id: cats[0]?.id ?? null, pack_id: packs[0]?.id ?? null, is_published: false });
     if (error) toast.error(error.message); else { qc.invalidateQueries({ queryKey: ["prompts"] }); toast.success("Draft prompt created"); }
   };
   return (
@@ -493,7 +491,7 @@ function NewPromptButton({ cats, packs }: { cats: Category[]; packs: Pack[] }) {
   );
 }
 
-function PromptEditor({ prompt, cats, packs, onClose }: { prompt: Prompt & { categories: { slug: string; name: string; accent_color: string | null } }; cats: Category[]; packs: Pack[]; onClose: () => void }) {
+function PromptEditor({ prompt, cats, packs, onClose }: { prompt: Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null }; cats: Category[]; packs: Pack[]; onClose: () => void }) {
   const qc = useQueryClient();
   const [form, setForm] = useState<Prompt>(prompt);
   const [galleryText, setGalleryText] = useState(prompt.gallery_urls.join("\n"));
@@ -538,7 +536,8 @@ function PromptEditor({ prompt, cats, packs, onClose }: { prompt: Prompt & { cat
           </select>
         </Field>
         <Field label="Category">
-          <select value={form.category_id ?? ""} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
+          <select value={form.category_id ?? ""} onChange={(e) => setForm({ ...form, category_id: e.target.value || null })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none">
+            <option value="" className="bg-background">— uncategorized —</option>
             {cats.map((c) => <option key={c.id} value={c.id} className="bg-background">{c.name}</option>)}
           </select>
         </Field>
@@ -555,7 +554,7 @@ function PromptEditor({ prompt, cats, packs, onClose }: { prompt: Prompt & { cat
 
       <div className="grid gap-3 sm:grid-cols-2">
         <MediaField label="Cover image" url={form.cover_image_url} accept="image/*" onUrl={(u) => setForm({ ...form, cover_image_url: u })} onFile={(f) => upload(f, "cover")} preview="image" />
-        <MediaField label="Demo video" url={form.demo_video_url} accept="video/*" onUrl={(u) => setForm({ ...form, demo_video_url: u })} onFile={(f) => upload(f, "video")} preview="video" />
+        <MediaField label="Demo video / GIF" url={form.demo_video_url} accept="video/*,image/gif,image/*" onUrl={(u) => setForm({ ...form, demo_video_url: u })} onFile={(f) => upload(f, "video")} preview="auto" />
       </div>
       <Field label="Gallery URLs (one per line)"><textarea value={galleryText} onChange={(e) => setGalleryText(e.target.value)} rows={3} className="glass w-full rounded-xl bg-transparent px-3 py-2 font-mono text-xs outline-none" /></Field>
 
@@ -585,6 +584,7 @@ const LANDING_BLOCKS: Block[] = [
     { name: "cta_primary", label: "Primary CTA button", type: "text" },
     { name: "cta_secondary", label: "Secondary CTA button", type: "text" },
     { name: "product_image", label: "Product preview image (pricing card)", type: "image" },
+    { name: "background_image", label: "Hero background image / GIF", type: "image" },
   ]},
   { key: "demo", label: "Demo Reel", fields: [
     { name: "video_url", label: "Demo reel video URL (mp4/webm)", type: "text" },
@@ -718,13 +718,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <div><label className="mb-1 block text-xs uppercase tracking-wider text-muted-foreground">{label}</label>{children}</div>;
 }
 
-function MediaField({ label, url, accept, onUrl, onFile, preview }: { label: string; url: string | null; accept: string; onUrl: (u: string) => void; onFile: (f: File) => void; preview: "image" | "video" }) {
+function MediaField({ label, url, accept, onUrl, onFile, preview }: { label: string; url: string | null; accept: string; onUrl: (u: string) => void; onFile: (f: File) => void; preview: "image" | "video" | "auto" }) {
+  const isImageUrl = (u: string) => /\.(gif|png|jpe?g|webp|avif|svg)(\?|$)/i.test(u);
+  const renderAs = preview === "auto" ? (url && isImageUrl(url) ? "image" : "video") : preview;
   return (
     <Field label={label}>
       <div className="space-y-2">
         {url && (
           <div className="glass aspect-video w-full overflow-hidden rounded-xl bg-black/40">
-            {preview === "image"
+            {renderAs === "image"
               ? <img src={url} alt="" className="h-full w-full object-cover" />
               : <video src={url} className="h-full w-full object-cover" muted playsInline />}
           </div>
