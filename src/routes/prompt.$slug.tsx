@@ -145,6 +145,36 @@ function PromptPage() {
               </div>
             </aside>
           </div>
+          </div>
+
+          {more.length > 0 && (
+            <section className="mt-24">
+              <div className="mb-6 flex items-end justify-between">
+                <h2 className="font-display text-2xl font-bold lowercase tracking-[-0.02em] sm:text-3xl">keep browsing</h2>
+                <Link to="/library" className="text-xs text-muted-foreground hover:text-foreground">All packs →</Link>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {more.map((p) => {
+                  const a = p.categories?.accent_color ?? "#a78bfa";
+                  return (
+                    <Link key={p.id} to="/prompt/$slug" params={{ slug: p.slug }} className="glass group block overflow-hidden rounded-2xl">
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        {p.cover_image_url ? (
+                          <img src={p.cover_image_url} alt={p.title} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                        ) : (
+                          <div className="h-full w-full" style={{ background: `radial-gradient(circle at 30% 30%, ${a}55, transparent 60%), #14122a` }} />
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <div className="truncate font-display text-sm font-semibold group-hover:text-[#a78bfa]">{p.title}</div>
+                        <div className="mt-1 truncate text-xs text-muted-foreground">{p.categories?.name ?? "Uncategorized"}</div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
         <SiteFooter />
       </main>
