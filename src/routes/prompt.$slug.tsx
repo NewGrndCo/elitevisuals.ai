@@ -85,7 +85,9 @@ function PromptPage() {
             <div>
               <div className="glass relative overflow-hidden rounded-3xl">
                 <div className="relative aspect-[16/10] w-full overflow-hidden">
-                  {prompt.demo_video_url ? (
+                  {prompt.demo_video_url && demoIsImage ? (
+                    <img src={prompt.demo_video_url} alt={prompt.title} className="h-full w-full object-cover" />
+                  ) : prompt.demo_video_url ? (
                     <video src={prompt.demo_video_url} controls autoPlay loop muted playsInline className="h-full w-full object-cover" />
                   ) : hero ? (
                     <img src={hero} alt={prompt.title} className="h-full w-full object-cover" />
