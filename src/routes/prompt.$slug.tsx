@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { usePrompt } from "@/lib/queries";
+import { usePrompt, usePrompts } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Copy, Check, ArrowLeft, Play, ClipboardCheck } from "lucide-react";
