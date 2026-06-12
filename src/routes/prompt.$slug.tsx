@@ -36,6 +36,7 @@ export const Route = createFileRoute("/prompt/$slug")({
 function PromptPage() {
   const { slug } = Route.useParams();
   const { data: prompt, isLoading } = usePrompt(slug);
+  const { data: allPrompts } = usePrompts();
   const [copied, setCopied] = useState(false);
   const [activeImg, setActiveImg] = useState<string | null>(null);
   const [copyCount, setCopyCount] = useState<number | null>(null);
@@ -57,6 +58,8 @@ function PromptPage() {
   const hero = activeImg ?? prompt.cover_image_url;
   const accent = prompt.categories?.accent_color ?? "#a78bfa";
   const displayedCount = copyCount ?? prompt.copy_count ?? 0;
+  const demoIsImage = prompt.demo_video_url && /\.(gif|png|jpe?g|webp|avif)(\?|$)/i.test(prompt.demo_video_url);
+  const more = (allPrompts ?? []).filter((p) => p.is_published && p.slug !== prompt.slug).slice(0, 8);
 
   const copy = async () => {
     await navigator.clipboard.writeText(prompt.prompt_text);
