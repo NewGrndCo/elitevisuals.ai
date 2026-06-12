@@ -480,10 +480,8 @@ function PromptManager() {
 function NewPromptButton({ cats, packs }: { cats: Category[]; packs: Pack[] }) {
   const qc = useQueryClient();
   const create = async () => {
-    if (cats.length === 0) { toast.error("Create a category first"); return; }
-    if (packs.length === 0) { toast.error("Create a pack first"); return; }
     const slug = `new-prompt-${Date.now()}`;
-    const { error } = await supabase.from("prompts").insert({ slug, title: "New prompt", description: "", prompt_text: "", category_id: cats[0].id, pack_id: packs[0].id, is_published: false });
+    const { error } = await supabase.from("prompts").insert({ slug, title: "New prompt", description: "", prompt_text: "", category_id: cats[0]?.id ?? null, pack_id: packs[0]?.id ?? null, is_published: false });
     if (error) toast.error(error.message); else { qc.invalidateQueries({ queryKey: ["prompts"] }); toast.success("Draft prompt created"); }
   };
   return (
