@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { usePacks, usePrompts, useSiteContent, sc } from "@/lib/queries";
+import { usePacks, usePrompts, useSiteContent, sc, type Pack } from "@/lib/queries";
+import { useCart } from "@/lib/cart-context";
 import { useMemo } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/library")({
   head: () => ({
@@ -75,37 +76,7 @@ function LibraryPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {packs?.map((p) => {
               const count = countsByPack.get(p.id) ?? 0;
-              return (
-                <Link
-                  key={p.id}
-                  to="/pack/$slug"
-                  params={{ slug: p.slug }}
-                  className="glass group relative flex flex-col overflow-hidden rounded-3xl transition-all hover:-translate-y-1 hover:border-[rgba(124,92,252,0.35)]"
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    {p.cover_image_url ? (
-                      <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
-                    ) : (
-                      <div className="h-full w-full" style={{
-                        background: "radial-gradient(circle at 30% 30%, rgba(167,139,250,0.55), transparent 60%), radial-gradient(circle at 70% 70%, rgba(34,211,238,0.45), transparent 60%), #0f0c1f",
-                      }} />
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
-                    <div className="absolute right-3 top-3 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-white/90 backdrop-blur">
-                      {count} prompts
-                    </div>
-                  </div>
-                  <div className="flex flex-1 flex-col p-6">
-                    <h2 className="font-display text-xl font-bold tracking-[-0.02em]">{p.title}</h2>
-                    {p.description && (
-                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{p.description}</p>
-                    )}
-                    <div className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#a78bfa]">
-                      Explore pack <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </div>
-                  </div>
-                </Link>
-              );
+              return <PackCard key={p.id} pack={p} count={count} />;
             })}
           </div>
         </section>
@@ -113,5 +84,72 @@ function LibraryPage() {
         <SiteFooter />
       </main>
     </>
+  );
+}
+
+function PackCard({ pack, count }: { pack: Pack; count: number }) {
+  const { addItem } = useCart();
+  const navigate = useNavigate();
+  const price = pack.price_cents != null ? `$${Math.round(pack.price_cents / 100)}` : null;
+
+  const handleAdd = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!pack.shopify_variant_id) return;
+    try {
+      await addItem(pack.shopify_variant_id, 1);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div
+      onClick={() => navigate({ to: "/pack/$slug", params: { slug: pack.slug } })}
+      className="glass group relative flex cursor-pointer flex-col overflow-hidden rounded-3xl transition-all hover:-translate-y-1 hover:border-[rgba(124,92,252,0.35)]"
+    >
+      <div className="relative aspect-[4/3] overflow-hidden">
+        {pack.cover_image_url ? (
+          <img src={pack.cover_image_url} alt={pack.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
+        ) : (
+          <div className="h-full w-full" style={{
+            background: "radial-gradient(circle at 30% 30%, rgba(167,139,250,0.55), transparent 60%), radial-gradient(circle at 70% 70%, rgba(34,211,238,0.45), transparent 60%), #0f0c1f",
+          }} />
+        )}
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
+        {price && (
+          <div className="absolute right-3 top-3 rounded-full border border-[rgba(124,92,252,0.35)] bg-black/55 px-3 py-1 text-xs font-extrabold tracking-[-0.01em] text-[#a78bfa] backdrop-blur">
+            {price}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-6">
+        <h2 className="font-display text-xl font-bold tracking-[-0.02em]">{pack.title}</h2>
+        <div className="mt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          {count} prompts
+        </div>
+        {pack.description && (
+          <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{pack.description}</p>
+        )}
+        <div className="mt-5 flex items-center justify-between gap-3">
+          <Link
+            to="/pack/$slug"
+            params={{ slug: pack.slug }}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#a78bfa]"
+          >
+            Explore <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+          {pack.shopify_variant_id && (
+            <button
+              onClick={handleAdd}
+              className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(124,92,252,0.35)] bg-[rgba(124,92,252,0.08)] px-3.5 py-1.5 text-xs font-bold text-[#a78bfa] transition-colors hover:bg-[rgba(124,92,252,0.18)]"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add to cart
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

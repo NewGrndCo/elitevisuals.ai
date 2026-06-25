@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "sonner";
 import { AnimatedBackground } from "@/components/animated-bg";
 import { CartProvider } from "@/lib/cart-context";
+import { CartDrawer } from "@/components/cart-drawer";
 
 function NotFoundComponent() {
   return (
@@ -124,6 +125,7 @@ function RootComponent() {
         <div className="relative z-10">
           <Outlet />
         </div>
+        <CartDrawer />
         <Toaster theme="dark" position="bottom-right" toastOptions={{ className: "glass" }} />
       </CartProvider>
     </QueryClientProvider>
