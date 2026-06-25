@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "sonner";
 import { AnimatedBackground } from "@/components/animated-bg";
+import { CartProvider } from "@/lib/cart-context";
 
 function NotFoundComponent() {
   return (
