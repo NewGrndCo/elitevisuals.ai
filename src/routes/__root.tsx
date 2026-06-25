@@ -118,12 +118,14 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthListener />
-      <AnimatedBackground />
-      <div className="relative z-10">
-        <Outlet />
-      </div>
-      <Toaster theme="dark" position="bottom-right" toastOptions={{ className: "glass" }} />
+      <CartProvider>
+        <AuthListener />
+        <AnimatedBackground />
+        <div className="relative z-10">
+          <Outlet />
+        </div>
+        <Toaster theme="dark" position="bottom-right" toastOptions={{ className: "glass" }} />
+      </CartProvider>
     </QueryClientProvider>
   );
 }
