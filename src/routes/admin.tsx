@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   Plus, Trash2, Save, Upload, Mail, ArrowUp, ArrowDown,
   LayoutDashboard, FileText, FolderKanban, Image as ImageIcon, ShieldCheck,
-  Eye, EyeOff, Copy, Search, ExternalLink, Type, Package, LogOut, Lock,
+  Eye, EyeOff, Copy, Search, ExternalLink, Type, Package, LogOut, Lock, ChevronDown,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -596,6 +596,12 @@ const LANDING_BLOCKS: Block[] = [
     { name: "description", label: "Page description", type: "textarea" },
     { name: "hero_image", label: "Image above page title", type: "image" },
   ]},
+  { key: "pricing", label: "Pricing", fields: [
+    { name: "membership_price_cents", label: "Membership price (cents)", type: "text" },
+    { name: "membership_shopify_variant_id", label: "Membership Shopify Variant GID", type: "text" },
+    { name: "membership_label", label: "Membership tier label", type: "text" },
+    { name: "membership_features", label: "Membership features (one per line)", type: "textarea" },
+  ]},
   { key: "footer", label: "Footer", fields: [
     { name: "copyright", label: "Copyright text", type: "text" },
     { name: "tagline", label: "Tagline (after copyright)", type: "text" },
@@ -614,6 +620,7 @@ function LandingEditor() {
   const { data: site } = useSiteContent();
   const mut = useSiteContentMutation();
   const [drafts, setDrafts] = useState<Record<string, Record<string, string>>>({});
+  const [openKey, setOpenKey] = useState<string>("hero");
 
   useEffect(() => {
     if (!site) return;
@@ -646,70 +653,85 @@ function LandingEditor() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <section className="glass rounded-3xl p-6">
         <SectionHeader title="Landing page content" desc="Edit hero text, library page copy, footer, and images. Changes appear immediately on the live site." />
       </section>
 
-      {LANDING_BLOCKS.map((block) => (
-        <section key={block.key} className="glass rounded-3xl p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl font-semibold">{block.label}</h2>
-            <button onClick={() => saveBlock(block.key)} disabled={mut.isPending}
-              className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">
-              <Save className="h-4 w-4" /> Save
-            </button>
-          </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {block.fields.map((f) => {
-              const val = drafts[block.key]?.[f.name] ?? "";
-              const wide = f.type !== "text";
-              return (
-                <div key={f.name} className={wide ? "sm:col-span-2" : ""}>
-                  <Field label={f.label}>
-                    {f.type === "textarea" ? (
-                      <textarea
-                        value={val}
-                        onChange={(e) => setField(block.key, f.name, e.target.value)}
-                        rows={3}
-                        className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
-                      />
-                    ) : f.type === "image" ? (
-                      <div className="space-y-2">
-                        {val && (
-                          <div className="glass aspect-video w-full overflow-hidden rounded-xl bg-black/40">
-                            <img src={val} alt="" className="h-full w-full object-cover" />
-                          </div>
-                        )}
-                        <input
-                          value={val}
-                          onChange={(e) => setField(block.key, f.name, e.target.value)}
-                          placeholder="https://… or upload below"
-                          className="glass w-full rounded-xl bg-transparent px-3 py-2 text-xs outline-none"
-                        />
-                        <label className="glass flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs hover:bg-white/10">
-                          <Upload className="h-3.5 w-3.5" /> Upload image
-                          <input
-                            type="file" accept="image/*" className="hidden"
-                            onChange={(e) => e.target.files?.[0] && uploadImage(block.key, f.name, e.target.files[0])}
+      {LANDING_BLOCKS.map((block) => {
+        const isOpen = openKey === block.key;
+        return (
+          <section key={block.key} className="glass overflow-hidden rounded-3xl">
+            <div className="flex items-center justify-between gap-3 p-5">
+              <button
+                onClick={() => setOpenKey(isOpen ? "" : block.key)}
+                className="flex flex-1 items-center justify-between gap-3 text-left"
+              >
+                <h2 className="font-display text-lg font-semibold">{block.label}</h2>
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isOpen && (
+                <button
+                  onClick={() => saveBlock(block.key)}
+                  disabled={mut.isPending}
+                  className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+                >
+                  <Save className="h-4 w-4" /> Save
+                </button>
+              )}
+            </div>
+            {isOpen && (
+              <div className="grid gap-3 border-t border-border/40 bg-white/[0.02] p-5 sm:grid-cols-2">
+                {block.fields.map((f) => {
+                  const val = drafts[block.key]?.[f.name] ?? "";
+                  const wide = f.type !== "text";
+                  return (
+                    <div key={f.name} className={wide ? "sm:col-span-2" : ""}>
+                      <Field label={f.label}>
+                        {f.type === "textarea" ? (
+                          <textarea
+                            value={val}
+                            onChange={(e) => setField(block.key, f.name, e.target.value)}
+                            rows={3}
+                            className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
                           />
-                        </label>
-                      </div>
-                    ) : (
-                      <input
-                        value={val}
-                        onChange={(e) => setField(block.key, f.name, e.target.value)}
-                        className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
-                      />
-                    )}
-                  </Field>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ))}
-
+                        ) : f.type === "image" ? (
+                          <div className="space-y-2">
+                            {val && (
+                              <div className="glass aspect-video w-full overflow-hidden rounded-xl bg-black/40">
+                                <img src={val} alt="" className="h-full w-full object-cover" />
+                              </div>
+                            )}
+                            <input
+                              value={val}
+                              onChange={(e) => setField(block.key, f.name, e.target.value)}
+                              placeholder="https://… or upload below"
+                              className="glass w-full rounded-xl bg-transparent px-3 py-2 text-xs outline-none"
+                            />
+                            <label className="glass flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs hover:bg-white/10">
+                              <Upload className="h-3.5 w-3.5" /> Upload image
+                              <input
+                                type="file" accept="image/*" className="hidden"
+                                onChange={(e) => e.target.files?.[0] && uploadImage(block.key, f.name, e.target.files[0])}
+                              />
+                            </label>
+                          </div>
+                        ) : (
+                          <input
+                            value={val}
+                            onChange={(e) => setField(block.key, f.name, e.target.value)}
+                            className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
+                          />
+                        )}
+                      </Field>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }
@@ -973,6 +995,7 @@ function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => v
     const { error } = await supabase.from("packs").update({
       title: form.title, slug: form.slug, description: form.description,
       cover_image_url: form.cover_image_url, is_published: form.is_published,
+      price_cents: form.price_cents, shopify_variant_id: form.shopify_variant_id,
     }).eq("id", form.id);
     setSaving(false);
     if (error) toast.error(error.message);
@@ -999,6 +1022,25 @@ function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => v
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Title"><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
         <Field label="Slug"><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none" /></Field>
+        <div>
+          <Field label="Price (cents) — e.g. 4900 = $49.00">
+            <input
+              type="number"
+              value={form.price_cents ?? 0}
+              onChange={(e) => setForm({ ...form, price_cents: Number(e.target.value) || 0 })}
+              className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none"
+            />
+          </Field>
+          <div className="mt-1 text-xs text-muted-foreground">${((form.price_cents ?? 0) / 100).toFixed(2)}</div>
+        </div>
+        <Field label="Shopify Variant GID">
+          <input
+            value={form.shopify_variant_id ?? ""}
+            onChange={(e) => setForm({ ...form, shopify_variant_id: e.target.value || null })}
+            placeholder="gid://shopify/ProductVariant/123456789"
+            className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none"
+          />
+        </Field>
       </div>
       <Field label="Description"><textarea value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
       <MediaField label="Cover image" url={form.cover_image_url} accept="image/*" onUrl={(u) => setForm({ ...form, cover_image_url: u })} onFile={upload} preview="image" />
