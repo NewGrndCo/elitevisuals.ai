@@ -254,8 +254,33 @@ function HomePage() {
             </section>
           );
 
+          const packPriceCents = featuredPack?.price_cents ?? 4900;
+          const packPriceDollars = Math.round(packPriceCents / 100);
+          const packVariant = featuredPack?.shopify_variant_id ?? null;
+
+          const memPriceCents = Number(sc(site, "pricing", "membership_price_cents", "9900")) || 9900;
+          const memPriceDollars = Math.round(memPriceCents / 100);
+          const memLabel = sc(site, "pricing", "membership_label", "All-Access Membership");
+          const memFeaturesRaw = sc(
+            site,
+            "pricing",
+            "membership_features",
+            "Every current pack\nEvery future drop\nPriority support\nCommercial license",
+          );
+          const memFeatures = memFeaturesRaw.split("\n").map((s) => s.trim()).filter(Boolean);
+          const memVariant = sc(site, "pricing", "membership_shopify_variant_id", "");
+
+          const handleAddPack = async () => {
+            if (!packVariant) return;
+            try { await addItem(packVariant, 1); } catch (e) { console.error(e); }
+          };
+          const handleAddMembership = async () => {
+            if (!memVariant) return;
+            try { await addItem(memVariant, 1); } catch (e) { console.error(e); }
+          };
+
           const pricingSection = (
-            <section id="pricing" className="mx-auto max-w-[1100px] px-6 py-28">
+            <section id="pricing" className="mx-auto max-w-[1200px] px-6 py-28">
               <div className="mb-14 text-center">
                 <SectionTag>Pricing</SectionTag>
                 <h2 className="mx-auto max-w-[480px] text-[clamp(1.8rem,3.5vw,2.6rem)] font-bold leading-[1.2] tracking-[-0.03em]">
@@ -266,68 +291,105 @@ function HomePage() {
                 </p>
               </div>
 
-              <div className="glass relative mx-auto flex max-w-[960px] flex-col overflow-hidden rounded-[14px] lg:flex-row">
-                <div className="pointer-events-none absolute -top-16 left-1/2 h-[220px] w-[320px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(124,92,252,0.18),transparent_70%)]" />
-                <div className="relative flex flex-1 flex-col justify-center p-8 sm:p-10 lg:p-12">
-                  <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.08em] text-[#a78bfa]">EVKT1: Kinetic V1</div>
-                      <div className="mt-1 text-[0.8rem] text-muted-foreground">Lifetime access · One-time payment</div>
-                    </div>
-                    <div className="rounded-full border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.12)] px-3.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] text-[#a78bfa]">
-                      {totalPrompts} Prompts
-                    </div>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="mt-2 text-2xl font-semibold text-muted-foreground">$</span>
-                    <span className="text-[4rem] font-extrabold leading-none tracking-[-0.06em]">49</span>
-                  </div>
-                  <p className="mb-8 mt-1 text-[0.8rem] text-muted-foreground">One-time purchase. Instant digital delivery.</p>
-                  <ul className="mb-8 flex flex-col gap-3">
-                    {[
-                      `${totalPrompts} curated image-to-video transition prompts`,
-                      `${totalStyles} motion styles: Temporal, Particle, Fluid, Energy`,
-                      "Compatible with Veo, Kling, Seedance, Runway, Hailuo & more",
-                      "Beginner to advanced skill level",
-                      "Copy-and-paste format — no technical setup required",
-                      "Commercial use license included",
-                    ].map((f) => (
-                      <li key={f} className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="grid h-[18px] w-[18px] flex-shrink-0 place-items-center rounded-full border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.15)]">
-                          <Check className="h-2.5 w-2.5 text-[#a78bfa]" strokeWidth={3} />
-                        </span>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    to="/library"
-                    className="block w-full rounded-[10px] bg-primary py-3.5 text-center text-base font-bold tracking-[-0.01em] text-primary-foreground shadow-[0_0_36px_rgba(124,92,252,0.35),0_0_80px_rgba(124,92,252,0.18)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_50px_rgba(124,92,252,0.45),0_0_110px_rgba(124,92,252,0.25)]"
-                  >
-                    Browse Library
-                  </Link>
-                  <p className="mt-4 text-center text-[0.73rem] text-muted-foreground">
-                    Secure checkout · Instant delivery · 30-day refund guarantee
-                  </p>
-                </div>
-                <div className="relative min-h-[280px] flex-1 overflow-hidden border-t border-border lg:min-h-0 lg:border-l lg:border-t-0">
-                  {productImage ? (
-                    <img src={productImage} alt="Product preview" className="absolute inset-0 h-full w-full object-cover" loading="eager" fetchPriority="high" decoding="async" />
-                  ) : (
-                    <>
-                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(124,92,252,0.10),transparent_70%),linear-gradient(135deg,rgba(124,92,252,0.05),rgba(56,182,255,0.05))]" />
-                      <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-4 p-8">
-                        <div className="grid h-20 w-20 place-items-center rounded-[18px] border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.12)] shadow-[0_0_30px_rgba(124,92,252,0.15)]">
-                          <Sparkles className="h-9 w-9 text-[#a78bfa]" />
+              <div className="mx-auto grid max-w-[1100px] gap-6 lg:grid-cols-2">
+                {/* Pack card */}
+                <div className="glass relative flex flex-col overflow-hidden rounded-[14px]">
+                  <div className="pointer-events-none absolute -top-16 left-1/2 h-[220px] w-[320px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(124,92,252,0.18),transparent_70%)]" />
+                  <div className="relative flex flex-1 flex-col p-8 sm:p-10">
+                    <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.08em] text-[#a78bfa]">
+                          {featuredPack?.title ?? "EVKT1: Kinetic V1"}
                         </div>
-                        <p className="max-w-[260px] text-center text-xs text-muted-foreground/60">
-                          Upload a product preview image from the Admin → Landing page tab.
-                        </p>
+                        <div className="mt-1 text-[0.8rem] text-muted-foreground">Lifetime access · One-time payment</div>
                       </div>
-                    </>
-                  )}
+                      <div className="rounded-full border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.12)] px-3.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] text-[#a78bfa]">
+                        {totalPrompts} Prompts
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="mt-2 text-2xl font-semibold text-muted-foreground">$</span>
+                      <span className="text-[4rem] font-extrabold leading-none tracking-[-0.06em]">{packPriceDollars}</span>
+                    </div>
+                    <p className="mb-8 mt-1 text-[0.8rem] text-muted-foreground">One-time purchase. Instant digital delivery.</p>
+                    <ul className="mb-8 flex flex-col gap-3">
+                      {[
+                        `${totalPrompts} curated image-to-video transition prompts`,
+                        `${totalStyles} motion styles: Temporal, Particle, Fluid, Energy`,
+                        "Compatible with Veo, Kling, Seedance, Runway, Hailuo & more",
+                        "Copy-and-paste format — no technical setup required",
+                        "Commercial use license included",
+                      ].map((f) => (
+                        <li key={f} className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <span className="grid h-[18px] w-[18px] flex-shrink-0 place-items-center rounded-full border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.15)]">
+                            <Check className="h-2.5 w-2.5 text-[#a78bfa]" strokeWidth={3} />
+                          </span>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={handleAddPack}
+                      disabled={!packVariant}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-primary py-3.5 text-center text-base font-bold tracking-[-0.01em] text-primary-foreground shadow-[0_0_36px_rgba(124,92,252,0.35),0_0_80px_rgba(124,92,252,0.18)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_50px_rgba(124,92,252,0.45),0_0_110px_rgba(124,92,252,0.25)] disabled:opacity-60 disabled:hover:translate-y-0"
+                    >
+                      <Plus className="h-4 w-4" /> {packVariant ? "Add to cart" : "Coming soon"}
+                    </button>
+                    <p className="mt-4 text-center text-[0.73rem] text-muted-foreground">
+                      Secure checkout · Instant delivery · 30-day refund guarantee
+                    </p>
+                  </div>
+                </div>
+
+                {/* Membership card */}
+                <div className="glass relative flex flex-col overflow-hidden rounded-[14px] border-[rgba(56,182,255,0.25)]">
+                  <div className="pointer-events-none absolute -top-16 left-1/2 h-[220px] w-[320px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(56,182,255,0.20),transparent_70%)]" />
+                  <div className="relative flex flex-1 flex-col p-8 sm:p-10">
+                    <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.08em] text-[#7dd3fc]">
+                          {memLabel}
+                        </div>
+                        <div className="mt-1 text-[0.8rem] text-muted-foreground">Unlock every pack · Cancel anytime</div>
+                      </div>
+                      <div className="rounded-full border border-[rgba(56,182,255,0.3)] bg-[rgba(56,182,255,0.12)] px-3.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] text-[#7dd3fc]">
+                        All Access
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="mt-2 text-2xl font-semibold text-muted-foreground">$</span>
+                      <span className="text-[4rem] font-extrabold leading-none tracking-[-0.06em]">{memPriceDollars}</span>
+                    </div>
+                    <p className="mb-8 mt-1 text-[0.8rem] text-muted-foreground">Recurring · Every drop included.</p>
+                    <ul className="mb-8 flex flex-col gap-3">
+                      {memFeatures.map((f) => (
+                        <li key={f} className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <span className="grid h-[18px] w-[18px] flex-shrink-0 place-items-center rounded-full border border-[rgba(56,182,255,0.3)] bg-[rgba(56,182,255,0.15)]">
+                            <Check className="h-2.5 w-2.5 text-[#7dd3fc]" strokeWidth={3} />
+                          </span>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={handleAddMembership}
+                      disabled={!memVariant}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(56,182,255,0.5)] bg-[rgba(56,182,255,0.12)] py-3.5 text-center text-base font-bold tracking-[-0.01em] text-[#bae6fd] shadow-[0_0_36px_rgba(56,182,255,0.25),0_0_80px_rgba(56,182,255,0.12)] transition-all hover:-translate-y-0.5 hover:bg-[rgba(56,182,255,0.18)] disabled:opacity-60 disabled:hover:translate-y-0"
+                    >
+                      <Plus className="h-4 w-4" /> {memVariant ? "Add membership" : "Coming soon"}
+                    </button>
+                    <p className="mt-4 text-center text-[0.73rem] text-muted-foreground">
+                      Secure checkout via Shopify
+                    </p>
+                  </div>
                 </div>
               </div>
+
+              {productImage && (
+                <div className="mx-auto mt-10 max-w-[1100px] overflow-hidden rounded-[14px] border border-border">
+                  <img src={productImage} alt="Product preview" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                </div>
+              )}
             </section>
           );
 
