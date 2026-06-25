@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { usePacks, usePrompts, useSiteContent, sc } from "@/lib/queries";
+import { usePacks, usePrompts, useSiteContent, sc, type Pack } from "@/lib/queries";
+import { useCart } from "@/lib/cart-context";
 import { useMemo } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/library")({
   head: () => ({
@@ -75,37 +76,7 @@ function LibraryPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {packs?.map((p) => {
               const count = countsByPack.get(p.id) ?? 0;
-              return (
-                <Link
-                  key={p.id}
-                  to="/pack/$slug"
-                  params={{ slug: p.slug }}
-                  className="glass group relative flex flex-col overflow-hidden rounded-3xl transition-all hover:-translate-y-1 hover:border-[rgba(124,92,252,0.35)]"
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    {p.cover_image_url ? (
-                      <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
-                    ) : (
-                      <div className="h-full w-full" style={{
-                        background: "radial-gradient(circle at 30% 30%, rgba(167,139,250,0.55), transparent 60%), radial-gradient(circle at 70% 70%, rgba(34,211,238,0.45), transparent 60%), #0f0c1f",
-                      }} />
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
-                    <div className="absolute right-3 top-3 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-white/90 backdrop-blur">
-                      {count} prompts
-                    </div>
-                  </div>
-                  <div className="flex flex-1 flex-col p-6">
-                    <h2 className="font-display text-xl font-bold tracking-[-0.02em]">{p.title}</h2>
-                    {p.description && (
-                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{p.description}</p>
-                    )}
-                    <div className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#a78bfa]">
-                      Explore pack <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </div>
-                  </div>
-                </Link>
-              );
+              return <PackCard key={p.id} pack={p} count={count} />;
             })}
           </div>
         </section>
