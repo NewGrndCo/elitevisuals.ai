@@ -123,6 +123,9 @@ function PackPage() {
   const { data: pack, isLoading: packLoading } = usePack(slug);
   const { data: cats } = useCategories();
   const { data: prompts, isLoading } = usePromptsByPack(pack?.id);
+  const { data: purchases } = useUserPurchases();
+  const isUnlocked = !!(pack && (purchases?.hasMembership || purchases?.packIds.has(pack.id)));
+
 
   const grouped = useMemo(() => {
     const map = new Map<string, PromptRow[]>();
