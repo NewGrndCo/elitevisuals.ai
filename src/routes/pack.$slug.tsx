@@ -208,7 +208,7 @@ function PackPage() {
               <div>
                 <div className="mb-5"><h2 className="font-display text-2xl font-bold lowercase">other</h2></div>
                 <div className="grid gap-4 md:grid-cols-3">
-                  {uncat.map((p) => <PromptCard key={p.id} p={p} accent="#a78bfa" />)}
+                  {uncat.map((p) => <PromptCard key={p.id} p={p} accent="#a78bfa" isUnlocked={isUnlocked} pack={pack ?? null} />)}
                 </div>
               </div>
             );
