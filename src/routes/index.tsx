@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { useCategories, usePrompts, useAiLogos, useSiteContent, sc } from "@/lib/queries";
+import { useCategories, usePrompts, useAiLogos, useSiteContent, usePacks, sc } from "@/lib/queries";
+import { useCart } from "@/lib/cart-context";
 import { getSectionOrder } from "@/lib/sections";
 import {
-  ArrowRight, Play, Monitor, UploadCloud, CheckCircle2, Timer, Sparkles, Waves, Zap, Check,
+  ArrowRight, Play, Monitor, UploadCloud, CheckCircle2, Timer, Sparkles, Waves, Zap, Check, Plus,
 } from "lucide-react";
 import { useRef, useState } from "react";
 
@@ -39,6 +40,9 @@ function HomePage() {
   const { data: prompts } = usePrompts();
   const { data: aiLogos } = useAiLogos();
   const { data: site } = useSiteContent();
+  const { data: packs } = usePacks();
+  const { addItem } = useCart();
+  const featuredPack = packs?.[0];
   const totalPrompts = prompts?.length ?? 20;
   const totalStyles = cats?.length ?? 4;
   const perStyle = totalStyles ? Math.round(totalPrompts / totalStyles) : 5;
