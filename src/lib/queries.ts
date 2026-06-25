@@ -145,3 +145,26 @@ export const usePrompt = (slug: string) =>
       return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null }) | null;
     },
   });
+
+/* ─── Purchases / Access ─── */
+export const useUserPurchases = () =>
+  useQuery({
+    queryKey: ["user_purchases"],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data: sess } = await supabase.auth.getSession();
+      const uid = sess.session?.user?.id;
+      if (!uid) return { packIds: new Set<string>(), hasMembership: false };
+      const { data, error } = await (supabase as unknown as { from: (t: string) => { select: (c: string) => { eq: (k: string, v: string) => Promise<{ data: { pack_id: string | null; is_membership: boolean }[] | null; error: unknown }> } } })
+        .from("purchases").select("pack_id,is_membership").eq("user_id", uid);
+      if (error) throw error as Error;
+      const packIds = new Set<string>();
+      let hasMembership = false;
+      (data ?? []).forEach((r) => {
+        if (r.is_membership) hasMembership = true;
+        if (r.pack_id) packIds.add(r.pack_id);
+      });
+      return { packIds, hasMembership };
+    },
+  });
+
