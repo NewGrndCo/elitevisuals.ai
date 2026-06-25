@@ -194,7 +194,7 @@ function PackPage() {
                   <span className="font-mono text-xs text-muted-foreground">{items.length} prompts</span>
                 </div>
                 <div className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:snap-none md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
-                  {items.map((p) => <PromptCard key={p.id} p={p} accent={accent} />)}
+                  {items.map((p) => <PromptCard key={p.id} p={p} accent={accent} isUnlocked={isUnlocked} pack={pack ?? null} />)}
                 </div>
               </div>
             );
