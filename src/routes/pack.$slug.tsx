@@ -192,6 +192,26 @@ function PackPage() {
               {pack.description}
             </p>
           )}
+
+          {!isUnlocked && pack?.shopify_variant_id && (
+            <div className="mx-auto mt-6 flex max-w-lg flex-col items-center gap-3 rounded-3xl border border-[rgba(167,139,250,0.25)] bg-[rgba(167,139,250,0.08)] px-8 py-6 text-center">
+              <Lock className="h-5 w-5 text-[#a78bfa]" />
+              <p className="text-sm text-muted-foreground">
+                Purchase this pack to unlock all prompts and copy them directly to your AI tools.
+              </p>
+              <button
+                onClick={async () => {
+                  if (!pack?.shopify_variant_id) return;
+                  await cart.addItem(pack.shopify_variant_id, 1);
+                  cart.openCart();
+                }}
+                className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Buy pack — ${((pack.price_cents ?? 4900) / 100).toFixed(0)}
+              </button>
+            </div>
+          )}
         </section>
 
         <section className="mx-auto mt-12 max-w-6xl space-y-16 px-6">
