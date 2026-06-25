@@ -149,11 +149,36 @@ function PromptPage() {
                   </pre>
                   <p className="mt-4 text-xs text-muted-foreground">
                     Paste into any modern image or video model. Adjust subject, lens, and palette to taste.
-
-                </p>
-              </div>
+                  </p>
+                </div>
+              ) : (
+                <div className="glass-strong rounded-3xl p-6">
+                  <Lock className="h-6 w-6 text-[#a78bfa]" />
+                  <h2 className="mt-3 font-display text-xl font-semibold">Purchase to unlock</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Buy this pack to copy and use this prompt.</p>
+                  {pack?.shopify_variant_id && (
+                    <button
+                      onClick={async () => {
+                        await addItem(pack.shopify_variant_id!, 1);
+                        openCart();
+                      }}
+                      className="ring-glow mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+                    >
+                      <Lock className="h-4 w-4" /> Add to cart
+                    </button>
+                  )}
+                  <pre
+                    aria-hidden
+                    className="mt-4 max-h-[60vh] overflow-hidden whitespace-pre-wrap rounded-2xl bg-black/40 p-4 font-mono text-[13px] leading-relaxed text-foreground/90 select-none pointer-events-none"
+                    style={{ filter: "blur(5px)" }}
+                  >
+{prompt.prompt_text}
+                  </pre>
+                </div>
+              )}
             </aside>
           </div>
+
 
 
 
