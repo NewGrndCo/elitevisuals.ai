@@ -1,10 +1,12 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { useCategories, usePack, usePromptsByPack } from "@/lib/queries";
+import { useCategories, usePack, usePromptsByPack, useUserPurchases } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo, useState } from "react";
-import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft } from "lucide-react";
+import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft, Lock, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
+import { useCart } from "@/lib/cart-context";
+
 
 export const Route = createFileRoute("/pack/$slug")({
   head: ({ params }) => ({
