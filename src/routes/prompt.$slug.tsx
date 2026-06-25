@@ -64,8 +64,10 @@ function PromptPage() {
   const displayedCount = copyCount ?? prompt.copy_count ?? 0;
   const demoIsImage = prompt.demo_video_url && /\.(gif|png|jpe?g|webp|avif)(\?|$)/i.test(prompt.demo_video_url);
   const more = (allPrompts ?? []).filter((p) => p.is_published && p.slug !== prompt.slug).slice(0, 8);
+  const isUnlocked = !!(purchases?.hasMembership || (pack && purchases?.packIds.has(pack.id)));
 
   const copy = async () => {
+    if (!isUnlocked) return;
     await navigator.clipboard.writeText(prompt.prompt_text);
     setCopied(true);
     toast.success("Prompt copied to clipboard");
@@ -74,6 +76,7 @@ function PromptPage() {
     else setCopyCount((n) => (n ?? prompt.copy_count ?? 0) + 1);
     setTimeout(() => setCopied(false), 1800);
   };
+
 
   return (
     <>
