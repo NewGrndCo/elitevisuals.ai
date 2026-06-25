@@ -60,6 +60,7 @@ export type Category = {
 export type Pack = {
   id: string; slug: string; title: string; description: string | null;
   cover_image_url: string | null; sort_order: number; is_published: boolean;
+  price_cents: number; shopify_variant_id: string | null;
 };
 
 export type Prompt = {
