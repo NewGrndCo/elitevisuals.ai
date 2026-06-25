@@ -72,22 +72,43 @@ function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: str
   return (
     <div className="glass group relative w-[78vw] shrink-0 snap-start overflow-hidden rounded-3xl sm:w-[55vw] md:w-auto md:shrink">
       {isUnlocked && <CopyButton slug={p.slug} text={p.prompt_text} />}
-      <Link to="/prompt/$slug" params={{ slug: p.slug }} className="block">
-        <div className="relative aspect-[4/3] overflow-hidden">
-          {p.cover_image_url ? (
-            <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
-          ) : (
-            <div className="h-full w-full" style={{
-              background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
-            }} />
-          )}
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
-        </div>
-      </Link>
-      <div className="p-5">
-        <Link to="/prompt/$slug" params={{ slug: p.slug }} className="font-display text-lg font-semibold hover:text-[#a78bfa] focus:outline-none">
-          {p.title}
+      {isUnlocked ? (
+        <Link to="/prompt/$slug" params={{ slug: p.slug }} className="block">
+          <div className="relative aspect-[4/3] overflow-hidden">
+            {p.cover_image_url ? (
+              <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
+            ) : (
+              <div className="h-full w-full" style={{
+                background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
+              }} />
+            )}
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+          </div>
         </Link>
+      ) : (
+        <div className="block">
+          <div className="relative aspect-[4/3] overflow-hidden">
+            {p.cover_image_url ? (
+              <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
+            ) : (
+              <div className="h-full w-full" style={{
+                background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
+              }} />
+            )}
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+          </div>
+        </div>
+      )}
+      <div className="p-5">
+        {isUnlocked ? (
+          <Link to="/prompt/$slug" params={{ slug: p.slug }} className="font-display text-lg font-semibold hover:text-[#a78bfa] focus:outline-none">
+            {p.title}
+          </Link>
+        ) : (
+          <span className="font-display text-lg font-semibold text-foreground">
+            {p.title}
+          </span>
+        )}
         <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
 
         <div className="relative mt-4 min-h-[88px] overflow-hidden rounded-xl border border-white/5 bg-black/30 p-3">
@@ -124,7 +145,9 @@ function PackPage() {
   const { data: cats } = useCategories();
   const { data: prompts, isLoading } = usePromptsByPack(pack?.id);
   const { data: purchases } = useUserPurchases();
+  const cart = useCart();
   const isUnlocked = !!(pack && (purchases?.hasMembership || purchases?.packIds.has(pack.id)));
+
 
 
   const grouped = useMemo(() => {
@@ -168,6 +191,26 @@ function PackPage() {
             <p className="mx-auto mt-8 max-w-2xl text-balance text-base text-muted-foreground sm:text-lg">
               {pack.description}
             </p>
+          )}
+
+          {!isUnlocked && pack?.shopify_variant_id && (
+            <div className="mx-auto mt-6 flex max-w-lg flex-col items-center gap-3 rounded-3xl border border-[rgba(167,139,250,0.25)] bg-[rgba(167,139,250,0.08)] px-8 py-6 text-center">
+              <Lock className="h-5 w-5 text-[#a78bfa]" />
+              <p className="text-sm text-muted-foreground">
+                Purchase this pack to unlock all prompts and copy them directly to your AI tools.
+              </p>
+              <button
+                onClick={async () => {
+                  if (!pack?.shopify_variant_id) return;
+                  await cart.addItem(pack.shopify_variant_id, 1);
+                  cart.openCart();
+                }}
+                className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Buy pack — ${((pack.price_cents ?? 4900) / 100).toFixed(0)}
+              </button>
+            </div>
           )}
         </section>
 
