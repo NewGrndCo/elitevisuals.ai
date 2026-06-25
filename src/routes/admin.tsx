@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   Plus, Trash2, Save, Upload, Mail, ArrowUp, ArrowDown,
   LayoutDashboard, FileText, FolderKanban, Image as ImageIcon, ShieldCheck,
-  Eye, EyeOff, Copy, Search, ExternalLink, Type, Package, LogOut, Lock,
+  Eye, EyeOff, Copy, Search, ExternalLink, Type, Package, LogOut, Lock, ChevronDown,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
