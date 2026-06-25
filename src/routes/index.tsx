@@ -68,6 +68,14 @@ function HomePage() {
               <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/70 to-background" />
             </>
           )}
+          <div
+            className="pointer-events-none absolute inset-0 -z-10 animate-hero-breathe opacity-60"
+            style={{
+              background: `radial-gradient(circle at 20% 20%, oklch(0.55 0.22 295 / 40%), transparent 55%),
+                           radial-gradient(circle at 80% 20%, oklch(0.65 0.18 200 / 35%), transparent 55%),
+                           radial-gradient(circle at 50% 90%, oklch(0.50 0.18 240 / 35%), transparent 60%)`,
+            }}
+          />
           <div className="mb-8 inline-flex items-center gap-3">
             <span className="rounded-md border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.10)] px-3 py-1 text-[0.72rem] font-extrabold uppercase tracking-[0.1em] text-[#a78bfa]">
               {badge}
