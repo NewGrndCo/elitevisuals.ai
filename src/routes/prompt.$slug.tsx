@@ -38,6 +38,9 @@ function PromptPage() {
   const { slug } = Route.useParams();
   const { data: prompt, isLoading } = usePrompt(slug);
   const { data: allPrompts } = usePrompts();
+  const { data: purchases } = useUserPurchases();
+  const { data: pack } = usePackById(prompt?.pack_id ?? null);
+  const { addItem, openCart } = useCart();
   const [copied, setCopied] = useState(false);
   const [activeImg, setActiveImg] = useState<string | null>(null);
   const [copyCount, setCopyCount] = useState<number | null>(null);
