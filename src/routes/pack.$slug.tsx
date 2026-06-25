@@ -72,22 +72,43 @@ function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: str
   return (
     <div className="glass group relative w-[78vw] shrink-0 snap-start overflow-hidden rounded-3xl sm:w-[55vw] md:w-auto md:shrink">
       {isUnlocked && <CopyButton slug={p.slug} text={p.prompt_text} />}
-      <Link to="/prompt/$slug" params={{ slug: p.slug }} className="block">
-        <div className="relative aspect-[4/3] overflow-hidden">
-          {p.cover_image_url ? (
-            <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
-          ) : (
-            <div className="h-full w-full" style={{
-              background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
-            }} />
-          )}
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
-        </div>
-      </Link>
-      <div className="p-5">
-        <Link to="/prompt/$slug" params={{ slug: p.slug }} className="font-display text-lg font-semibold hover:text-[#a78bfa] focus:outline-none">
-          {p.title}
+      {isUnlocked ? (
+        <Link to="/prompt/$slug" params={{ slug: p.slug }} className="block">
+          <div className="relative aspect-[4/3] overflow-hidden">
+            {p.cover_image_url ? (
+              <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
+            ) : (
+              <div className="h-full w-full" style={{
+                background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
+              }} />
+            )}
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+          </div>
         </Link>
+      ) : (
+        <div className="block">
+          <div className="relative aspect-[4/3] overflow-hidden">
+            {p.cover_image_url ? (
+              <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
+            ) : (
+              <div className="h-full w-full" style={{
+                background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
+              }} />
+            )}
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+          </div>
+        </div>
+      )}
+      <div className="p-5">
+        {isUnlocked ? (
+          <Link to="/prompt/$slug" params={{ slug: p.slug }} className="font-display text-lg font-semibold hover:text-[#a78bfa] focus:outline-none">
+            {p.title}
+          </Link>
+        ) : (
+          <span className="font-display text-lg font-semibold text-foreground">
+            {p.title}
+          </span>
+        )}
         <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
 
         <div className="relative mt-4 min-h-[88px] overflow-hidden rounded-xl border border-white/5 bg-black/30 p-3">
@@ -124,7 +145,9 @@ function PackPage() {
   const { data: cats } = useCategories();
   const { data: prompts, isLoading } = usePromptsByPack(pack?.id);
   const { data: purchases } = useUserPurchases();
+  const cart = useCart();
   const isUnlocked = !!(pack && (purchases?.hasMembership || purchases?.packIds.has(pack.id)));
+
 
 
   const grouped = useMemo(() => {
