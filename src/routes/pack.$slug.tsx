@@ -1,10 +1,12 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { useCategories, usePack, usePromptsByPack } from "@/lib/queries";
+import { useCategories, usePack, usePromptsByPack, useUserPurchases } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo, useState } from "react";
-import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft } from "lucide-react";
+import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft, Lock, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
+import { useCart } from "@/lib/cart-context";
+
 
 export const Route = createFileRoute("/pack/$slug")({
   head: ({ params }) => ({
@@ -59,10 +61,17 @@ function CopyButton({ slug, text }: { slug: string; text: string }) {
   );
 }
 
-function PromptCard({ p, accent }: { p: PromptRow; accent: string }) {
+function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: string; isUnlocked: boolean; pack: { shopify_variant_id: string | null } | null }) {
+  const cart = useCart();
+  const onBuy = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!pack?.shopify_variant_id) { toast.error("This pack isn't available for purchase yet"); return; }
+    try { await cart.addItem(pack.shopify_variant_id, 1); cart.openCart(); }
+    catch { toast.error("Couldn't add to cart"); }
+  };
   return (
     <div className="glass group relative w-[78vw] shrink-0 snap-start overflow-hidden rounded-3xl sm:w-[55vw] md:w-auto md:shrink">
-      <CopyButton slug={p.slug} text={p.prompt_text} />
+      {isUnlocked && <CopyButton slug={p.slug} text={p.prompt_text} />}
       <Link to="/prompt/$slug" params={{ slug: p.slug }} className="block">
         <div className="relative aspect-[4/3] overflow-hidden">
           {p.cover_image_url ? (
@@ -80,16 +89,43 @@ function PromptCard({ p, accent }: { p: PromptRow; accent: string }) {
           {p.title}
         </Link>
         <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
+
+        <div className="relative mt-4 min-h-[88px] overflow-hidden rounded-xl border border-white/5 bg-black/30 p-3">
+          {isUnlocked ? (
+            <p className="line-clamp-4 font-mono text-xs leading-relaxed text-white/80">{p.prompt_text}</p>
+          ) : (
+            <>
+              <div className="pointer-events-none select-none" style={{ filter: "blur(6px)" }} aria-hidden>
+                <p className="line-clamp-4 font-mono text-xs leading-relaxed text-white/80">{p.prompt_text}</p>
+              </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30 backdrop-blur-[2px]">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/90">
+                  <Lock className="h-3.5 w-3.5 text-[#a78bfa]" /> Purchase to unlock
+                </div>
+                <button
+                  onClick={onBuy}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#a78bfa] px-3 py-1.5 text-[11px] font-semibold text-black transition hover:bg-[#c4b5fd]"
+                >
+                  <ShoppingCart className="h-3 w-3" /> Add to cart
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
 
 function PackPage() {
   const { slug } = Route.useParams();
   const { data: pack, isLoading: packLoading } = usePack(slug);
   const { data: cats } = useCategories();
   const { data: prompts, isLoading } = usePromptsByPack(pack?.id);
+  const { data: purchases } = useUserPurchases();
+  const isUnlocked = !!(pack && (purchases?.hasMembership || purchases?.packIds.has(pack.id)));
+
 
   const grouped = useMemo(() => {
     const map = new Map<string, PromptRow[]>();
@@ -158,7 +194,7 @@ function PackPage() {
                   <span className="font-mono text-xs text-muted-foreground">{items.length} prompts</span>
                 </div>
                 <div className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:snap-none md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
-                  {items.map((p) => <PromptCard key={p.id} p={p} accent={accent} />)}
+                  {items.map((p) => <PromptCard key={p.id} p={p} accent={accent} isUnlocked={isUnlocked} pack={pack ?? null} />)}
                 </div>
               </div>
             );
@@ -172,7 +208,7 @@ function PackPage() {
               <div>
                 <div className="mb-5"><h2 className="font-display text-2xl font-bold lowercase">other</h2></div>
                 <div className="grid gap-4 md:grid-cols-3">
-                  {uncat.map((p) => <PromptCard key={p.id} p={p} accent="#a78bfa" />)}
+                  {uncat.map((p) => <PromptCard key={p.id} p={p} accent="#a78bfa" isUnlocked={isUnlocked} pack={pack ?? null} />)}
                 </div>
               </div>
             );
