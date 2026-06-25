@@ -995,6 +995,7 @@ function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => v
     const { error } = await supabase.from("packs").update({
       title: form.title, slug: form.slug, description: form.description,
       cover_image_url: form.cover_image_url, is_published: form.is_published,
+      price_cents: form.price_cents, shopify_variant_id: form.shopify_variant_id,
     }).eq("id", form.id);
     setSaving(false);
     if (error) toast.error(error.message);
