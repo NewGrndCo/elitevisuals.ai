@@ -102,6 +102,8 @@ export type Database = {
           description: string | null
           id: string
           is_published: boolean
+          price_cents: number
+          shopify_variant_id: string | null
           slug: string
           sort_order: number
           title: string
@@ -113,6 +115,8 @@ export type Database = {
           description?: string | null
           id?: string
           is_published?: boolean
+          price_cents?: number
+          shopify_variant_id?: string | null
           slug: string
           sort_order?: number
           title: string
@@ -124,6 +128,8 @@ export type Database = {
           description?: string | null
           id?: string
           is_published?: boolean
+          price_cents?: number
+          shopify_variant_id?: string | null
           slug?: string
           sort_order?: number
           title?: string
@@ -193,6 +199,41 @@ export type Database = {
           },
           {
             foreignKeyName: "prompts_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchases: {
+        Row: {
+          created_at: string
+          id: string
+          is_membership: boolean
+          pack_id: string | null
+          shopify_order_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_membership?: boolean
+          pack_id?: string | null
+          shopify_order_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_membership?: boolean
+          pack_id?: string | null
+          shopify_order_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_pack_id_fkey"
             columns: ["pack_id"]
             isOneToOne: false
             referencedRelation: "packs"
