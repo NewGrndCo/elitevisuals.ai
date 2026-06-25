@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "sonner";
 import { AnimatedBackground } from "@/components/animated-bg";
+import { CartProvider } from "@/lib/cart-context";
 
 function NotFoundComponent() {
   return (
@@ -117,12 +118,14 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthListener />
-      <AnimatedBackground />
-      <div className="relative z-10">
-        <Outlet />
-      </div>
-      <Toaster theme="dark" position="bottom-right" toastOptions={{ className: "glass" }} />
+      <CartProvider>
+        <AuthListener />
+        <AnimatedBackground />
+        <div className="relative z-10">
+          <Outlet />
+        </div>
+        <Toaster theme="dark" position="bottom-right" toastOptions={{ className: "glass" }} />
+      </CartProvider>
     </QueryClientProvider>
   );
 }
