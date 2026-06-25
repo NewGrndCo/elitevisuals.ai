@@ -253,7 +253,7 @@ function Overview({ onJump }: { onJump: (t: TabKey) => void }) {
           const Icon = s.icon;
           return (
             <button key={s.label} onClick={() => onJump(s.key)}
-              className="glass group rounded-3xl p-5 text-left transition-transform hover:-translate-y-0.5">
+              className="glass-card group rounded-3xl p-5 text-left transition-transform hover:-translate-y-0.5">
               <div className="flex items-start justify-between">
                 <span className="text-xs uppercase tracking-wider text-muted-foreground">{s.label}</span>
                 <Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
@@ -265,7 +265,7 @@ function Overview({ onJump }: { onJump: (t: TabKey) => void }) {
         })}
       </div>
 
-      <section className="glass rounded-3xl p-6">
+      <section className="glass-card rounded-3xl p-6">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold">Top performing prompts</h2>
           <button onClick={() => onJump("prompts")} className="text-xs text-muted-foreground hover:text-foreground">View all →</button>
@@ -319,7 +319,7 @@ function WhitelistManager() {
     if (error) toast.error(error.message); else load();
   };
   return (
-    <section className="glass rounded-3xl p-6">
+    <section className="glass-card rounded-3xl p-6">
       <SectionHeader title="Admin whitelist" desc="Emails listed here become admins automatically on next sign-in." />
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
         <div className="glass flex flex-1 items-center gap-2 rounded-xl px-3">
@@ -368,7 +368,7 @@ function CategoryManager() {
   };
 
   return (
-    <section className="glass rounded-3xl p-6">
+    <section className="glass-card rounded-3xl p-6">
       <SectionHeader title="Categories" desc="Style buckets used to group prompts on the library page." />
 
       <div className="glass mt-5 rounded-2xl p-4">
@@ -421,7 +421,7 @@ function PromptManager() {
   }), [prompts, search, catFilter, packFilter]);
 
   return (
-    <section className="glass rounded-3xl p-6">
+    <section className="glass-card rounded-3xl p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SectionHeader title="Prompts" desc={`${prompts?.length ?? 0} total · ${filtered.length} shown`} />
         <NewPromptButton cats={cats ?? []} packs={packs ?? []} />
@@ -654,14 +654,14 @@ function LandingEditor() {
 
   return (
     <div className="space-y-4">
-      <section className="glass rounded-3xl p-6">
+      <section className="glass-card rounded-3xl p-6">
         <SectionHeader title="Landing page content" desc="Edit hero text, library page copy, footer, and images. Changes appear immediately on the live site." />
       </section>
 
       {LANDING_BLOCKS.map((block) => {
         const isOpen = openKey === block.key;
         return (
-          <section key={block.key} className="glass overflow-hidden rounded-3xl">
+          <section key={block.key} className="glass-card overflow-hidden rounded-3xl">
             <div className="flex items-center justify-between gap-3 p-5">
               <button
                 onClick={() => setOpenKey(isOpen ? "" : block.key)}
@@ -808,7 +808,7 @@ function AiLogoManager() {
   };
 
   return (
-    <section className="glass rounded-3xl p-6">
+    <section className="glass-card rounded-3xl p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SectionHeader title="AI Models Carousel" desc="Logos that auto-scroll across the homepage. Hide individual ones with the toggle." />
         <label className="ring-glow inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
@@ -890,7 +890,7 @@ function SectionOrderManager() {
   const labelFor = (id: SectionId) => DEFAULT_SECTIONS.find((s) => s.id === id)?.label ?? id;
 
   return (
-    <section className="glass rounded-3xl p-6">
+    <section className="glass-card rounded-3xl p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SectionHeader title="Landing section order" desc="Drag-free reorder — use the arrows to set how sections appear under the hero on the homepage." />
         <div className="flex gap-2">
@@ -943,7 +943,7 @@ function PackManager() {
   const countFor = (id: string) => (prompts ?? []).filter((p) => p.pack_id === id).length;
 
   return (
-    <section className="glass rounded-3xl p-6">
+    <section className="glass-card rounded-3xl p-6">
       <div className="flex items-center justify-between">
         <SectionHeader title="Prompt Packs" desc="Each pack appears as a card on the library page. Click to edit details or manage prompts." />
         <button onClick={create} className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">

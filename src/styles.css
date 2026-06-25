@@ -44,7 +44,7 @@
   --radius: 1rem;
 
   /* Deep charcoal canvas */
-  --background: oklch(0.16 0.02 270);
+  --background: oklch(0.13 0.025 275);
   --foreground: oklch(0.97 0.01 270);
 
   /* Frosted card surfaces use translucent values – classes below */
@@ -80,8 +80,8 @@
                      radial-gradient(circle at 50% 100%, oklch(0.50 0.18 240 / 30%), transparent 60%);
   --gradient-text: linear-gradient(120deg, oklch(0.95 0.05 295), oklch(0.85 0.14 200) 60%, oklch(0.80 0.15 240));
   --shadow-glow: 0 30px 80px -30px oklch(0.55 0.22 295 / 50%);
-  --glass-bg: oklch(0.22 0.03 270 / 55%);
-  --glass-border: oklch(0.85 0.05 270 / 12%);
+  --glass-bg: oklch(0.20 0.04 275 / 58%);
+  --glass-border: oklch(0.85 0.08 285 / 13%);
 }
 
 .dark { color-scheme: dark; }
@@ -102,17 +102,21 @@
 
 @layer components {
   .glass {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(22px) saturate(140%);
-    -webkit-backdrop-filter: blur(22px) saturate(140%);
-    box-shadow: inset 0 1px 0 0 oklch(1 0 0 / 6%), 0 10px 40px -20px oklch(0 0 0 / 60%);
+    background: oklch(0.19 0.04 275 / 60%);
+    border: 1px solid oklch(0.85 0.08 285 / 14%);
+    backdrop-filter: blur(28px) saturate(160%) brightness(1.05);
+    box-shadow: inset 0 1px 0 0 oklch(1 0 0 / 8%), inset 0 -1px 0 0 oklch(0 0 0 / 10%), 0 12px 48px -16px oklch(0 0 0 / 70%);
   }
   .glass-strong {
     background: oklch(0.22 0.03 270 / 75%);
     border: 1px solid oklch(0.85 0.05 270 / 16%);
     backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
+  }
+  .glass-card {
+    background: oklch(0.21 0.05 278 / 70%);
+    border: 1px solid oklch(0.9 0.08 285 / 16%);
+    backdrop-filter: blur(32px) saturate(170%);
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 10%), 0 20px 60px -20px oklch(0.4 0.2 290 / 25%);
   }
   .text-gradient {
     background: var(--gradient-text);
@@ -182,6 +186,15 @@
 .animate-orb-c { animation: orb-c 40s ease-in-out infinite; will-change: transform; }
 .animate-orb-d { animation: orb-d 24s ease-in-out infinite; will-change: transform, opacity; }
 .animate-orb-e { animation: orb-e 36s ease-in-out infinite; will-change: transform; }
+
+@keyframes hero-breathe {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+@utility animate-hero-breathe {
+  animation: hero-breathe 20s ease-in-out infinite alternate;
+  will-change: transform;
+}
 
 @media (max-width: 640px) {
   .animate-orb-a, .animate-orb-b, .animate-orb-c,

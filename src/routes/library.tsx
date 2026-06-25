@@ -106,7 +106,7 @@ function PackCard({ pack, count }: { pack: Pack; count: number }) {
   return (
     <div
       onClick={() => navigate({ to: "/pack/$slug", params: { slug: pack.slug } })}
-      className="glass group relative flex cursor-pointer flex-col overflow-hidden rounded-3xl transition-all hover:-translate-y-1 hover:border-[rgba(124,92,252,0.35)]"
+      className="glass-card group relative flex cursor-pointer flex-col overflow-hidden rounded-3xl transition-all hover:-translate-y-1 hover:border-[rgba(124,92,252,0.35)]"
     >
       <div className="relative aspect-[4/3] overflow-hidden">
         {pack.cover_image_url ? (
@@ -118,16 +118,16 @@ function PackCard({ pack, count }: { pack: Pack; count: number }) {
         )}
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
         {price && (
-          <div className="absolute right-3 top-3 rounded-full border border-[rgba(124,92,252,0.35)] bg-black/55 px-3 py-1 text-xs font-extrabold tracking-[-0.01em] text-[#a78bfa] backdrop-blur">
+          <div className="absolute left-3 top-3 rounded-full border border-[rgba(124,92,252,0.4)] bg-[rgba(124,92,252,0.25)] px-3 py-1 text-xs font-extrabold tracking-[-0.01em] text-[#c4b5fd] backdrop-blur">
             {price}
           </div>
         )}
+        <div className="absolute left-3 bottom-3 rounded-full border border-[rgba(124,92,252,0.4)] bg-[rgba(124,92,252,0.25)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#c4b5fd] backdrop-blur">
+          {count} prompts
+        </div>
       </div>
       <div className="flex flex-1 flex-col p-6">
         <h2 className="font-display text-xl font-bold tracking-[-0.02em]">{pack.title}</h2>
-        <div className="mt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-          {count} prompts
-        </div>
         {pack.description && (
           <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{pack.description}</p>
         )}
@@ -143,7 +143,7 @@ function PackCard({ pack, count }: { pack: Pack; count: number }) {
           {pack.shopify_variant_id && (
             <button
               onClick={handleAdd}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(124,92,252,0.35)] bg-[rgba(124,92,252,0.08)] px-3.5 py-1.5 text-xs font-bold text-[#a78bfa] transition-colors hover:bg-[rgba(124,92,252,0.18)]"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(124,92,252,0.35)] bg-[rgba(124,92,252,0.08)] px-3.5 py-1.5 text-xs font-bold text-[#a78bfa] transition-colors hover:bg-[rgba(124,92,252,0.18)] hover:shadow-[0_0_20px_rgba(124,92,252,0.3)]"
             >
               <Plus className="h-3.5 w-3.5" /> Add to cart
             </button>
