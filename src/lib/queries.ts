@@ -105,6 +105,17 @@ export const usePack = (slug: string) =>
     },
   });
 
+export const usePackById = (id: string | null | undefined) =>
+  useQuery({
+    enabled: !!id,
+    queryKey: ["pack_by_id", id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("packs").select("*").eq("id", id!).maybeSingle();
+      if (error) throw error;
+      return data as Pack | null;
+    },
+  });
+
 /* ─── Prompts ─── */
 
 export const usePrompts = (categorySlug?: string) =>

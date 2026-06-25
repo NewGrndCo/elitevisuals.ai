@@ -1,9 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { usePrompt, usePrompts } from "@/lib/queries";
+import { usePrompt, usePrompts, useUserPurchases, usePackById } from "@/lib/queries";
+import { useCart } from "@/lib/cart-context";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import { Copy, Check, ArrowLeft, Play, ClipboardCheck } from "lucide-react";
+import { Copy, Check, ArrowLeft, Play, ClipboardCheck, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 
@@ -37,6 +38,9 @@ function PromptPage() {
   const { slug } = Route.useParams();
   const { data: prompt, isLoading } = usePrompt(slug);
   const { data: allPrompts } = usePrompts();
+  const { data: purchases } = useUserPurchases();
+  const { data: pack } = usePackById(prompt?.pack_id ?? null);
+  const { addItem, openCart } = useCart();
   const [copied, setCopied] = useState(false);
   const [activeImg, setActiveImg] = useState<string | null>(null);
   const [copyCount, setCopyCount] = useState<number | null>(null);
@@ -60,8 +64,10 @@ function PromptPage() {
   const displayedCount = copyCount ?? prompt.copy_count ?? 0;
   const demoIsImage = prompt.demo_video_url && /\.(gif|png|jpe?g|webp|avif)(\?|$)/i.test(prompt.demo_video_url);
   const more = (allPrompts ?? []).filter((p) => p.is_published && p.slug !== prompt.slug).slice(0, 8);
+  const isUnlocked = !!(purchases?.hasMembership || (pack && purchases?.packIds.has(pack.id)));
 
   const copy = async () => {
+    if (!isUnlocked) return;
     await navigator.clipboard.writeText(prompt.prompt_text);
     setCopied(true);
     toast.success("Prompt copied to clipboard");
@@ -70,6 +76,7 @@ function PromptPage() {
     else setCopyCount((n) => (n ?? prompt.copy_count ?? 0) + 1);
     setTimeout(() => setCopied(false), 1800);
   };
+
 
   return (
     <>
@@ -123,28 +130,55 @@ function PromptPage() {
 
             {/* RIGHT: sticky prompt sidebar */}
             <aside className="lg:sticky lg:top-28 lg:self-start">
-              <div className="glass-strong rounded-3xl p-6">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="font-display text-sm uppercase tracking-widest text-muted-foreground">Prompt</h2>
-                    <div className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <ClipboardCheck className="h-3.5 w-3.5 text-[#a78bfa]" />
-                      Copied <span className="font-mono text-foreground">{displayedCount.toLocaleString()}</span> {displayedCount === 1 ? "time" : "times"}
+              {isUnlocked ? (
+                <div className="glass-strong rounded-3xl p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="font-display text-sm uppercase tracking-widest text-muted-foreground">Prompt</h2>
+                      <div className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <ClipboardCheck className="h-3.5 w-3.5 text-[#a78bfa]" />
+                        Copied <span className="font-mono text-foreground">{displayedCount.toLocaleString()}</span> {displayedCount === 1 ? "time" : "times"}
+                      </div>
                     </div>
+                    <button onClick={copy} className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">
+                      {copied ? <><Check className="h-3.5 w-3.5" /> Copied</> : <><Copy className="h-3.5 w-3.5" /> Copy</>}
+                    </button>
                   </div>
-                  <button onClick={copy} className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">
-                    {copied ? <><Check className="h-3.5 w-3.5" /> Copied</> : <><Copy className="h-3.5 w-3.5" /> Copy</>}
-                  </button>
-                </div>
-                <pre className="mt-4 max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-2xl bg-black/40 p-4 font-mono text-[13px] leading-relaxed text-foreground/90">
+                  <pre className="mt-4 max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-2xl bg-black/40 p-4 font-mono text-[13px] leading-relaxed text-foreground/90">
 {prompt.prompt_text}
-                </pre>
-                <p className="mt-4 text-xs text-muted-foreground">
-                  Paste into any modern image or video model. Adjust subject, lens, and palette to taste.
-                </p>
-              </div>
+                  </pre>
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    Paste into any modern image or video model. Adjust subject, lens, and palette to taste.
+                  </p>
+                </div>
+              ) : (
+                <div className="glass-strong rounded-3xl p-6">
+                  <Lock className="h-6 w-6 text-[#a78bfa]" />
+                  <h2 className="mt-3 font-display text-xl font-semibold">Purchase to unlock</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Buy this pack to copy and use this prompt.</p>
+                  {pack?.shopify_variant_id && (
+                    <button
+                      onClick={async () => {
+                        await addItem(pack.shopify_variant_id!, 1);
+                        openCart();
+                      }}
+                      className="ring-glow mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+                    >
+                      <Lock className="h-4 w-4" /> Add to cart
+                    </button>
+                  )}
+                  <pre
+                    aria-hidden
+                    className="mt-4 max-h-[60vh] overflow-hidden whitespace-pre-wrap rounded-2xl bg-black/40 p-4 font-mono text-[13px] leading-relaxed text-foreground/90 select-none pointer-events-none"
+                    style={{ filter: "blur(5px)" }}
+                  >
+{prompt.prompt_text}
+                  </pre>
+                </div>
+              )}
             </aside>
           </div>
+
 
 
 
