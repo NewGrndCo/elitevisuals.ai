@@ -1,7 +1,9 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useRef } from "react";
+import { ShoppingCart } from "lucide-react";
 import logoUrl from "@/assets/logo.png";
 import { useSiteContent, sc } from "@/lib/queries";
+import { useCart } from "@/lib/cart-context";
 
 const ADMIN_TAP_COUNT = 4;
 const ADMIN_TAP_WINDOW_MS = 1500;
@@ -10,6 +12,7 @@ export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const tapsRef = useRef<number[]>([]);
+  const { totalQuantity, openCart } = useCart();
 
   const handleLogoTap = (e: React.MouseEvent) => {
     const now = Date.now();
@@ -46,6 +49,18 @@ export function SiteHeader() {
               </Link>
             );
           })}
+          <button
+            onClick={openCart}
+            aria-label="Open cart"
+            className="relative ml-1 grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+          >
+            <ShoppingCart className="h-[18px] w-[18px]" />
+            {totalQuantity > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[rgba(124,92,252,0.95)] px-1 text-[10px] font-bold text-white shadow-[0_0_10px_rgba(124,92,252,0.5)]">
+                {totalQuantity}
+              </span>
+            )}
+          </button>
         </nav>
       </div>
     </header>
