@@ -268,7 +268,7 @@ function HomePage() {
 
           const packPriceCents = featuredPack?.price_cents ?? 4900;
           const packPriceDollars = Math.round(packPriceCents / 100);
-          const packVariant = featuredPack?.shopify_variant_id ?? null;
+          const packId = featuredPack?.id ?? null;
 
           const memPriceCents = Number(sc(site, "pricing", "membership_price_cents", "9900")) || 9900;
           const memPriceDollars = Math.round(memPriceCents / 100);
@@ -283,13 +283,17 @@ function HomePage() {
           const memVariant = sc(site, "pricing", "membership_shopify_variant_id", "");
 
           const handleAddPack = async () => {
-            if (!packVariant) return;
-            try { await addItem(packVariant, 1); } catch (e) { console.error(e); }
+            if (!packId) return;
+            try {
+              const { startPackCheckout } = await import("@/lib/checkout-client");
+              await startPackCheckout(packId);
+            } catch (e) { console.error(e); }
           };
           const handleAddMembership = async () => {
             if (!memVariant) return;
             try { await addItem(memVariant, 1); } catch (e) { console.error(e); }
           };
+
 
           const pricingSection = (
             <section id="pricing" className="mx-auto max-w-[1200px] px-6 py-28">
@@ -342,10 +346,11 @@ function HomePage() {
                     </ul>
                     <button
                       onClick={handleAddPack}
-                      disabled={!packVariant}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-primary py-3.5 text-center text-base font-bold tracking-[-0.01em] text-primary-foreground shadow-[0_0_36px_rgba(124,92,252,0.35),0_0_80px_rgba(124,92,252,0.18)] transition-all hover:-translate-y-0.5 hover:shadow-[0_0_50px_rgba(124,92,252,0.45),0_0_110px_rgba(124,92,252,0.25)] disabled:opacity-60 disabled:hover:translate-y-0"
+                      disabled={!packId}
+                      className="ring-glow inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50"
                     >
-                      <Plus className="h-4 w-4" /> {packVariant ? "Add to cart" : "Coming soon"}
+                      <Plus className="h-4 w-4" /> {packId ? "Buy now" : "Coming soon"}
+
                     </button>
                     <p className="mt-4 text-center text-[0.73rem] text-muted-foreground">
                       Secure checkout · Instant delivery · 30-day refund guarantee
