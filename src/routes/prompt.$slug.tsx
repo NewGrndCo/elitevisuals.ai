@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { usePrompt, usePrompts, useUserPurchases, usePackById } from "@/lib/queries";
-import { useCart } from "@/lib/cart-context";
+import { startPackCheckout } from "@/lib/checkout-client";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Copy, Check, ArrowLeft, Play, ClipboardCheck, Lock } from "lucide-react";
