@@ -267,7 +267,9 @@ function PackPage() {
             </div>
           )}
         </section>
+        )}
 
+        {!hidden.has("how_to") && (
         <section className="mx-auto mt-28 max-w-5xl px-6">
           <div className="mb-10 text-center">
             <h2 className="font-display text-3xl font-bold lowercase tracking-[-0.02em] sm:text-4xl">how to use</h2>
