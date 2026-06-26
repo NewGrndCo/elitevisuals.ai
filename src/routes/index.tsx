@@ -100,7 +100,6 @@ function HomePage() {
             {[
               { num: String(totalPrompts), label: "Prompts" },
               { num: String(totalStyles),   label: "Motion Styles" },
-              { num: String(perStyle),      label: "Prompts / Style" },
               { num: "6+",                  label: "AI Platforms" },
             ].map((s, i, arr) => (
               <div key={s.label} className="flex items-center gap-8">
@@ -119,6 +118,43 @@ function HomePage() {
           >
             {ctaPrimary} <ArrowRight className="h-[18px] w-[18px]" />
           </Link>
+
+          {/* AI Logos carousel — part of the hero */}
+          <div className="relative z-10 mt-20 w-full max-w-[1100px]">
+            {sc(site, "compat", "description", "") && (
+              <p className="mb-6 text-center text-[0.78rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                {sc(site, "compat", "description", "")}
+              </p>
+            )}
+            <div
+              className="overflow-hidden"
+              style={{
+                maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
+              }}
+            >
+              <div className="flex w-max animate-[marquee_24s_linear_infinite] gap-4 hover:[animation-play-state:paused]">
+                {publishedLogos.length > 0
+                  ? [...publishedLogos, ...publishedLogos].map((l, i) => (
+                      <a
+                        key={`${l.id}-${i}`}
+                        href={l.link_url ?? "#"}
+                        target={l.link_url ? "_blank" : undefined}
+                        rel="noreferrer"
+                        className="glass flex h-[60px] flex-shrink-0 items-center justify-center rounded-[10px] px-6 transition-colors hover:border-[rgba(124,92,252,0.3)]"
+                      >
+                        <img src={l.logo_url} alt={l.name} className="h-7 w-auto max-w-[120px] object-contain opacity-80 transition-opacity hover:opacity-100" draggable={false} />
+                      </a>
+                    ))
+                  : [...compatLogos, ...compatLogos].map((l, i) => (
+                      <div key={i} className="glass flex flex-shrink-0 items-center gap-2.5 whitespace-nowrap rounded-[8px] px-5 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:border-[rgba(124,92,252,0.3)] hover:text-foreground">
+                        <span className="grid h-[26px] w-[26px] place-items-center rounded-[5px] text-[0.6rem] font-black text-white" style={{ background: l.grad }}>{l.short}</span>
+                        {l.label}
+                      </div>
+                    ))}
+              </div>
+            </div>
+          </div>
         </section>
 
         {(() => {
