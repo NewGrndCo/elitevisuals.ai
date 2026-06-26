@@ -217,6 +217,7 @@ function PackPage() {
         </section>
         )}
 
+        {!hidden.has("prompts") && (
         <section className="mx-auto mt-12 max-w-6xl space-y-16 px-6">
           {isLoading && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
