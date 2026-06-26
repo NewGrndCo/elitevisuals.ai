@@ -215,6 +215,7 @@ function PackPage() {
             </div>
           )}
         </section>
+        )}
 
         <section className="mx-auto mt-12 max-w-6xl space-y-16 px-6">
           {isLoading && (
