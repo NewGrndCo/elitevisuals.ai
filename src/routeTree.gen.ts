@@ -15,6 +15,8 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PromptSlugRouteImport } from './routes/prompt.$slug'
 import { Route as PackSlugRouteImport } from './routes/pack.$slug'
+import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
+import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -46,22 +48,36 @@ const PackSlugRoute = PackSlugRouteImport.update({
   path: '/pack/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
+  id: '/checkout/success',
+  path: '/checkout/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
+  id: '/api/public/stripe-webhook',
+  path: '/api/public/stripe-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,8 +85,10 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -79,18 +97,30 @@ export interface FileRouteTypes {
     | '/admin'
     | '/library'
     | '/login'
+    | '/checkout/success'
     | '/pack/$slug'
     | '/prompt/$slug'
+    | '/api/public/stripe-webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/library' | '/login' | '/pack/$slug' | '/prompt/$slug'
+  to:
+    | '/'
+    | '/admin'
+    | '/library'
+    | '/login'
+    | '/checkout/success'
+    | '/pack/$slug'
+    | '/prompt/$slug'
+    | '/api/public/stripe-webhook'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/library'
     | '/login'
+    | '/checkout/success'
     | '/pack/$slug'
     | '/prompt/$slug'
+    | '/api/public/stripe-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -98,8 +128,10 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   LibraryRoute: typeof LibraryRoute
   LoginRoute: typeof LoginRoute
+  CheckoutSuccessRoute: typeof CheckoutSuccessRoute
   PackSlugRoute: typeof PackSlugRoute
   PromptSlugRoute: typeof PromptSlugRoute
+  ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -146,6 +178,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PackSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout/success': {
+      id: '/checkout/success'
+      path: '/checkout/success'
+      fullPath: '/checkout/success'
+      preLoaderRoute: typeof CheckoutSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/stripe-webhook': {
+      id: '/api/public/stripe-webhook'
+      path: '/api/public/stripe-webhook'
+      fullPath: '/api/public/stripe-webhook'
+      preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -154,19 +200,11 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   LibraryRoute: LibraryRoute,
   LoginRoute: LoginRoute,
+  CheckoutSuccessRoute: CheckoutSuccessRoute,
   PackSlugRoute: PackSlugRoute,
   PromptSlugRoute: PromptSlugRoute,
+  ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

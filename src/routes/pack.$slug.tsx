@@ -3,9 +3,11 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { useCategories, usePack, usePromptsByPack, useUserPurchases } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo, useState } from "react";
-import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft, Lock, ShoppingCart } from "lucide-react";
+import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft, Lock, ShoppingCart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useCart } from "@/lib/cart-context";
+import { startPackCheckout } from "@/lib/checkout-client";
+
+
 
 
 export const Route = createFileRoute("/pack/$slug")({
@@ -61,14 +63,16 @@ function CopyButton({ slug, text }: { slug: string; text: string }) {
   );
 }
 
-function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: string; isUnlocked: boolean; pack: { shopify_variant_id: string | null } | null }) {
-  const cart = useCart();
+function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: string; isUnlocked: boolean; pack: { id: string } | null }) {
+  const [busy, setBusy] = useState(false);
   const onBuy = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
-    if (!pack?.shopify_variant_id) { toast.error("This pack isn't available for purchase yet"); return; }
-    try { await cart.addItem(pack.shopify_variant_id, 1); cart.openCart(); }
-    catch { toast.error("Couldn't add to cart"); }
+    if (!pack?.id) return;
+    setBusy(true);
+    try { await startPackCheckout(pack.id); }
+    catch (err) { console.error(err); toast.error("Couldn't start checkout"); setBusy(false); }
   };
+
   return (
     <div className="glass group relative w-[78vw] shrink-0 snap-start overflow-hidden rounded-3xl sm:w-[55vw] md:w-auto md:shrink">
       {isUnlocked && <CopyButton slug={p.slug} text={p.prompt_text} />}
