@@ -45,7 +45,7 @@ function HomePage() {
   const featuredPack = packs?.[0];
   const totalPrompts = prompts?.length ?? 20;
   const totalStyles = cats?.length ?? 4;
-  void totalStyles;
+  
   const publishedLogos = (aiLogos ?? []).filter((l) => l.is_published);
 
   const badge = sc(site, "hero", "badge", "EVKT1");
