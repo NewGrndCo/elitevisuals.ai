@@ -1093,6 +1093,35 @@ function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => v
       </Field>
 
       <div className="rounded-2xl bg-white/[0.02] p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold">Page sections</div>
+            <div className="text-xs text-muted-foreground">Toggle visibility on the public pack page. Hidden sections stay editable here.</div>
+          </div>
+        </div>
+        <ul className="space-y-2">
+          {PACK_SECTIONS.map((s) => {
+            const isHidden = hidden.has(s.key);
+            return (
+              <li key={s.key} className="glass flex items-center justify-between gap-3 rounded-xl px-3 py-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold">{s.label}</div>
+                  <div className="truncate text-xs text-muted-foreground">{s.desc}</div>
+                </div>
+                <button
+                  onClick={() => toggleSection(s.key)}
+                  aria-label={isHidden ? "Show section" : "Hide section"}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors ${isHidden ? "bg-yellow-500/15 text-yellow-200 hover:bg-yellow-500/25" : "bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25"}`}
+                >
+                  {isHidden ? <><EyeOff className="h-3.5 w-3.5" /> Hidden</> : <><Eye className="h-3.5 w-3.5" /> Visible</>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div className="rounded-2xl bg-white/[0.02] p-4">
         <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Prompts in this pack ({inPack.length})</div>
         <ul className="space-y-1">
           {inPack.length === 0 && <li className="py-2 text-sm text-muted-foreground">None yet — add one from the picker below.</li>}
