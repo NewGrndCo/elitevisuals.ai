@@ -147,6 +147,7 @@ function PackPage() {
   const { data: purchases } = useUserPurchases();
   const cart = useCart();
   const isUnlocked = !!(pack && (purchases?.hasMembership || purchases?.packIds.has(pack.id)));
+  const hidden = new Set(pack?.hidden_sections ?? []);
 
 
 
@@ -166,6 +167,7 @@ function PackPage() {
     <>
       <SiteHeader />
       <main className="pt-28">
+        {!hidden.has("hero") && (
         <section className="mx-auto max-w-5xl px-6 text-center">
           <Link to="/library" className="mb-6 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" /> All packs
@@ -213,7 +215,9 @@ function PackPage() {
             </div>
           )}
         </section>
+        )}
 
+        {!hidden.has("prompts") && (
         <section className="mx-auto mt-12 max-w-6xl space-y-16 px-6">
           {isLoading && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -263,7 +267,9 @@ function PackPage() {
             </div>
           )}
         </section>
+        )}
 
+        {!hidden.has("how_to") && (
         <section className="mx-auto mt-28 max-w-5xl px-6">
           <div className="mb-10 text-center">
             <h2 className="font-display text-3xl font-bold lowercase tracking-[-0.02em] sm:text-4xl">how to use</h2>
@@ -286,6 +292,7 @@ function PackPage() {
             ))}
           </div>
         </section>
+        )}
 
         <SiteFooter />
       </main>

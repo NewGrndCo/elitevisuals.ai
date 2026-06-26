@@ -766,6 +766,13 @@ function MediaField({ label, url, accept, onUrl, onFile, preview }: { label: str
 /* ──────────────────────────── AI Logos ─────────────────────────── */
 
 function AiLogoManager() {
+  const { data: site } = useSiteContent();
+  const mut = useSiteContentMutation();
+  const [desc, setDesc] = useState("");
+  useEffect(() => {
+    const v = site?.compat?.description;
+    setDesc(typeof v === "string" ? v : "");
+  }, [site]);
   const { data: logos } = useAiLogos();
   const qc = useQueryClient();
   const refresh = () => qc.invalidateQueries({ queryKey: ["ai_logos"] });
@@ -816,6 +823,25 @@ function AiLogoManager() {
           <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" className="hidden"
             onChange={(e) => e.target.files?.[0] && addLogo(e.target.files[0])} />
         </label>
+      </div>
+
+      <div className="glass mt-5 rounded-2xl p-4">
+        <label className="mb-1 block text-xs uppercase tracking-wider text-muted-foreground">Carousel description (shown above the logos)</label>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            placeholder="Compatible with the leading AI video models"
+            className="w-full rounded-xl bg-white/5 px-3 py-2 text-sm outline-none focus:bg-white/10"
+          />
+          <button
+            onClick={async () => { await mut.mutateAsync({ key: "compat", value: { description: desc } }); toast.success("Saved"); }}
+            disabled={mut.isPending}
+            className="ring-glow inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            <Save className="h-4 w-4" /> Save
+          </button>
+        </div>
       </div>
 
       <div className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -996,10 +1022,23 @@ function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => v
       title: form.title, slug: form.slug, description: form.description,
       cover_image_url: form.cover_image_url, is_published: form.is_published,
       price_cents: form.price_cents, shopify_variant_id: form.shopify_variant_id,
+      hidden_sections: form.hidden_sections ?? [],
     }).eq("id", form.id);
     setSaving(false);
     if (error) toast.error(error.message);
-    else { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["packs"] }); }
+    else { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["packs"] }); qc.invalidateQueries({ queryKey: ["pack", form.slug] }); }
+  };
+
+  const PACK_SECTIONS: { key: string; label: string; desc: string }[] = [
+    { key: "hero", label: "Hero", desc: "Cover image, title, description, buy banner" },
+    { key: "prompts", label: "Prompts grid", desc: "All prompts grouped by category" },
+    { key: "how_to", label: "How to use", desc: "Three-step usage guide" },
+  ];
+  const hidden = new Set(form.hidden_sections ?? []);
+  const toggleSection = (key: string) => {
+    const next = new Set(hidden);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    setForm({ ...form, hidden_sections: Array.from(next) });
   };
 
   const upload = async (file: File) => {
@@ -1052,6 +1091,35 @@ function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => v
           {form.is_published ? "Published" : "Draft"}
         </button>
       </Field>
+
+      <div className="rounded-2xl bg-white/[0.02] p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold">Page sections</div>
+            <div className="text-xs text-muted-foreground">Toggle visibility on the public pack page. Hidden sections stay editable here.</div>
+          </div>
+        </div>
+        <ul className="space-y-2">
+          {PACK_SECTIONS.map((s) => {
+            const isHidden = hidden.has(s.key);
+            return (
+              <li key={s.key} className="glass flex items-center justify-between gap-3 rounded-xl px-3 py-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold">{s.label}</div>
+                  <div className="truncate text-xs text-muted-foreground">{s.desc}</div>
+                </div>
+                <button
+                  onClick={() => toggleSection(s.key)}
+                  aria-label={isHidden ? "Show section" : "Hide section"}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors ${isHidden ? "bg-yellow-500/15 text-yellow-200 hover:bg-yellow-500/25" : "bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25"}`}
+                >
+                  {isHidden ? <><EyeOff className="h-3.5 w-3.5" /> Hidden</> : <><Eye className="h-3.5 w-3.5" /> Visible</>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
 
       <div className="rounded-2xl bg-white/[0.02] p-4">
         <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Prompts in this pack ({inPack.length})</div>

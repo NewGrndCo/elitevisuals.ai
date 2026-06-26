@@ -100,6 +100,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           description: string | null
+          hidden_sections: string[]
           id: string
           is_published: boolean
           price_cents: number
@@ -113,6 +114,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          hidden_sections?: string[]
           id?: string
           is_published?: boolean
           price_cents?: number
@@ -126,6 +128,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          hidden_sections?: string[]
           id?: string
           is_published?: boolean
           price_cents?: number

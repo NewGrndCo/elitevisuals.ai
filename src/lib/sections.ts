@@ -2,7 +2,6 @@ import type { SiteContentMap } from "./queries";
 
 export const DEFAULT_SECTIONS = [
   { id: "demo", label: "Demo Reel" },
-  { id: "compat", label: "AI Models Carousel" },
   { id: "workflow", label: "Workflow + Motion Styles" },
   { id: "pricing", label: "Pricing" },
 ] as const;

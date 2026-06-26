@@ -1,0 +1,1 @@
+ALTER TABLE public.packs ADD COLUMN IF NOT EXISTS hidden_sections text[] NOT NULL DEFAULT '{}'::text[];
