@@ -1022,10 +1022,23 @@ function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => v
       title: form.title, slug: form.slug, description: form.description,
       cover_image_url: form.cover_image_url, is_published: form.is_published,
       price_cents: form.price_cents, shopify_variant_id: form.shopify_variant_id,
+      hidden_sections: form.hidden_sections ?? [],
     }).eq("id", form.id);
     setSaving(false);
     if (error) toast.error(error.message);
-    else { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["packs"] }); }
+    else { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["packs"] }); qc.invalidateQueries({ queryKey: ["pack", form.slug] }); }
+  };
+
+  const PACK_SECTIONS: { key: string; label: string; desc: string }[] = [
+    { key: "hero", label: "Hero", desc: "Cover image, title, description, buy banner" },
+    { key: "prompts", label: "Prompts grid", desc: "All prompts grouped by category" },
+    { key: "how_to", label: "How to use", desc: "Three-step usage guide" },
+  ];
+  const hidden = new Set(form.hidden_sections ?? []);
+  const toggleSection = (key: string) => {
+    const next = new Set(hidden);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    setForm({ ...form, hidden_sections: Array.from(next) });
   };
 
   const upload = async (file: File) => {
