@@ -179,38 +179,6 @@ function HomePage() {
             </section>
           );
 
-          const compatSection = (
-            <section className="overflow-hidden px-6 py-16 text-center">
-              <div
-                className="overflow-hidden"
-                style={{
-                  maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
-                  WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)",
-                }}
-              >
-                <div className="flex w-max animate-[marquee_24s_linear_infinite] gap-4 hover:[animation-play-state:paused]">
-                  {publishedLogos.length > 0
-                    ? [...publishedLogos, ...publishedLogos].map((l, i) => (
-                        <a
-                          key={`${l.id}-${i}`}
-                          href={l.link_url ?? "#"}
-                          target={l.link_url ? "_blank" : undefined}
-                          rel="noreferrer"
-                          className="glass flex h-[60px] flex-shrink-0 items-center justify-center rounded-[10px] px-6 transition-colors hover:border-[rgba(124,92,252,0.3)]"
-                        >
-                          <img src={l.logo_url} alt={l.name} className="h-7 w-auto max-w-[120px] object-contain opacity-80 transition-opacity hover:opacity-100" draggable={false} />
-                        </a>
-                      ))
-                    : [...compatLogos, ...compatLogos].map((l, i) => (
-                        <div key={i} className="glass flex flex-shrink-0 items-center gap-2.5 whitespace-nowrap rounded-[8px] px-5 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:border-[rgba(124,92,252,0.3)] hover:text-foreground">
-                          <span className="grid h-[26px] w-[26px] place-items-center rounded-[5px] text-[0.6rem] font-black text-white" style={{ background: l.grad }}>{l.short}</span>
-                          {l.label}
-                        </div>
-                      ))}
-                </div>
-              </div>
-            </section>
-          );
 
           const workflowSection = (
             <section id="how-to" className="mx-auto max-w-[1100px] px-6 py-28">
