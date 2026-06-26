@@ -216,6 +216,7 @@ export type Database = {
           is_membership: boolean
           pack_id: string | null
           shopify_order_id: string | null
+          stripe_session_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -224,6 +225,7 @@ export type Database = {
           is_membership?: boolean
           pack_id?: string | null
           shopify_order_id?: string | null
+          stripe_session_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -232,6 +234,7 @@ export type Database = {
           is_membership?: boolean
           pack_id?: string | null
           shopify_order_id?: string | null
+          stripe_session_id?: string | null
           user_id?: string | null
         }
         Relationships: [
