@@ -167,6 +167,7 @@ function PackPage() {
     <>
       <SiteHeader />
       <main className="pt-28">
+        {!hidden.has("hero") && (
         <section className="mx-auto max-w-5xl px-6 text-center">
           <Link to="/library" className="mb-6 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" /> All packs
