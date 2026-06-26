@@ -407,7 +407,7 @@ function HomePage() {
 
           const sectionMap: Record<string, React.ReactNode> = {
             demo: demoSection,
-            compat: compatSection,
+            
             workflow: workflowSection,
             pricing: pricingSection,
           };
