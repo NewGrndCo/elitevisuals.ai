@@ -292,6 +292,7 @@ function PackPage() {
             ))}
           </div>
         </section>
+        )}
 
         <SiteFooter />
       </main>
