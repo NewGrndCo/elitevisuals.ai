@@ -825,6 +825,25 @@ function AiLogoManager() {
         </label>
       </div>
 
+      <div className="glass mt-5 rounded-2xl p-4">
+        <label className="mb-1 block text-xs uppercase tracking-wider text-muted-foreground">Carousel description (shown above the logos)</label>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            placeholder="Compatible with the leading AI video models"
+            className="w-full rounded-xl bg-white/5 px-3 py-2 text-sm outline-none focus:bg-white/10"
+          />
+          <button
+            onClick={async () => { await mut.mutateAsync({ key: "compat", value: { description: desc } }); toast.success("Saved"); }}
+            disabled={mut.isPending}
+            className="ring-glow inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            <Save className="h-4 w-4" /> Save
+          </button>
+        </div>
+      </div>
+
       <div className="mt-5 grid gap-2 sm:grid-cols-2">
         {logos?.length === 0 && (
           <p className="col-span-full py-10 text-center text-sm text-muted-foreground">No logos yet — upload your first one.</p>
