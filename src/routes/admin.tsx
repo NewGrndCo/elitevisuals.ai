@@ -766,6 +766,13 @@ function MediaField({ label, url, accept, onUrl, onFile, preview }: { label: str
 /* ──────────────────────────── AI Logos ─────────────────────────── */
 
 function AiLogoManager() {
+  const { data: site } = useSiteContent();
+  const mut = useSiteContentMutation();
+  const [desc, setDesc] = useState("");
+  useEffect(() => {
+    const v = site?.compat?.description;
+    setDesc(typeof v === "string" ? v : "");
+  }, [site]);
   const { data: logos } = useAiLogos();
   const qc = useQueryClient();
   const refresh = () => qc.invalidateQueries({ queryKey: ["ai_logos"] });
