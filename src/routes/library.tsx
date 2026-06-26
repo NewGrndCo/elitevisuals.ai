@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { usePacks, usePrompts, useSiteContent, sc, type Pack } from "@/lib/queries";
-import { useCart } from "@/lib/cart-context";
-import { useMemo } from "react";
-import { ArrowRight, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowRight } from "lucide-react";
+
 
 export const Route = createFileRoute("/library")({
   head: () => ({
