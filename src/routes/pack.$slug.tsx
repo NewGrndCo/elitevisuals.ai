@@ -151,8 +151,8 @@ function PackPage() {
   const { data: cats } = useCategories();
   const { data: prompts, isLoading } = usePromptsByPack(pack?.id);
   const { data: purchases } = useUserPurchases();
-  const cart = useCart();
-  const isUnlocked = !!(pack && (purchases?.hasMembership || purchases?.packIds.has(pack.id)));
+  const [heroBusy, setHeroBusy] = useState(false);
+
   const hidden = new Set(pack?.hidden_sections ?? []);
 
 
