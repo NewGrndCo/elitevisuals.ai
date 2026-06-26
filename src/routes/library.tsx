@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { usePacks, usePrompts, useSiteContent, sc, type Pack } from "@/lib/queries";
-import { useCart } from "@/lib/cart-context";
-import { useMemo } from "react";
-import { ArrowRight, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowRight } from "lucide-react";
+
 
 export const Route = createFileRoute("/library")({
   head: () => ({
@@ -88,18 +88,20 @@ function LibraryPage() {
 }
 
 function PackCard({ pack, count }: { pack: Pack; count: number }) {
-  const { addItem } = useCart();
   const navigate = useNavigate();
   const price = pack.price_cents != null ? `$${Math.round(pack.price_cents / 100)}` : null;
+  const [busy, setBusy] = useState(false);
 
-  const handleAdd = async (e: React.MouseEvent) => {
+  const handleBuy = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!pack.shopify_variant_id) return;
+    setBusy(true);
     try {
-      await addItem(pack.shopify_variant_id, 1);
+      const { startPackCheckout } = await import("@/lib/checkout-client");
+      await startPackCheckout(pack.id);
     } catch (err) {
       console.error(err);
+      setBusy(false);
     }
   };
 
@@ -140,16 +142,16 @@ function PackCard({ pack, count }: { pack: Pack; count: number }) {
           >
             Explore <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
-          {pack.shopify_variant_id && (
-            <button
-              onClick={handleAdd}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(124,92,252,0.35)] bg-[rgba(124,92,252,0.08)] px-3.5 py-1.5 text-xs font-bold text-[#a78bfa] transition-colors hover:bg-[rgba(124,92,252,0.18)] hover:shadow-[0_0_20px_rgba(124,92,252,0.3)]"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add to cart
-            </button>
-          )}
+          <button
+            onClick={handleBuy}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(124,92,252,0.35)] bg-[rgba(124,92,252,0.08)] px-3.5 py-1.5 text-xs font-bold text-[#a78bfa] transition-colors hover:bg-[rgba(124,92,252,0.18)] hover:shadow-[0_0_20px_rgba(124,92,252,0.3)] disabled:opacity-60"
+          >
+            {busy ? "Loading…" : "Buy now"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
+

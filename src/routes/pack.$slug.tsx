@@ -3,9 +3,11 @@ import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { useCategories, usePack, usePromptsByPack, useUserPurchases } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo, useState } from "react";
-import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft, Lock, ShoppingCart } from "lucide-react";
+import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft, Lock, ShoppingCart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useCart } from "@/lib/cart-context";
+import { startPackCheckout } from "@/lib/checkout-client";
+
+
 
 
 export const Route = createFileRoute("/pack/$slug")({
@@ -61,14 +63,16 @@ function CopyButton({ slug, text }: { slug: string; text: string }) {
   );
 }
 
-function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: string; isUnlocked: boolean; pack: { shopify_variant_id: string | null } | null }) {
-  const cart = useCart();
+function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: string; isUnlocked: boolean; pack: { id: string } | null }) {
+  const [busy, setBusy] = useState(false);
   const onBuy = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
-    if (!pack?.shopify_variant_id) { toast.error("This pack isn't available for purchase yet"); return; }
-    try { await cart.addItem(pack.shopify_variant_id, 1); cart.openCart(); }
-    catch { toast.error("Couldn't add to cart"); }
+    if (!pack?.id) return;
+    setBusy(true);
+    try { await startPackCheckout(pack.id); }
+    catch (err) { console.error(err); toast.error("Couldn't start checkout"); setBusy(false); }
   };
+
   return (
     <div className="glass group relative w-[78vw] shrink-0 snap-start overflow-hidden rounded-3xl sm:w-[55vw] md:w-auto md:shrink">
       {isUnlocked && <CopyButton slug={p.slug} text={p.prompt_text} />}
@@ -125,10 +129,12 @@ function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: str
                 </div>
                 <button
                   onClick={onBuy}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#a78bfa] px-3 py-1.5 text-[11px] font-semibold text-black transition hover:bg-[#c4b5fd]"
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#a78bfa] px-3 py-1.5 text-[11px] font-semibold text-black transition hover:bg-[#c4b5fd] disabled:opacity-60"
                 >
-                  <ShoppingCart className="h-3 w-3" /> Add to cart
+                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShoppingCart className="h-3 w-3" />} Buy pack
                 </button>
+
               </div>
             </>
           )}
@@ -145,8 +151,10 @@ function PackPage() {
   const { data: cats } = useCategories();
   const { data: prompts, isLoading } = usePromptsByPack(pack?.id);
   const { data: purchases } = useUserPurchases();
-  const cart = useCart();
+  const [heroBusy, setHeroBusy] = useState(false);
   const isUnlocked = !!(pack && (purchases?.hasMembership || purchases?.packIds.has(pack.id)));
+
+
   const hidden = new Set(pack?.hidden_sections ?? []);
 
 
@@ -195,25 +203,28 @@ function PackPage() {
             </p>
           )}
 
-          {!isUnlocked && pack?.shopify_variant_id && (
+          {!isUnlocked && pack?.id && (
             <div className="mx-auto mt-6 flex max-w-lg flex-col items-center gap-3 rounded-3xl border border-[rgba(167,139,250,0.25)] bg-[rgba(167,139,250,0.08)] px-8 py-6 text-center">
               <Lock className="h-5 w-5 text-[#a78bfa]" />
               <p className="text-sm text-muted-foreground">
                 Purchase this pack to unlock all prompts and copy them directly to your AI tools.
               </p>
               <button
+                disabled={heroBusy}
                 onClick={async () => {
-                  if (!pack?.shopify_variant_id) return;
-                  await cart.addItem(pack.shopify_variant_id, 1);
-                  cart.openCart();
+                  if (!pack?.id) return;
+                  setHeroBusy(true);
+                  try { await startPackCheckout(pack.id); }
+                  catch (err) { console.error(err); toast.error("Couldn't start checkout"); setHeroBusy(false); }
                 }}
-                className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground"
+                className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
               >
-                <ShoppingCart className="h-4 w-4" />
+                {heroBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
                 Buy pack — ${((pack.price_cents ?? 4900) / 100).toFixed(0)}
               </button>
             </div>
           )}
+
         </section>
         )}
 
