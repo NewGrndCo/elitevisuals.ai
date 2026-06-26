@@ -147,6 +147,7 @@ function PackPage() {
   const { data: purchases } = useUserPurchases();
   const cart = useCart();
   const isUnlocked = !!(pack && (purchases?.hasMembership || purchases?.packIds.has(pack.id)));
+  const hidden = new Set(pack?.hidden_sections ?? []);
 
 
 
