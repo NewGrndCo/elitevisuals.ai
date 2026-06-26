@@ -40,7 +40,7 @@ function PromptPage() {
   const { data: allPrompts } = usePrompts();
   const { data: purchases } = useUserPurchases();
   const { data: pack } = usePackById(prompt?.pack_id ?? null);
-  const { addItem, openCart } = useCart();
+  const [buying, setBuying] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeImg, setActiveImg] = useState<string | null>(null);
   const [copyCount, setCopyCount] = useState<number | null>(null);
@@ -156,17 +156,20 @@ function PromptPage() {
                   <Lock className="h-6 w-6 text-[#a78bfa]" />
                   <h2 className="mt-3 font-display text-xl font-semibold">Purchase to unlock</h2>
                   <p className="mt-1 text-sm text-muted-foreground">Buy this pack to copy and use this prompt.</p>
-                  {pack?.shopify_variant_id && (
+                  {pack?.id && (
                     <button
+                      disabled={buying}
                       onClick={async () => {
-                        await addItem(pack.shopify_variant_id!, 1);
-                        openCart();
+                        setBuying(true);
+                        try { await startPackCheckout(pack.id); }
+                        catch (err) { console.error(err); toast.error("Couldn't start checkout"); setBuying(false); }
                       }}
-                      className="ring-glow mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+                      className="ring-glow mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
                     >
-                      <Lock className="h-4 w-4" /> Add to cart
+                      <Lock className="h-4 w-4" /> Buy pack — ${((pack.price_cents ?? 4900) / 100).toFixed(0)}
                     </button>
                   )}
+
                   <pre
                     aria-hidden
                     className="mt-4 max-h-[60vh] overflow-hidden whitespace-pre-wrap rounded-2xl bg-black/40 p-4 font-mono text-[13px] leading-relaxed text-foreground/90 select-none pointer-events-none"
