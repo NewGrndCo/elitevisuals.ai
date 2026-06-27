@@ -280,7 +280,7 @@ function HomePage() {
             "Every current pack\nEvery future drop\nPriority support\nCommercial license",
           );
           const memFeatures = memFeaturesRaw.split("\n").map((s) => s.trim()).filter(Boolean);
-          const memVariant = sc(site, "pricing", "membership_shopify_variant_id", "");
+          
 
           const handleAddPack = () => {
             if (!packId || !featuredPack) return;
