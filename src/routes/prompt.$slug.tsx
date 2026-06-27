@@ -1,6 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { usePrompt, usePrompts, useUserPurchases, usePackById } from "@/lib/queries";
+import {
+  usePrompt, usePrompts, useUserPurchases, usePackById,
+  promptOptions, promptsOptions,
+} from "@/lib/queries";
 import { useCart } from "@/lib/cart-context";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -16,6 +19,12 @@ export const Route = createFileRoute("/prompt/$slug")({
       { name: "description", content: "Premium AI visual prompt with demo gallery and copy-ready prompt text." },
     ],
   }),
+  loader: async ({ context, params }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(promptOptions(params.slug)),
+      context.queryClient.ensureQueryData(promptsOptions()),
+    ]);
+  },
   component: PromptPage,
   errorComponent: ({ error }) => (
     <div className="grid min-h-screen place-items-center px-6">

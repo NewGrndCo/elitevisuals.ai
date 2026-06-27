@@ -1,5 +1,74 @@
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation, queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+/* ─── Shared fetcher fns + queryOptions for SSR prefetch ─── */
+const fetchSiteContent = async (): Promise<SiteContentMap> => {
+  const { data, error } = await (supabase as unknown as { from: (t: string) => { select: (c: string) => Promise<{ data: { key: string; value: Record<string, unknown> }[] | null; error: unknown }> } })
+    .from("site_content").select("key,value");
+  if (error) throw error as Error;
+  const map: SiteContentMap = {};
+  (data ?? []).forEach((r) => { map[r.key] = r.value ?? {}; });
+  return map;
+};
+const fetchAiLogos = async () => {
+  const { data, error } = await supabase.from("ai_logos").select("*").order("sort_order");
+  if (error) throw error;
+  return data as AiLogo[];
+};
+const fetchCategories = async () => {
+  const { data, error } = await supabase.from("categories").select("*").order("sort_order");
+  if (error) throw error;
+  return data as Category[];
+};
+const fetchPacks = async (includeUnpublished = false) => {
+  let q = supabase.from("packs").select("*").order("sort_order");
+  if (!includeUnpublished) q = q.eq("is_published", true);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data as Pack[];
+};
+const fetchPrompts = async (categorySlug?: string) => {
+  const q = categorySlug
+    ? supabase.from("prompts").select("*, categories!inner(slug,name,accent_color)").order("sort_order").eq("categories.slug", categorySlug)
+    : supabase.from("prompts").select("*, categories(slug,name,accent_color)").order("sort_order");
+  const { data, error } = await q;
+  if (error) throw error;
+  return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null })[];
+};
+const fetchPack = async (slug: string) => {
+  const { data, error } = await supabase.from("packs").select("*").eq("slug", slug).maybeSingle();
+  if (error) throw error;
+  return data as Pack | null;
+};
+const fetchPromptsByPack = async (packId: string) => {
+  const { data, error } = await supabase
+    .from("prompts")
+    .select("*, categories(slug,name,accent_color)")
+    .eq("pack_id", packId)
+    .order("sort_order");
+  if (error) throw error;
+  return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null })[];
+};
+const fetchPrompt = async (slug: string) => {
+  const { data, error } = await supabase.from("prompts").select("*, categories(slug,name,accent_color)").eq("slug", slug).maybeSingle();
+  if (error) throw error;
+  return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null }) | null;
+};
+
+export const siteContentOptions = () => queryOptions({ queryKey: ["site_content"], queryFn: fetchSiteContent, staleTime: 30_000 });
+export const aiLogosOptions = () => queryOptions({ queryKey: ["ai_logos"], queryFn: fetchAiLogos });
+export const categoriesOptions = () => queryOptions({ queryKey: ["categories"], queryFn: fetchCategories });
+export const packsOptions = (includeUnpublished = false) => queryOptions({
+  queryKey: ["packs", includeUnpublished ? "all" : "published"],
+  queryFn: () => fetchPacks(includeUnpublished),
+});
+export const promptsOptions = (categorySlug?: string) => queryOptions({
+  queryKey: ["prompts", categorySlug ?? "all"],
+  queryFn: () => fetchPrompts(categorySlug),
+});
+export const packOptions = (slug: string) => queryOptions({ queryKey: ["pack", slug], queryFn: () => fetchPack(slug) });
+export const promptsByPackOptions = (packId: string) => queryOptions({ queryKey: ["prompts_by_pack", packId], queryFn: () => fetchPromptsByPack(packId) });
+export const promptOptions = (slug: string) => queryOptions({ queryKey: ["prompt", slug], queryFn: () => fetchPrompt(slug) });
 
 /* ─── Site Content (CMS) ─── */
 export type SiteContentMap = Record<string, Record<string, unknown>>;
