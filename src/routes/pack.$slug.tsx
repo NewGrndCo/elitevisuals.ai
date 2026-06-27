@@ -1,6 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { useCategories, usePack, usePromptsByPack, useUserPurchases } from "@/lib/queries";
+import {
+  useCategories, usePack, usePromptsByPack, useUserPurchases,
+  packOptions, promptsByPackOptions, categoriesOptions,
+} from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo, useState } from "react";
 import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft, Lock, ShoppingCart, Plus } from "lucide-react";
