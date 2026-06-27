@@ -394,7 +394,7 @@ function HomePage() {
                         <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.08em] text-[#7dd3fc]">
                           {memLabel}
                         </div>
-                        <div className="mt-1 text-[0.8rem] text-muted-foreground">Unlock every pack · Cancel anytime</div>
+                        <div className="mt-1 text-[0.8rem] text-muted-foreground">Unlock every pack · Lifetime access</div>
                       </div>
                       <div className="rounded-full border border-[rgba(56,182,255,0.3)] bg-[rgba(56,182,255,0.12)] px-3.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] text-[#7dd3fc]">
                         All Access
@@ -404,7 +404,7 @@ function HomePage() {
                       <span className="mt-2 text-2xl font-semibold text-muted-foreground">$</span>
                       <span className="text-[4rem] font-extrabold leading-none tracking-[-0.06em]">{memPriceDollars}</span>
                     </div>
-                    <p className="mb-8 mt-1 text-[0.8rem] text-muted-foreground">Recurring · Every drop included.</p>
+                    <p className="mb-8 mt-1 text-[0.8rem] text-muted-foreground">One-time purchase. Every current and future drop.</p>
                     <ul className="mb-8 flex flex-col gap-3">
                       {memFeatures.map((f) => (
                         <li key={f} className="flex items-center gap-3 text-sm text-muted-foreground">
