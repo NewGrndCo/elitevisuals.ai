@@ -21,6 +21,13 @@ export const Route = createFileRoute("/pack/$slug")({
       { name: "description", content: "Cinematic AI prompts." },
     ],
   }),
+  loader: async ({ context, params }) => {
+    const pack = await context.queryClient.ensureQueryData(packOptions(params.slug));
+    await Promise.all([
+      context.queryClient.ensureQueryData(categoriesOptions()),
+      pack ? context.queryClient.ensureQueryData(promptsByPackOptions(pack.id)) : Promise.resolve(),
+    ]);
+  },
   component: PackPage,
   notFoundComponent: () => (
     <>
