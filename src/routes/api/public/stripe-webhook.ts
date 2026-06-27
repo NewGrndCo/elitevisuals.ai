@@ -120,6 +120,7 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
           .upsert(rows, { onConflict: "stripe_session_id,item_key" });
         if (error) {
           console.error("Webhook insert error", error);
+          console.error(JSON.stringify({ event: "webhook_db_failure", sessionId: session.id, error: String(error) }));
           return new Response("DB error", { status: 500 });
         }
         return new Response("ok", { status: 200 });
