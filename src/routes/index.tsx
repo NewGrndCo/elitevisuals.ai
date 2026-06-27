@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { useCategories, usePrompts, useAiLogos, useSiteContent, usePacks, sc } from "@/lib/queries";
+import {
+  useCategories, usePrompts, useAiLogos, useSiteContent, usePacks, sc,
+  siteContentOptions, aiLogosOptions, categoriesOptions, packsOptions, promptsOptions,
+} from "@/lib/queries";
 import { useCart } from "@/lib/cart-context";
 import { getSectionOrder } from "@/lib/sections";
 import {
@@ -15,6 +18,19 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "20 curated image-to-video prompts across 4 motion styles. Cinematic transitions for modern AI video models." },
     ],
   }),
+  // Prefetch all public data on the server so SSR HTML contains the latest
+  // CMS-edited content. Without this, SSR renders hardcoded fallbacks and
+  // the client briefly shows them before the queries resolve — the "flash
+  // of old version" the user was seeing.
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(siteContentOptions()),
+      context.queryClient.ensureQueryData(aiLogosOptions()),
+      context.queryClient.ensureQueryData(categoriesOptions()),
+      context.queryClient.ensureQueryData(packsOptions()),
+      context.queryClient.ensureQueryData(promptsOptions()),
+    ]);
+  },
   component: HomePage,
 });
 
