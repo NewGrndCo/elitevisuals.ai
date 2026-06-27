@@ -214,6 +214,7 @@ export type Database = {
           created_at: string
           id: string
           is_membership: boolean
+          item_key: string | null
           pack_id: string | null
           shopify_order_id: string | null
           stripe_session_id: string | null
@@ -223,6 +224,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_membership?: boolean
+          item_key?: string | null
           pack_id?: string | null
           shopify_order_id?: string | null
           stripe_session_id?: string | null
@@ -232,6 +234,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_membership?: boolean
+          item_key?: string | null
           pack_id?: string | null
           shopify_order_id?: string | null
           stripe_session_id?: string | null
