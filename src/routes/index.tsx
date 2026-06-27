@@ -282,17 +282,26 @@ function HomePage() {
           const memFeatures = memFeaturesRaw.split("\n").map((s) => s.trim()).filter(Boolean);
           const memVariant = sc(site, "pricing", "membership_shopify_variant_id", "");
 
-          const handleAddPack = async () => {
-            if (!packId) return;
-            try {
-              const { startPackCheckout } = await import("@/lib/checkout-client");
-              await startPackCheckout(packId);
-            } catch (e) { console.error(e); }
+          const handleAddPack = () => {
+            if (!packId || !featuredPack) return;
+            addItem({
+              id: `pack:${packId}`,
+              kind: "pack",
+              packId,
+              title: featuredPack.title ?? "Prompt Pack",
+              priceCents: packPriceCents,
+              image: featuredPack.cover_image_url ?? null,
+            });
           };
-          const handleAddMembership = async () => {
-            if (!memVariant) return;
-            try { await addItem(memVariant, 1); } catch (e) { console.error(e); }
+          const handleAddMembership = () => {
+            addItem({
+              id: "membership",
+              kind: "membership",
+              title: memLabel,
+              priceCents: memPriceCents,
+            });
           };
+
 
 
           const pricingSection = (
