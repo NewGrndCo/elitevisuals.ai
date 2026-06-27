@@ -394,7 +394,7 @@ function HomePage() {
                         <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.08em] text-[#7dd3fc]">
                           {memLabel}
                         </div>
-                        <div className="mt-1 text-[0.8rem] text-muted-foreground">Unlock every pack · Cancel anytime</div>
+                        <div className="mt-1 text-[0.8rem] text-muted-foreground">Unlock every pack · Lifetime access</div>
                       </div>
                       <div className="rounded-full border border-[rgba(56,182,255,0.3)] bg-[rgba(56,182,255,0.12)] px-3.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] text-[#7dd3fc]">
                         All Access
