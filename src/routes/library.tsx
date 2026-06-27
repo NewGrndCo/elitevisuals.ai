@@ -146,12 +146,12 @@ function PackCard({ pack, count }: { pack: Pack; count: number }) {
             Explore <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
           <button
-            onClick={handleBuy}
-            disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(124,92,252,0.35)] bg-[rgba(124,92,252,0.08)] px-3.5 py-1.5 text-xs font-bold text-[#a78bfa] transition-colors hover:bg-[rgba(124,92,252,0.18)] hover:shadow-[0_0_20px_rgba(124,92,252,0.3)] disabled:opacity-60"
+            onClick={handleAdd}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(124,92,252,0.35)] bg-[rgba(124,92,252,0.08)] px-3.5 py-1.5 text-xs font-bold text-[#a78bfa] transition-colors hover:bg-[rgba(124,92,252,0.18)] hover:shadow-[0_0_20px_rgba(124,92,252,0.3)]"
           >
-            {busy ? "Loading…" : "Buy now"}
+            <Plus className="h-3 w-3" /> Add to cart
           </button>
+
         </div>
       </div>
     </div>
