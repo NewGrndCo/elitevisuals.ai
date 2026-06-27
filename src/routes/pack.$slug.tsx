@@ -136,11 +136,11 @@ function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: str
                 </div>
                 <button
                   onClick={onBuy}
-                  disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#a78bfa] px-3 py-1.5 text-[11px] font-semibold text-black transition hover:bg-[#c4b5fd] disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#a78bfa] px-3 py-1.5 text-[11px] font-semibold text-black transition hover:bg-[#c4b5fd]"
                 >
-                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShoppingCart className="h-3 w-3" />} Buy pack
+                  <Plus className="h-3 w-3" /> Add to cart
                 </button>
+
 
               </div>
             </>
