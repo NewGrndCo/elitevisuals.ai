@@ -399,14 +399,14 @@ function HomePage() {
                     </ul>
                     <button
                       onClick={handleAddMembership}
-                      disabled={!memVariant}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(56,182,255,0.5)] bg-[rgba(56,182,255,0.12)] py-3.5 text-center text-base font-bold tracking-[-0.01em] text-[#bae6fd] shadow-[0_0_36px_rgba(56,182,255,0.25),0_0_80px_rgba(56,182,255,0.12)] transition-all hover:-translate-y-0.5 hover:bg-[rgba(56,182,255,0.18)] disabled:opacity-60 disabled:hover:translate-y-0"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(56,182,255,0.5)] bg-[rgba(56,182,255,0.12)] py-3.5 text-center text-base font-bold tracking-[-0.01em] text-[#bae6fd] shadow-[0_0_36px_rgba(56,182,255,0.25),0_0_80px_rgba(56,182,255,0.12)] transition-all hover:-translate-y-0.5 hover:bg-[rgba(56,182,255,0.18)]"
                     >
-                      <Plus className="h-4 w-4" /> {memVariant ? "Add membership" : "Coming soon"}
+                      <Plus className="h-4 w-4" /> Add membership
                     </button>
                     <p className="mt-4 text-center text-[0.73rem] text-muted-foreground">
-                      Secure checkout via Shopify
+                      Secure checkout via Stripe
                     </p>
+
                   </div>
                 </div>
               </div>
