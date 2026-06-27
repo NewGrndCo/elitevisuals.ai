@@ -205,63 +205,65 @@ function HomePage() {
                   </div>
                 ))}
               </div>
+            </section>
+          );
 
-              <div id="styles" className="mt-24">
-                <div className="mb-12 max-w-[520px]">
-                  <SectionTag>Motion Styles</SectionTag>
-                  <h2 className="mb-3 text-[clamp(1.6rem,3vw,2.2rem)] font-bold leading-[1.2] tracking-[-0.03em]">
-                    {totalStyles} distinct motion languages.
-                  </h2>
-                  <p className="mt-3 text-[0.95rem] leading-[1.75] text-muted-foreground">
-                    Elite Visuals is built around the concept of motion as transformation. Each style uses a specific motion language to evolve a still image into a dynamic cinematic sequence.
-                  </p>
-                </div>
+          const stylesSection = (
+            <section id="styles" className="mx-auto max-w-[1100px] px-6 py-28">
+              <div className="mb-12 max-w-[520px]">
+                <SectionTag>Motion Styles</SectionTag>
+                <h2 className="mb-3 text-[clamp(1.6rem,3vw,2.2rem)] font-bold leading-[1.2] tracking-[-0.03em]">
+                  {totalStyles} distinct motion languages.
+                </h2>
+                <p className="mt-3 text-[0.95rem] leading-[1.75] text-muted-foreground">
+                  Elite Visuals is built around the concept of motion as transformation. Each style uses a specific motion language to evolve a still image into a dynamic cinematic sequence.
+                </p>
+              </div>
 
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                  {cats?.map((c) => {
-                    const meta = STYLE_META[c.slug] ?? STYLE_META.temporal;
-                    const Icon = meta.icon;
-                    const count = prompts?.filter((p) => p.category_id === c.id).length ?? 5;
-                    return (
-                      <Link
-                        key={c.id}
-                        to="/library"
-                        search={{ category: c.slug }}
-                        className="glass group relative overflow-hidden rounded-[14px] p-7 transition-all hover:-translate-y-1"
-                      >
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {cats?.map((c) => {
+                  const meta = STYLE_META[c.slug] ?? STYLE_META.temporal;
+                  const Icon = meta.icon;
+                  const count = prompts?.filter((p) => p.category_id === c.id).length ?? 5;
+                  return (
+                    <Link
+                      key={c.id}
+                      to="/library"
+                      search={{ category: c.slug }}
+                      className="glass group relative overflow-hidden rounded-[14px] p-7 transition-all hover:-translate-y-1"
+                    >
+                      <div
+                        className="pointer-events-none absolute inset-0"
+                        style={{ background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${meta.tint}, transparent 70%)` }}
+                      />
+                      <div className="absolute right-5 top-5 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                        {count} prompts
+                      </div>
+                      <div className="relative">
                         <div
-                          className="pointer-events-none absolute inset-0"
-                          style={{ background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${meta.tint}, transparent 70%)` }}
-                        />
-                        <div className="absolute right-5 top-5 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-                          {count} prompts
+                          className="mb-5 grid h-12 w-12 place-items-center rounded-[12px] border"
+                          style={{ background: meta.tint, borderColor: meta.tintBorder }}
+                        >
+                          <Icon className="h-5 w-5" style={{ color: meta.tintText }} />
                         </div>
-                        <div className="relative">
-                          <div
-                            className="mb-5 grid h-12 w-12 place-items-center rounded-[12px] border"
-                            style={{ background: meta.tint, borderColor: meta.tintBorder }}
-                          >
-                            <Icon className="h-5 w-5" style={{ color: meta.tintText }} />
-                          </div>
-                          <h3 className="mb-1 text-base font-bold tracking-[-0.01em]">{c.name}</h3>
-                          <div className="mb-3 text-[0.7rem] font-bold uppercase tracking-[0.1em]" style={{ color: meta.tintText }}>{meta.lang}</div>
-                          <p className="mb-5 text-[0.825rem] leading-[1.65] text-muted-foreground">{c.description}</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {meta.tags.map((t) => (
-                              <span
-                                key={t}
-                                className="rounded-[4px] border px-2 py-0.5 text-[0.68rem] font-semibold tracking-[0.04em]"
-                                style={{ background: meta.tint, borderColor: meta.tintBorder, color: meta.tintText }}
-                              >
-                                {t}
-                              </span>
-                            ))}
-                          </div>
+                        <h3 className="mb-1 text-base font-bold tracking-[-0.01em]">{c.name}</h3>
+                        <div className="mb-3 text-[0.7rem] font-bold uppercase tracking-[0.1em]" style={{ color: meta.tintText }}>{meta.lang}</div>
+                        <p className="mb-5 text-[0.825rem] leading-[1.65] text-muted-foreground">{c.description}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {meta.tags.map((t) => (
+                            <span
+                              key={t}
+                              className="rounded-[4px] border px-2 py-0.5 text-[0.68rem] font-semibold tracking-[0.04em]"
+                              style={{ background: meta.tint, borderColor: meta.tintBorder, color: meta.tintText }}
+                            >
+                              {t}
+                            </span>
+                          ))}
                         </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </section>
           );
