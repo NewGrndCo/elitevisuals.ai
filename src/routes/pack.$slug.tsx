@@ -218,18 +218,23 @@ function PackPage() {
                 Purchase this pack to unlock all prompts and copy them directly to your AI tools.
               </p>
               <button
-                disabled={heroBusy}
-                onClick={async () => {
+                onClick={() => {
                   if (!pack?.id) return;
-                  setHeroBusy(true);
-                  try { await startPackCheckout(pack.id); }
-                  catch (err) { console.error(err); toast.error("Couldn't start checkout"); setHeroBusy(false); }
+                  addItem({
+                    id: `pack:${pack.id}`,
+                    kind: "pack",
+                    packId: pack.id,
+                    title: pack.title ?? "Prompt Pack",
+                    priceCents: pack.price_cents ?? 4900,
+                    image: pack.cover_image_url ?? null,
+                  });
                 }}
-                className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+                className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground"
               >
-                {heroBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
-                Buy pack — ${((pack.price_cents ?? 4900) / 100).toFixed(0)}
+                <ShoppingCart className="h-4 w-4" />
+                Add to cart — ${((pack.price_cents ?? 4900) / 100).toFixed(0)}
               </button>
+
             </div>
           )}
 
