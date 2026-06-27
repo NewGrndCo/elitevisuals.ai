@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Admin — Elite Visuals" }] }),
+  head: () => ({ meta: [{ title: "Admin — Elite Visuals" }, { name: "robots", content: "noindex,nofollow" }] }),
   component: AdminPage,
 });
 
@@ -1021,7 +1021,7 @@ function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => v
     const { error } = await supabase.from("packs").update({
       title: form.title, slug: form.slug, description: form.description,
       cover_image_url: form.cover_image_url, is_published: form.is_published,
-      price_cents: form.price_cents, shopify_variant_id: form.shopify_variant_id,
+      price_cents: form.price_cents,
       hidden_sections: form.hidden_sections ?? [],
     }).eq("id", form.id);
     setSaving(false);
@@ -1072,14 +1072,6 @@ function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => v
           </Field>
           <div className="mt-1 text-xs text-muted-foreground">${((form.price_cents ?? 0) / 100).toFixed(2)}</div>
         </div>
-        <Field label="Shopify Variant GID">
-          <input
-            value={form.shopify_variant_id ?? ""}
-            onChange={(e) => setForm({ ...form, shopify_variant_id: e.target.value || null })}
-            placeholder="gid://shopify/ProductVariant/123456789"
-            className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none"
-          />
-        </Field>
       </div>
       <Field label="Description"><textarea value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
       <MediaField label="Cover image" url={form.cover_image_url} accept="image/*" onUrl={(u) => setForm({ ...form, cover_image_url: u })} onFile={upload} preview="image" />
