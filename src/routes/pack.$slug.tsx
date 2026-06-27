@@ -64,15 +64,21 @@ function CopyButton({ slug, text }: { slug: string; text: string }) {
   );
 }
 
-function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: string; isUnlocked: boolean; pack: { id: string } | null }) {
-  const [busy, setBusy] = useState(false);
-  const onBuy = async (e: React.MouseEvent) => {
+function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: string; isUnlocked: boolean; pack: { id: string; title?: string | null; price_cents?: number | null; cover_image_url?: string | null } | null }) {
+  const { addItem } = useCart();
+  const onBuy = (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
     if (!pack?.id) return;
-    setBusy(true);
-    try { await startPackCheckout(pack.id); }
-    catch (err) { console.error(err); toast.error("Couldn't start checkout"); setBusy(false); }
+    addItem({
+      id: `pack:${pack.id}`,
+      kind: "pack",
+      packId: pack.id,
+      title: pack.title ?? "Prompt Pack",
+      priceCents: pack.price_cents ?? 4900,
+      image: pack.cover_image_url ?? null,
+    });
   };
+
 
   return (
     <div className="glass group relative w-[78vw] shrink-0 snap-start overflow-hidden rounded-3xl sm:w-[55vw] md:w-auto md:shrink">
