@@ -423,8 +423,8 @@ function HomePage() {
 
           const sectionMap: Record<string, React.ReactNode> = {
             demo: demoSection,
-            
             workflow: workflowSection,
+            styles: stylesSection,
             pricing: pricingSection,
           };
 
