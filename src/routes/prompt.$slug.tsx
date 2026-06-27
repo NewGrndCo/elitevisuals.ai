@@ -159,17 +159,23 @@ function PromptPage() {
                   <p className="mt-1 text-sm text-muted-foreground">Buy this pack to copy and use this prompt.</p>
                   {pack?.id && (
                     <button
-                      disabled={buying}
-                      onClick={async () => {
-                        setBuying(true);
-                        try { await startPackCheckout(pack.id); }
-                        catch (err) { console.error(err); toast.error("Couldn't start checkout"); setBuying(false); }
+                      onClick={() => {
+                        if (!pack?.id) return;
+                        addItem({
+                          id: `pack:${pack.id}`,
+                          kind: "pack",
+                          packId: pack.id,
+                          title: pack.title ?? "Prompt Pack",
+                          priceCents: pack.price_cents ?? 4900,
+                          image: pack.cover_image_url ?? null,
+                        });
                       }}
-                      className="ring-glow mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+                      className="ring-glow mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
                     >
-                      <Lock className="h-4 w-4" /> Buy pack — ${((pack.price_cents ?? 4900) / 100).toFixed(0)}
+                      <Plus className="h-4 w-4" /> Add to cart — ${((pack.price_cents ?? 4900) / 100).toFixed(0)}
                     </button>
                   )}
+
 
                   <pre
                     aria-hidden
