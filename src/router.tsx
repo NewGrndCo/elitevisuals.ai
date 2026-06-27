@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, dehydrate, hydrate } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
@@ -14,6 +14,12 @@ export const getRouter = () => {
         refetchOnReconnect: false,
         retry: 1,
       },
+      dehydrate: {
+        // Include in-flight queries so loader prefetches that haven't resolved
+        // yet still serialize to the client.
+        shouldDehydrateQuery: (q) =>
+          q.state.status === "success" || q.state.status === "pending",
+      },
     },
   });
 
@@ -21,10 +27,17 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    // Allow Router's preload cache to serve fresh data for 30s instead of
-    // re-querying on every hover/preload.
-    defaultPreloadStaleTime: 30_000,
+    // With TanStack Query owning cache freshness, let Query decide instead of
+    // the router serving stale preload data.
+    defaultPreloadStaleTime: 0,
     defaultPreload: "intent",
+    // Serialize React Query cache from server to client so SSR'd content stays
+    // intact through hydration — prevents the flash of fallback/default copy
+    // before client-side queries resolve.
+    dehydrate: () => ({ queryClient: dehydrate(queryClient) }),
+    hydrate: (d: { queryClient: ReturnType<typeof dehydrate> }) => {
+      hydrate(queryClient, d.queryClient);
+    },
   });
 
   return router;
