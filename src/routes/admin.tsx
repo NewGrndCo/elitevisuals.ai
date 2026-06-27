@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-chrome";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCategories, usePrompts, useAiLogos, usePacks, useSiteContent, useSiteContentMutation, type Prompt, type Category, type AiLogo, type Pack, type SiteContentMap } from "@/lib/queries";
+import { useCategories, usePrompts, useAiLogos, usePacks, useSiteContent, useSiteContentMutation, useIsAdmin, type Prompt, type Category, type AiLogo, type Pack, type SiteContentMap } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { adminPinLogin } from "@/lib/admin-pin.functions";
@@ -37,6 +37,7 @@ const PIN_STORAGE_KEY = "ev_admin_pin_ok";
 function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(true);
+  const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
 
   useEffect(() => {
     let active = true;
@@ -58,11 +59,24 @@ function AdminPage() {
     setAuthed(true);
   };
 
-  if (checking) {
+  if (checking || (authed && adminLoading)) {
     return <Shell><div className="glass animate-pulse rounded-3xl p-10 text-center text-sm text-muted-foreground">Loading…</div></Shell>;
   }
   if (!authed) {
     return <Shell><PinGate onUnlock={onUnlock} /></Shell>;
+  }
+  if (isAdmin === false) {
+    return (
+      <Shell>
+        <div className="glass rounded-3xl p-10 text-center">
+          <Lock className="mx-auto mb-4 h-8 w-8 text-[#a78bfa]" />
+          <h2 className="font-display text-2xl font-semibold">Access denied</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your account does not have admin privileges. Contact the site owner.
+          </p>
+        </div>
+      </Shell>
+    );
   }
   return <AdminDashboard />;
 }

@@ -242,3 +242,21 @@ export const useUserPurchases = () =>
     },
   });
 
+/* ─── Admin role check (defense-in-depth behind the PIN gate) ─── */
+export const useIsAdmin = () =>
+  useQuery({
+    queryKey: ["is_admin"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      return !!data;
+    },
+  });
+

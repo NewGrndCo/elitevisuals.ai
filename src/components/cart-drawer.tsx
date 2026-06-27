@@ -1,6 +1,7 @@
 import { useCart } from "@/lib/cart-context";
 import { ShoppingBag, X, Trash2, Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 function formatMoney(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
@@ -94,7 +95,19 @@ export function CartDrawer() {
               <span className="font-display text-lg font-bold">{formatMoney(totalCents)}</span>
             </div>
             <button
-              onClick={() => checkout()}
+              onClick={async () => {
+                try {
+                  await checkout();
+                  setTimeout(() => {
+                    toast.info("If checkout didn't open, click here to try again.", {
+                      action: { label: "Open checkout", onClick: () => checkout() },
+                      duration: 8000,
+                    });
+                  }, 3000);
+                } catch {
+                  toast.error("Checkout failed. Please try again.");
+                }
+              }}
               disabled={isLoading}
               className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-primary py-3.5 text-center text-base font-bold tracking-[-0.01em] text-primary-foreground shadow-[0_0_28px_rgba(124,92,252,0.35),0_0_60px_rgba(124,92,252,0.18)] transition-all hover:-translate-y-0.5 disabled:opacity-60"
             >

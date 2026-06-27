@@ -33,7 +33,16 @@ export function SiteHeader() {
     <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4">
       <div className="glass flex w-full max-w-6xl items-center justify-between rounded-2xl px-4 py-2.5 sm:px-6">
         <Link to="/" onClick={handleLogoTap} className="flex items-center gap-2 font-display text-base font-semibold sm:text-lg">
-          <img src={logoUrl} alt="ELITEVISUALS.AI logo" className="h-8 w-8 select-none object-contain sm:h-9 sm:w-9" draggable={false} />
+          <img
+            src={logoUrl}
+            alt="ELITEVISUALS.AI logo"
+            width={36}
+            height={36}
+            loading="eager"
+            fetchPriority="high"
+            className="h-8 w-8 select-none object-contain sm:h-9 sm:w-9"
+            draggable={false}
+          />
           <span className="tracking-[0.18em] text-white">ELITEVISUALS.AI</span>
         </Link>
         <nav className="flex items-center gap-1">
