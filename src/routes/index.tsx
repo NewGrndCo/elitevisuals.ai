@@ -280,19 +280,28 @@ function HomePage() {
             "Every current pack\nEvery future drop\nPriority support\nCommercial license",
           );
           const memFeatures = memFeaturesRaw.split("\n").map((s) => s.trim()).filter(Boolean);
-          const memVariant = sc(site, "pricing", "membership_shopify_variant_id", "");
+          
 
-          const handleAddPack = async () => {
-            if (!packId) return;
-            try {
-              const { startPackCheckout } = await import("@/lib/checkout-client");
-              await startPackCheckout(packId);
-            } catch (e) { console.error(e); }
+          const handleAddPack = () => {
+            if (!packId || !featuredPack) return;
+            addItem({
+              id: `pack:${packId}`,
+              kind: "pack",
+              packId,
+              title: featuredPack.title ?? "Prompt Pack",
+              priceCents: packPriceCents,
+              image: featuredPack.cover_image_url ?? null,
+            });
           };
-          const handleAddMembership = async () => {
-            if (!memVariant) return;
-            try { await addItem(memVariant, 1); } catch (e) { console.error(e); }
+          const handleAddMembership = () => {
+            addItem({
+              id: "membership",
+              kind: "membership",
+              title: memLabel,
+              priceCents: memPriceCents,
+            });
           };
+
 
 
           const pricingSection = (
@@ -349,9 +358,9 @@ function HomePage() {
                       disabled={!packId}
                       className="ring-glow inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50"
                     >
-                      <Plus className="h-4 w-4" /> {packId ? "Buy now" : "Coming soon"}
-
+                      <Plus className="h-4 w-4" /> {packId ? "Add to cart" : "Coming soon"}
                     </button>
+
                     <p className="mt-4 text-center text-[0.73rem] text-muted-foreground">
                       Secure checkout · Instant delivery · 30-day refund guarantee
                     </p>
@@ -390,14 +399,14 @@ function HomePage() {
                     </ul>
                     <button
                       onClick={handleAddMembership}
-                      disabled={!memVariant}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(56,182,255,0.5)] bg-[rgba(56,182,255,0.12)] py-3.5 text-center text-base font-bold tracking-[-0.01em] text-[#bae6fd] shadow-[0_0_36px_rgba(56,182,255,0.25),0_0_80px_rgba(56,182,255,0.12)] transition-all hover:-translate-y-0.5 hover:bg-[rgba(56,182,255,0.18)] disabled:opacity-60 disabled:hover:translate-y-0"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(56,182,255,0.5)] bg-[rgba(56,182,255,0.12)] py-3.5 text-center text-base font-bold tracking-[-0.01em] text-[#bae6fd] shadow-[0_0_36px_rgba(56,182,255,0.25),0_0_80px_rgba(56,182,255,0.12)] transition-all hover:-translate-y-0.5 hover:bg-[rgba(56,182,255,0.18)]"
                     >
-                      <Plus className="h-4 w-4" /> {memVariant ? "Add membership" : "Coming soon"}
+                      <Plus className="h-4 w-4" /> Add membership
                     </button>
                     <p className="mt-4 text-center text-[0.73rem] text-muted-foreground">
-                      Secure checkout via Shopify
+                      Secure checkout via Stripe
                     </p>
+
                   </div>
                 </div>
               </div>

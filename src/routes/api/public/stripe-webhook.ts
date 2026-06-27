@@ -31,7 +31,6 @@ async function verifyStripeSignature(
   const macHex = Array.from(new Uint8Array(macBuf))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-  // Constant-time compare.
   if (macHex.length !== sig.length) return false;
   let diff = 0;
   for (let i = 0; i < macHex.length; i++) diff |= macHex.charCodeAt(i) ^ sig.charCodeAt(i);
@@ -67,7 +66,7 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
         const session = event.data.object as {
           id: string;
           payment_status?: string;
-          metadata?: { user_id?: string; pack_id?: string };
+          metadata?: { user_id?: string; pack_id?: string; pack_ids?: string; membership?: string };
           client_reference_id?: string | null;
         };
         if (session.payment_status && session.payment_status !== "paid") {
@@ -75,24 +74,50 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
         }
 
         const userId = session.metadata?.user_id ?? session.client_reference_id ?? null;
-        const packId = session.metadata?.pack_id ?? null;
-        if (!userId || !packId) {
-          console.error("Webhook missing metadata", { sessionId: session.id });
+        if (!userId) {
+          console.error("Webhook missing user", { sessionId: session.id });
           return new Response("ok", { status: 200 });
+        }
+
+        // Support both legacy single pack_id and new pack_ids CSV.
+        const packIds = (session.metadata?.pack_ids ?? session.metadata?.pack_id ?? "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const isMembership = session.metadata?.membership === "1";
+
+        if (packIds.length === 0 && !isMembership) {
+          console.error("Webhook has no items", { sessionId: session.id });
+          return new Response("ok", { status: 200 });
+        }
+
+        const rows: Array<{
+          user_id: string;
+          pack_id: string | null;
+          stripe_session_id: string;
+          is_membership: boolean;
+        }> = [];
+        for (const pid of packIds) {
+          rows.push({
+            user_id: userId,
+            pack_id: pid,
+            stripe_session_id: session.id,
+            is_membership: false,
+          });
+        }
+        if (isMembership) {
+          rows.push({
+            user_id: userId,
+            pack_id: null,
+            stripe_session_id: session.id,
+            is_membership: true,
+          });
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { error } = await supabaseAdmin
           .from("purchases")
-          .upsert(
-            {
-              user_id: userId,
-              pack_id: packId,
-              stripe_session_id: session.id,
-              is_membership: false,
-            },
-            { onConflict: "stripe_session_id" },
-          );
+          .upsert(rows, { onConflict: "stripe_session_id,item_key" });
         if (error) {
           console.error("Webhook insert error", error);
           return new Response("DB error", { status: 500 });
