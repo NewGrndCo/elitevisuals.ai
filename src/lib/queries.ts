@@ -76,14 +76,7 @@ export type SiteContentMap = Record<string, Record<string, unknown>>;
 export const useSiteContent = () =>
   useQuery({
     queryKey: ["site_content"],
-    queryFn: async () => {
-      const { data, error } = await (supabase as unknown as { from: (t: string) => { select: (c: string) => Promise<{ data: { key: string; value: Record<string, unknown> }[] | null; error: unknown }> } })
-        .from("site_content").select("key,value");
-      if (error) throw error as Error;
-      const map: SiteContentMap = {};
-      (data ?? []).forEach((r) => { map[r.key] = r.value ?? {}; });
-      return map;
-    },
+    queryFn: fetchSiteContent,
     staleTime: 30_000,
   });
 
