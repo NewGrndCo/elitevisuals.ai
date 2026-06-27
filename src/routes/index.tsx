@@ -358,9 +358,9 @@ function HomePage() {
                       disabled={!packId}
                       className="ring-glow inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50"
                     >
-                      <Plus className="h-4 w-4" /> {packId ? "Buy now" : "Coming soon"}
-
+                      <Plus className="h-4 w-4" /> {packId ? "Add to cart" : "Coming soon"}
                     </button>
+
                     <p className="mt-4 text-center text-[0.73rem] text-muted-foreground">
                       Secure checkout · Instant delivery · 30-day refund guarantee
                     </p>
