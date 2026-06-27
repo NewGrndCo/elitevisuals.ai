@@ -404,7 +404,7 @@ function HomePage() {
                       <span className="mt-2 text-2xl font-semibold text-muted-foreground">$</span>
                       <span className="text-[4rem] font-extrabold leading-none tracking-[-0.06em]">{memPriceDollars}</span>
                     </div>
-                    <p className="mb-8 mt-1 text-[0.8rem] text-muted-foreground">Recurring · Every drop included.</p>
+                    <p className="mb-8 mt-1 text-[0.8rem] text-muted-foreground">One-time purchase. Every current and future drop.</p>
                     <ul className="mb-8 flex flex-col gap-3">
                       {memFeatures.map((f) => (
                         <li key={f} className="flex items-center gap-3 text-sm text-muted-foreground">
