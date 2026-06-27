@@ -34,8 +34,8 @@ export const getRouter = () => {
     // Serialize React Query cache from server to client so SSR'd content stays
     // intact through hydration — prevents the flash of fallback/default copy
     // before client-side queries resolve.
-    dehydrate: () => ({ queryClient: dehydrate(queryClient) }),
-    hydrate: (d: { queryClient: ReturnType<typeof dehydrate> }) => {
+    dehydrate: (): any => ({ queryClient: dehydrate(queryClient) }),
+    hydrate: (d: any) => {
       hydrate(queryClient, d.queryClient);
     },
   });
