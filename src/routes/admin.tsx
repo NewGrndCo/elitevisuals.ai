@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Admin — Elite Visuals" }] }),
+  head: () => ({ meta: [{ title: "Admin — Elite Visuals" }, { name: "robots", content: "noindex,nofollow" }] }),
   component: AdminPage,
 });
 
