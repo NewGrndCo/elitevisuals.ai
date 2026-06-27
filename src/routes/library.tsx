@@ -1,6 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { usePacks, usePrompts, useSiteContent, sc, type Pack } from "@/lib/queries";
+import {
+  usePacks, usePrompts, useSiteContent, sc, type Pack,
+  packsOptions, promptsOptions, siteContentOptions,
+} from "@/lib/queries";
 import { useMemo, useState } from "react";
 import { ArrowRight, Plus } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
@@ -16,6 +19,13 @@ export const Route = createFileRoute("/library")({
       { property: "og:description", content: "Browse all Elite Visuals prompt packs." },
     ],
   }),
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(packsOptions()),
+      context.queryClient.ensureQueryData(promptsOptions()),
+      context.queryClient.ensureQueryData(siteContentOptions()),
+    ]);
+  },
   component: LibraryPage,
 });
 
