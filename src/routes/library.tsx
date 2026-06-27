@@ -91,21 +91,22 @@ function LibraryPage() {
 
 function PackCard({ pack, count }: { pack: Pack; count: number }) {
   const navigate = useNavigate();
+  const { addItem } = useCart();
   const price = pack.price_cents != null ? `$${Math.round(pack.price_cents / 100)}` : null;
-  const [busy, setBusy] = useState(false);
 
-  const handleBuy = async (e: React.MouseEvent) => {
+  const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setBusy(true);
-    try {
-      const { startPackCheckout } = await import("@/lib/checkout-client");
-      await startPackCheckout(pack.id);
-    } catch (err) {
-      console.error(err);
-      setBusy(false);
-    }
+    addItem({
+      id: `pack:${pack.id}`,
+      kind: "pack",
+      packId: pack.id,
+      title: pack.title,
+      priceCents: pack.price_cents ?? 4900,
+      image: pack.cover_image_url ?? null,
+    });
   };
+
 
   return (
     <div
