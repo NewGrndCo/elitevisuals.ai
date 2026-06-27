@@ -17,6 +17,7 @@ import { Route as PromptSlugRouteImport } from './routes/prompt.$slug'
 import { Route as PackSlugRouteImport } from './routes/pack.$slug'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
+import { Route as ApiPublicPurchaseEmailRouteImport } from './routes/api/public/purchase-email'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -58,6 +59,11 @@ const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
   path: '/api/public/stripe-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPurchaseEmailRoute = ApiPublicPurchaseEmailRouteImport.update({
+  id: '/api/public/purchase-email',
+  path: '/api/public/purchase-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
+  '/api/public/purchase-email': typeof ApiPublicPurchaseEmailRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
+  '/api/public/purchase-email': typeof ApiPublicPurchaseEmailRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
+  '/api/public/purchase-email': typeof ApiPublicPurchaseEmailRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/checkout/success'
     | '/pack/$slug'
     | '/prompt/$slug'
+    | '/api/public/purchase-email'
     | '/api/public/stripe-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/checkout/success'
     | '/pack/$slug'
     | '/prompt/$slug'
+    | '/api/public/purchase-email'
     | '/api/public/stripe-webhook'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/checkout/success'
     | '/pack/$slug'
     | '/prompt/$slug'
+    | '/api/public/purchase-email'
     | '/api/public/stripe-webhook'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   CheckoutSuccessRoute: typeof CheckoutSuccessRoute
   PackSlugRoute: typeof PackSlugRoute
   PromptSlugRoute: typeof PromptSlugRoute
+  ApiPublicPurchaseEmailRoute: typeof ApiPublicPurchaseEmailRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
 }
 
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/purchase-email': {
+      id: '/api/public/purchase-email'
+      path: '/api/public/purchase-email'
+      fullPath: '/api/public/purchase-email'
+      preLoaderRoute: typeof ApiPublicPurchaseEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutSuccessRoute: CheckoutSuccessRoute,
   PackSlugRoute: PackSlugRoute,
   PromptSlugRoute: PromptSlugRoute,
+  ApiPublicPurchaseEmailRoute: ApiPublicPurchaseEmailRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport

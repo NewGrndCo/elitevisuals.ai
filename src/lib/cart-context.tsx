@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export type CartItem = {
   /** local id (e.g. `pack:<uuid>` or `membership`) — stable for dedup */
@@ -55,6 +57,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items]);
 
+  // Clear cart on sign-out so it doesn't persist across accounts.
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (!session) {
+        setItems([]);
+        if (typeof window !== "undefined") {
+          try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+        }
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   const addItem = useCallback((item: CartItem) => {
     setItems((prev) => (prev.find((p) => p.id === item.id) ? prev : [...prev, item]));
     setIsOpen(true);
@@ -72,8 +87,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (items.length === 0) return;
     setIsLoading(true);
     try {
+      const validItems = items.filter(
+        (i) => i.kind === "membership" || (i.kind === "pack" && !!i.packId),
+      );
+      if (validItems.length === 0) {
+        toast.error("Your cart is empty or contains invalid items.");
+        return;
+      }
       const { startCartCheckout } = await import("./checkout-client");
-      await startCartCheckout(items);
+      await startCartCheckout(validItems);
     } finally {
       setIsLoading(false);
     }
