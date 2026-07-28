@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { grantStripePurchase, type StripeCheckoutSession } from "@/lib/stripe-purchase.server";
 
 // Verify a Stripe webhook signature header (t=...,v1=...).
 async function verifyStripeSignature(
@@ -63,64 +64,21 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
           return new Response("ok", { status: 200 });
         }
 
-        const session = event.data.object as {
-          id: string;
-          payment_status?: string;
-          metadata?: { user_id?: string; pack_id?: string; pack_ids?: string; membership?: string };
-          client_reference_id?: string | null;
-        };
+        const session = event.data.object as StripeCheckoutSession;
         if (session.payment_status && session.payment_status !== "paid") {
           return new Response("ok", { status: 200 });
         }
 
-        const userId = session.metadata?.user_id ?? session.client_reference_id ?? null;
-        if (!userId) {
-          console.error("Webhook missing user", { sessionId: session.id });
-          return new Response("ok", { status: 200 });
-        }
-
-        // Support both legacy single pack_id and new pack_ids CSV.
-        const packIds = (session.metadata?.pack_ids ?? session.metadata?.pack_id ?? "")
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-        const isMembership = session.metadata?.membership === "1";
-
-        if (packIds.length === 0 && !isMembership) {
-          console.error("Webhook has no items", { sessionId: session.id });
-          return new Response("ok", { status: 200 });
-        }
-
-        const rows: Array<{
-          user_id: string;
-          pack_id: string | null;
-          stripe_session_id: string;
-          is_membership: boolean;
-        }> = [];
-        for (const pid of packIds) {
-          rows.push({
-            user_id: userId,
-            pack_id: pid,
-            stripe_session_id: session.id,
-            is_membership: false,
-          });
-        }
-        if (isMembership) {
-          rows.push({
-            user_id: userId,
-            pack_id: null,
-            stripe_session_id: session.id,
-            is_membership: true,
-          });
-        }
-
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { error } = await supabaseAdmin
-          .from("purchases")
-          .upsert(rows, { onConflict: "stripe_session_id,item_key" });
-        if (error) {
-          console.error("Webhook insert error", error);
-          console.error(JSON.stringify({ event: "webhook_db_failure", sessionId: session.id, error: String(error) }));
+        try {
+          await grantStripePurchase(session);
+        } catch (error) {
+          console.error(
+            JSON.stringify({
+              event: "webhook_purchase_grant_failure",
+              sessionId: session.id,
+              error: error instanceof Error ? error.message : String(error),
+            }),
+          );
           return new Response("DB error", { status: 500 });
         }
         return new Response("ok", { status: 200 });

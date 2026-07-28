@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -57,13 +65,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items]);
 
-  // Clear cart on sign-out so it doesn't persist across accounts.
+  // Clear only on an explicit sign-out. INITIAL_SESSION is also emitted with
+  // a null session for guests and must not erase a saved guest cart.
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!session) {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
         setItems([]);
         if (typeof window !== "undefined") {
-          try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+          try {
+            window.localStorage.removeItem(STORAGE_KEY);
+          } catch {
+            /* ignore */
+          }
         }
       }
     });

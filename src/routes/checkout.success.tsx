@@ -4,16 +4,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import { useUserPurchases } from "@/lib/queries";
+import { confirmCheckoutSession } from "@/lib/checkout.functions";
+import { useCart } from "@/lib/cart-context";
 
 export const Route = createFileRoute("/checkout/success")({
   validateSearch: (s: Record<string, unknown>) => ({
     session_id: typeof s.session_id === "string" ? s.session_id : "",
   }),
   head: () => ({
-    meta: [
-      { title: "Purchase complete — Elite Visuals" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Purchase complete — Elite Visuals" }, { name: "robots", content: "noindex" }],
   }),
   component: CheckoutSuccess,
 });
@@ -22,24 +21,55 @@ function CheckoutSuccess() {
   const qc = useQueryClient();
   const { session_id } = Route.useSearch();
   const { data: purchases, isLoading: purchasesLoading } = useUserPurchases();
-  const [timedOut, setTimedOut] = useState(false);
+  const { clearCart } = useCart();
+  const [status, setStatus] = useState<"confirming" | "confirmed" | "pending" | "error">(
+    session_id ? "confirming" : "pending",
+  );
 
   useEffect(() => {
-    let attempts = 0;
-    const max = 6;
-    const poll = setInterval(() => {
-      qc.invalidateQueries({ queryKey: ["user_purchases"] });
-      attempts++;
-      if (attempts >= max) {
-        clearInterval(poll);
-        setTimedOut(true);
-      }
-    }, 1500);
-    return () => clearInterval(poll);
-  }, [qc]);
+    if (!session_id) return;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
-  const hasPurchase =
-    !!purchases && (purchases.packIds.size > 0 || purchases.hasMembership);
+    const confirm = async (attempt: number) => {
+      try {
+        const result = await confirmCheckoutSession({
+          data: { sessionId: session_id },
+        });
+        if (!active) return;
+        if (result.confirmed) {
+          clearCart();
+          await qc.invalidateQueries({ queryKey: ["user_purchases"] });
+          if (active) setStatus("confirmed");
+          return;
+        }
+        if (attempt < 7) {
+          setStatus("pending");
+          timer = setTimeout(() => void confirm(attempt + 1), 1500);
+        } else {
+          setStatus("error");
+        }
+      } catch (error) {
+        console.error("Purchase confirmation failed", error);
+        if (!active) return;
+        if (attempt < 7) {
+          timer = setTimeout(() => void confirm(attempt + 1), 1500);
+        } else {
+          setStatus("error");
+        }
+      }
+    };
+
+    void confirm(1);
+    return () => {
+      active = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [clearCart, qc, session_id]);
+
+  const hasPurchase = session_id
+    ? status === "confirmed"
+    : !!purchases && (purchases.packIds.size > 0 || purchases.hasMembership);
 
   return (
     <>
@@ -62,14 +92,17 @@ function CheckoutSuccess() {
                 Open the library <ArrowRight className="h-4 w-4" />
               </Link>
             </>
-          ) : timedOut ? (
+          ) : status === "error" ? (
             <>
               <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-full bg-[rgba(124,92,252,0.15)]">
                 <CheckCircle2 className="h-7 w-7 text-[#a78bfa]" />
               </div>
-              <h1 className="font-display text-3xl font-bold tracking-[-0.02em]">Almost there.</h1>
+              <h1 className="font-display text-3xl font-bold tracking-[-0.02em]">
+                Payment received.
+              </h1>
               <p className="mt-3 text-sm text-muted-foreground">
-                Your receipt is processing — it can take a moment. Check your email or visit the library.
+                We couldn't unlock your library automatically. Please refresh this page in a moment.
+                If access is still locked, contact support with your receipt.
               </p>
               <Link
                 to="/library"

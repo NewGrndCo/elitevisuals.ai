@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getRequestHost, getRequestHeader } from "@tanstack/react-start/server";
+import { fetchStripeCheckoutSession, grantStripePurchase } from "./stripe-purchase.server";
 
 type PackRow = {
   id: string;
@@ -96,7 +97,7 @@ export const createCartCheckout = createServerFn({ method: "POST" })
     if (!input || !Array.isArray(input.items) || input.items.length === 0) {
       throw new Error("items required");
     }
-    if (input.items.length > 20) throw new Error("Too many items");
+    if (input.items.length > 10) throw new Error("Too many items");
     return input;
   })
   .handler(async ({ data, context }) => {
@@ -190,4 +191,24 @@ export const createCartCheckout = createServerFn({ method: "POST" })
     }
 
     return postStripeSession(form, secret);
+  });
+
+/**
+ * Verify a completed Checkout Session directly with Stripe and grant access.
+ * This is an authenticated fallback for delayed or misconfigured webhooks.
+ */
+export const confirmCheckoutSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { sessionId: string }) => {
+    if (!input?.sessionId || typeof input.sessionId !== "string" || input.sessionId.length > 255) {
+      throw new Error("Valid sessionId required");
+    }
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const secret = process.env.STRIPE_SECRET_KEY;
+    if (!secret) throw new Error("Stripe is not configured");
+
+    const session = await fetchStripeCheckoutSession(data.sessionId, secret);
+    return grantStripePurchase(session, context.userId);
   });
