@@ -1,9 +1,9 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useRef } from "react";
-import { ShoppingCart } from "lucide-react";
+import { useRef, useState } from "react";
+import { Heart, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import logoUrl from "@/assets/logo.png";
 import { useSiteContent, sc } from "@/lib/queries";
-import { useCart } from "@/lib/cart-context";
 
 const ADMIN_TAP_COUNT = 4;
 const ADMIN_TAP_WINDOW_MS = 1500;
@@ -12,7 +12,21 @@ export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const tapsRef = useRef<number[]>([]);
-  const { totalQuantity, openCart } = useCart();
+  const [donating, setDonating] = useState(false);
+
+  const handleDonate = async () => {
+    if (donating) return;
+    setDonating(true);
+    try {
+      const { startDonation } = await import("@/lib/checkout-client");
+      await startDonation(10);
+    } catch {
+      toast.error("Couldn't open the donation page. Please try again.");
+    } finally {
+      setDonating(false);
+    }
+  };
+
 
   const handleLogoTap = (e: React.MouseEvent) => {
     const now = Date.now();
