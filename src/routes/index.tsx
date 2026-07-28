@@ -56,7 +56,6 @@ function HomePage() {
   const { data: aiLogos } = useAiLogos();
   const { data: site } = useSiteContent();
   const { data: packs } = usePacks();
-  const featuredPack = packs?.[0];
   const totalPrompts = prompts?.length ?? 20;
   const totalStyles = cats?.length ?? 4;
   
@@ -67,7 +66,6 @@ function HomePage() {
   const headline = sc(site, "hero", "headline", "The best AI transitions for video editors.");
   const subhead = sc(site, "hero", "subhead", `A curated library of ${totalPrompts} image-to-video prompts engineered to create cinematic motion and transformation effects across modern AI video generation platforms.`);
   const ctaPrimary = sc(site, "hero", "cta_primary", "Explore Prompts");
-  const productImage = sc(site, "hero", "product_image", "");
   const heroBg = sc(site, "hero", "background_image", "");
 
   return (
