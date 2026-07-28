@@ -1,13 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import {
-  useCategories, usePrompts, useAiLogos, useSiteContent, usePacks, sc,
+  useCategories, usePrompts, useAiLogos, useSiteContent, sc,
   siteContentOptions, aiLogosOptions, categoriesOptions, packsOptions, promptsOptions,
 } from "@/lib/queries";
-import { useCart } from "@/lib/cart-context";
 import { getSectionOrder } from "@/lib/sections";
 import {
-  ArrowRight, Play, Monitor, UploadCloud, CheckCircle2, Timer, Sparkles, Waves, Zap, Check, Plus,
+  ArrowRight, Play, Monitor, UploadCloud, CheckCircle2, Timer, Sparkles, Waves, Zap,
 } from "lucide-react";
 import { useRef, useState } from "react";
 
@@ -56,9 +55,6 @@ function HomePage() {
   const { data: prompts } = usePrompts();
   const { data: aiLogos } = useAiLogos();
   const { data: site } = useSiteContent();
-  const { data: packs } = usePacks();
-  const { addItem } = useCart();
-  const featuredPack = packs?.[0];
   const totalPrompts = prompts?.length ?? 20;
   const totalStyles = cats?.length ?? 4;
   
@@ -69,7 +65,6 @@ function HomePage() {
   const headline = sc(site, "hero", "headline", "The best AI transitions for video editors.");
   const subhead = sc(site, "hero", "subhead", `A curated library of ${totalPrompts} image-to-video prompts engineered to create cinematic motion and transformation effects across modern AI video generation platforms.`);
   const ctaPrimary = sc(site, "hero", "cta_primary", "Explore Prompts");
-  const productImage = sc(site, "hero", "product_image", "");
   const heroBg = sc(site, "hero", "background_image", "");
 
   return (
@@ -284,164 +279,10 @@ function HomePage() {
             </section>
           );
 
-          const packPriceCents = featuredPack?.price_cents ?? 4900;
-          const packPriceDollars = Math.round(packPriceCents / 100);
-          const packId = featuredPack?.id ?? null;
-
-          const memPriceCents = Number(sc(site, "pricing", "membership_price_cents", "9900")) || 9900;
-          const memPriceDollars = Math.round(memPriceCents / 100);
-          const memLabel = sc(site, "pricing", "membership_label", "All-Access Membership");
-          const memFeaturesRaw = sc(
-            site,
-            "pricing",
-            "membership_features",
-            "Every current pack\nEvery future drop\nPriority support\nCommercial license",
-          );
-          const memFeatures = memFeaturesRaw.split("\n").map((s) => s.trim()).filter(Boolean);
-          
-
-          const handleAddPack = () => {
-            if (!packId || !featuredPack) return;
-            addItem({
-              id: `pack:${packId}`,
-              kind: "pack",
-              packId,
-              title: featuredPack.title ?? "Prompt Pack",
-              priceCents: packPriceCents,
-              image: featuredPack.cover_image_url ?? null,
-            });
-          };
-          const handleAddMembership = () => {
-            addItem({
-              id: "membership",
-              kind: "membership",
-              title: memLabel,
-              priceCents: memPriceCents,
-            });
-          };
-
-
-
-          const pricingSection = (
-            <section id="pricing" className="mx-auto max-w-[1200px] px-6 py-28">
-              <div className="mb-14 text-center">
-                <SectionTag>Pricing</SectionTag>
-                <h2 className="mx-auto max-w-[480px] text-[clamp(1.8rem,3.5vw,2.6rem)] font-bold leading-[1.2] tracking-[-0.03em]">
-                  Invest in your creativity.
-                </h2>
-                <p className="mb-0 mt-3 text-base text-muted-foreground">
-                  Gain access to the Elite Visuals prompt pack library.
-                </p>
-              </div>
-
-              <div className="mx-auto grid max-w-[1100px] gap-6 lg:grid-cols-2">
-                {/* Pack card */}
-                <div className="glass relative flex flex-col overflow-hidden rounded-[14px]">
-                  <div className="pointer-events-none absolute -top-16 left-1/2 h-[220px] w-[320px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(124,92,252,0.18),transparent_70%)]" />
-                  <div className="relative flex flex-1 flex-col p-8 sm:p-10">
-                    <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.08em] text-[#a78bfa]">
-                          {featuredPack?.title ?? "EVKT1: Kinetic V1"}
-                        </div>
-                        <div className="mt-1 text-[0.8rem] text-muted-foreground">Lifetime access · One-time payment</div>
-                      </div>
-                      <div className="rounded-full border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.12)] px-3.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] text-[#a78bfa]">
-                        {totalPrompts} Prompts
-                      </div>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="mt-2 text-2xl font-semibold text-muted-foreground">$</span>
-                      <span className="text-[4rem] font-extrabold leading-none tracking-[-0.06em]">{packPriceDollars}</span>
-                    </div>
-                    <p className="mb-8 mt-1 text-[0.8rem] text-muted-foreground">One-time purchase. Instant digital delivery.</p>
-                    <ul className="mb-8 flex flex-col gap-3">
-                      {[
-                        `${totalPrompts} curated image-to-video transition prompts`,
-                        `${totalStyles} motion styles: Temporal, Particle, Fluid, Energy`,
-                        "Compatible with Veo, Kling, Seedance, Runway, Hailuo & more",
-                        "Copy-and-paste format — no technical setup required",
-                        "Commercial use license included",
-                      ].map((f) => (
-                        <li key={f} className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span className="grid h-[18px] w-[18px] flex-shrink-0 place-items-center rounded-full border border-[rgba(124,92,252,0.25)] bg-[rgba(124,92,252,0.15)]">
-                            <Check className="h-2.5 w-2.5 text-[#a78bfa]" strokeWidth={3} />
-                          </span>
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      onClick={handleAddPack}
-                      disabled={!packId}
-                      className="ring-glow inline-flex w-full items-center justify-center gap-2 rounded-[10px] bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50"
-                    >
-                      <Plus className="h-4 w-4" /> {packId ? "Add to cart" : "Coming soon"}
-                    </button>
-
-                    <p className="mt-4 text-center text-[0.73rem] text-muted-foreground">
-                      Secure checkout · Instant delivery · 30-day refund guarantee
-                    </p>
-                  </div>
-                </div>
-
-                {/* Membership card */}
-                <div className="glass relative flex flex-col overflow-hidden rounded-[14px] border-[rgba(56,182,255,0.25)]">
-                  <div className="pointer-events-none absolute -top-16 left-1/2 h-[220px] w-[320px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(56,182,255,0.20),transparent_70%)]" />
-                  <div className="relative flex flex-1 flex-col p-8 sm:p-10">
-                    <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.08em] text-[#7dd3fc]">
-                          {memLabel}
-                        </div>
-                        <div className="mt-1 text-[0.8rem] text-muted-foreground">Unlock every pack · Lifetime access</div>
-                      </div>
-                      <div className="rounded-full border border-[rgba(56,182,255,0.3)] bg-[rgba(56,182,255,0.12)] px-3.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] text-[#7dd3fc]">
-                        All Access
-                      </div>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="mt-2 text-2xl font-semibold text-muted-foreground">$</span>
-                      <span className="text-[4rem] font-extrabold leading-none tracking-[-0.06em]">{memPriceDollars}</span>
-                    </div>
-                    <p className="mb-8 mt-1 text-[0.8rem] text-muted-foreground">One-time purchase. Every current and future drop.</p>
-                    <ul className="mb-8 flex flex-col gap-3">
-                      {memFeatures.map((f) => (
-                        <li key={f} className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span className="grid h-[18px] w-[18px] flex-shrink-0 place-items-center rounded-full border border-[rgba(56,182,255,0.3)] bg-[rgba(56,182,255,0.15)]">
-                            <Check className="h-2.5 w-2.5 text-[#7dd3fc]" strokeWidth={3} />
-                          </span>
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      onClick={handleAddMembership}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-[10px] border border-[rgba(56,182,255,0.5)] bg-[rgba(56,182,255,0.12)] py-3.5 text-center text-base font-bold tracking-[-0.01em] text-[#bae6fd] shadow-[0_0_36px_rgba(56,182,255,0.25),0_0_80px_rgba(56,182,255,0.12)] transition-all hover:-translate-y-0.5 hover:bg-[rgba(56,182,255,0.18)]"
-                    >
-                      <Plus className="h-4 w-4" /> Add membership
-                    </button>
-                    <p className="mt-4 text-center text-[0.73rem] text-muted-foreground">
-                      Secure checkout via Stripe
-                    </p>
-
-                  </div>
-                </div>
-              </div>
-
-              {productImage && (
-                <div className="mx-auto mt-10 max-w-[1100px] overflow-hidden rounded-[14px] border border-border">
-                  <img src={productImage} alt="Product preview" className="h-full w-full object-cover" loading="lazy" decoding="async" />
-                </div>
-              )}
-            </section>
-          );
-
           const sectionMap: Record<string, React.ReactNode> = {
             demo: demoSection,
             workflow: workflowSection,
             styles: stylesSection,
-            pricing: pricingSection,
           };
 
           return sectionOrder.map((id, i) => (

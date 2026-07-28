@@ -610,12 +610,6 @@ const LANDING_BLOCKS: Block[] = [
     { name: "description", label: "Page description", type: "textarea" },
     { name: "hero_image", label: "Image above page title", type: "image" },
   ]},
-  { key: "pricing", label: "Pricing", fields: [
-    { name: "membership_price_cents", label: "Membership price (cents)", type: "text" },
-    { name: "membership_shopify_variant_id", label: "Membership Shopify Variant GID", type: "text" },
-    { name: "membership_label", label: "Membership tier label (One-time / All-Access)", type: "text" },
-    { name: "membership_features", label: "Membership features (one per line)", type: "textarea" },
-  ]},
   { key: "footer", label: "Footer", fields: [
     { name: "copyright", label: "Copyright text", type: "text" },
     { name: "tagline", label: "Tagline (after copyright)", type: "text" },
@@ -1075,17 +1069,6 @@ function PackEditor({ pack, onDelete, onClose }: { pack: Pack; onDelete: () => v
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Title"><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
         <Field label="Slug"><input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none" /></Field>
-        <div>
-          <Field label="Price (cents) — e.g. 4900 = $49.00">
-            <input
-              type="number"
-              value={form.price_cents ?? 0}
-              onChange={(e) => setForm({ ...form, price_cents: Number(e.target.value) || 0 })}
-              className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm font-mono outline-none"
-            />
-          </Field>
-          <div className="mt-1 text-xs text-muted-foreground">${((form.price_cents ?? 0) / 100).toFixed(2)}</div>
-        </div>
       </div>
       <Field label="Description"><textarea value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="glass w-full rounded-xl bg-transparent px-3 py-2 text-sm outline-none" /></Field>
       <MediaField label="Cover image" url={form.cover_image_url} accept="image/*" onUrl={(u) => setForm({ ...form, cover_image_url: u })} onFile={upload} preview="image" />

@@ -5,8 +5,7 @@ import {
   packsOptions, promptsOptions, siteContentOptions,
 } from "@/lib/queries";
 import { useMemo, useState } from "react";
-import { ArrowRight, Plus } from "lucide-react";
-import { useCart } from "@/lib/cart-context";
+import { ArrowRight } from "lucide-react";
 
 
 
@@ -101,22 +100,6 @@ function LibraryPage() {
 
 function PackCard({ pack, count }: { pack: Pack; count: number }) {
   const navigate = useNavigate();
-  const { addItem } = useCart();
-  const price = pack.price_cents != null ? `$${Math.round(pack.price_cents / 100)}` : null;
-
-  const handleAdd = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addItem({
-      id: `pack:${pack.id}`,
-      kind: "pack",
-      packId: pack.id,
-      title: pack.title,
-      priceCents: pack.price_cents ?? 4900,
-      image: pack.cover_image_url ?? null,
-    });
-  };
-
 
   return (
     <div
@@ -132,11 +115,6 @@ function PackCard({ pack, count }: { pack: Pack; count: number }) {
           }} />
         )}
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
-        {price && (
-          <div className="absolute left-3 top-3 rounded-full border border-[rgba(124,92,252,0.4)] bg-[rgba(124,92,252,0.25)] px-3 py-1 text-xs font-extrabold tracking-[-0.01em] text-[#c4b5fd] backdrop-blur">
-            {price}
-          </div>
-        )}
         <div className="absolute left-3 bottom-3 rounded-full border border-[rgba(124,92,252,0.4)] bg-[rgba(124,92,252,0.25)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#c4b5fd] backdrop-blur">
           {count} prompts
         </div>
@@ -155,12 +133,6 @@ function PackCard({ pack, count }: { pack: Pack; count: number }) {
           >
             Explore <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
-          <button
-            onClick={handleAdd}
-            className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(124,92,252,0.35)] bg-[rgba(124,92,252,0.08)] px-3.5 py-1.5 text-xs font-bold text-[#a78bfa] transition-colors hover:bg-[rgba(124,92,252,0.18)] hover:shadow-[0_0_20px_rgba(124,92,252,0.3)]"
-          >
-            <Plus className="h-3 w-3" /> Add to cart
-          </button>
 
         </div>
       </div>

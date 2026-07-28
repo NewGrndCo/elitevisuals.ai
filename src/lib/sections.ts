@@ -1,23 +1,37 @@
-import type { SiteContentMap } from "./queries";
+export type SectionId = "demo" | "workflow" | "styles";
 
-export const DEFAULT_SECTIONS = [
-  { id: "demo", label: "Demo Reel" },
+export const DEFAULT_SECTIONS: { id: SectionId; label: string }[] = [
+  { id: "demo", label: "Video demo" },
   { id: "workflow", label: "Workflow" },
-  { id: "styles", label: "Motion Styles" },
-  { id: "pricing", label: "Pricing" },
-] as const;
+  { id: "styles", label: "Motion styles" },
+];
 
-export type SectionId = typeof DEFAULT_SECTIONS[number]["id"];
+/** Back-compat alias. */
+export const ALL_SECTIONS = DEFAULT_SECTIONS;
 
-export function getSectionOrder(site: SiteContentMap | undefined): SectionId[] {
-  const raw = (site?.layout as { sections?: unknown } | undefined)?.sections;
-  const ids = DEFAULT_SECTIONS.map((s) => s.id);
-  if (!Array.isArray(raw)) return ids;
-  const valid = (raw as unknown[]).filter(
-    (x): x is SectionId => typeof x === "string" && (ids as readonly string[]).includes(x),
-  );
-  ids.forEach((id) => {
-    if (!valid.includes(id)) valid.push(id);
-  });
-  return valid;
+const DEFAULT_ORDER: SectionId[] = DEFAULT_SECTIONS.map((s) => s.id);
+
+type SiteContentLike = Record<string, Record<string, unknown>>;
+
+/**
+ * Accepts either the raw comma-separated string or the site-content map
+ * (reads `layout.sections`).
+ */
+export function getSectionOrder(source?: SiteContentLike | string | null): SectionId[] {
+  let raw: string[] = [];
+
+  if (typeof source === "string") {
+    raw = source.split(",");
+  } else if (source && typeof source === "object") {
+    const value = source.layout?.sections;
+    if (Array.isArray(value)) raw = value.map((v) => String(v));
+    else if (typeof value === "string") raw = value.split(",");
+  }
+
+  const valid = new Set<string>(DEFAULT_ORDER);
+  const parsed = raw
+    .map((s) => s.trim())
+    .filter((s): s is SectionId => valid.has(s));
+  const seen = new Set(parsed);
+  return [...parsed, ...DEFAULT_ORDER.filter((s) => !seen.has(s))];
 }

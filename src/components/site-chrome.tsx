@@ -1,9 +1,9 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useRef } from "react";
-import { ShoppingCart } from "lucide-react";
+import { useRef, useState } from "react";
+import { Heart, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import logoUrl from "@/assets/logo.png";
 import { useSiteContent, sc } from "@/lib/queries";
-import { useCart } from "@/lib/cart-context";
 
 const ADMIN_TAP_COUNT = 4;
 const ADMIN_TAP_WINDOW_MS = 1500;
@@ -12,7 +12,21 @@ export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const tapsRef = useRef<number[]>([]);
-  const { totalQuantity, openCart } = useCart();
+  const [donating, setDonating] = useState(false);
+
+  const handleDonate = async () => {
+    if (donating) return;
+    setDonating(true);
+    try {
+      const { startDonation } = await import("@/lib/checkout-client");
+      await startDonation(10);
+    } catch {
+      toast.error("Couldn't open the donation page. Please try again.");
+    } finally {
+      setDonating(false);
+    }
+  };
+
 
   const handleLogoTap = (e: React.MouseEvent) => {
     const now = Date.now();
@@ -59,16 +73,17 @@ export function SiteHeader() {
             );
           })}
           <button
-            onClick={openCart}
-            aria-label="Open cart"
-            className="relative ml-1 grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+            onClick={handleDonate}
+            disabled={donating}
+            aria-label="Donate to support Elite Visuals"
+            className="ml-1 inline-flex items-center gap-1.5 rounded-full border border-[rgba(124,92,252,0.35)] bg-[rgba(124,92,252,0.12)] px-3.5 py-1.5 text-sm font-semibold text-[#c4b5fd] transition-all hover:bg-[rgba(124,92,252,0.2)] hover:shadow-[0_0_20px_rgba(124,92,252,0.3)] disabled:opacity-60"
           >
-            <ShoppingCart className="h-[18px] w-[18px]" />
-            {totalQuantity > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[rgba(124,92,252,0.95)] px-1 text-[10px] font-bold text-white shadow-[0_0_10px_rgba(124,92,252,0.5)]">
-                {totalQuantity}
-              </span>
+            {donating ? (
+              <Loader2 className="h-[15px] w-[15px] animate-spin" />
+            ) : (
+              <Heart className="h-[15px] w-[15px]" />
             )}
+            <span className="hidden sm:inline">Donate</span>
           </button>
         </nav>
       </div>
