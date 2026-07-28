@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import {
-  useCategories, usePrompts, useAiLogos, useSiteContent, usePacks, sc,
+  useCategories, usePrompts, useAiLogos, useSiteContent, sc,
   siteContentOptions, aiLogosOptions, categoriesOptions, packsOptions, promptsOptions,
 } from "@/lib/queries";
 import { getSectionOrder } from "@/lib/sections";
@@ -55,7 +55,6 @@ function HomePage() {
   const { data: prompts } = usePrompts();
   const { data: aiLogos } = useAiLogos();
   const { data: site } = useSiteContent();
-  const { data: packs } = usePacks();
   const totalPrompts = prompts?.length ?? 20;
   const totalStyles = cats?.length ?? 4;
   
