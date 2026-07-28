@@ -610,12 +610,6 @@ const LANDING_BLOCKS: Block[] = [
     { name: "description", label: "Page description", type: "textarea" },
     { name: "hero_image", label: "Image above page title", type: "image" },
   ]},
-  { key: "pricing", label: "Pricing", fields: [
-    { name: "membership_price_cents", label: "Membership price (cents)", type: "text" },
-    { name: "membership_shopify_variant_id", label: "Membership Shopify Variant GID", type: "text" },
-    { name: "membership_label", label: "Membership tier label (One-time / All-Access)", type: "text" },
-    { name: "membership_features", label: "Membership features (one per line)", type: "textarea" },
-  ]},
   { key: "footer", label: "Footer", fields: [
     { name: "copyright", label: "Copyright text", type: "text" },
     { name: "tagline", label: "Tagline (after copyright)", type: "text" },
