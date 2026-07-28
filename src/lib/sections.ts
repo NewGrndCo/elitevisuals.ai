@@ -1,23 +1,19 @@
-import type { SiteContentMap } from "./queries";
+export type SectionId = "demo" | "workflow" | "styles";
 
-export const DEFAULT_SECTIONS = [
-  { id: "demo", label: "Demo Reel" },
+export const ALL_SECTIONS: { id: SectionId; label: string }[] = [
+  { id: "demo", label: "Video demo" },
   { id: "workflow", label: "Workflow" },
-  { id: "styles", label: "Motion Styles" },
-  { id: "pricing", label: "Pricing" },
-] as const;
+  { id: "styles", label: "Motion styles" },
+];
 
-export type SectionId = typeof DEFAULT_SECTIONS[number]["id"];
+const DEFAULT_ORDER: SectionId[] = ["demo", "workflow", "styles"];
 
-export function getSectionOrder(site: SiteContentMap | undefined): SectionId[] {
-  const raw = (site?.layout as { sections?: unknown } | undefined)?.sections;
-  const ids = DEFAULT_SECTIONS.map((s) => s.id);
-  if (!Array.isArray(raw)) return ids;
-  const valid = (raw as unknown[]).filter(
-    (x): x is SectionId => typeof x === "string" && (ids as readonly string[]).includes(x),
-  );
-  ids.forEach((id) => {
-    if (!valid.includes(id)) valid.push(id);
-  });
-  return valid;
+export function getSectionOrder(raw?: string | null): SectionId[] {
+  const valid = new Set(ALL_SECTIONS.map((s) => s.id));
+  const parsed = (raw ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s): s is SectionId => valid.has(s as SectionId));
+  const seen = new Set(parsed);
+  return [...parsed, ...DEFAULT_ORDER.filter((s) => !seen.has(s))];
 }
