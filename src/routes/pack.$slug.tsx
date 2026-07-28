@@ -1,14 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import {
-  useCategories, usePack, usePromptsByPack, useUserPurchases,
+  useCategories, usePack, usePromptsByPack,
   packOptions, promptsByPackOptions, categoriesOptions,
 } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo, useState } from "react";
-import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft, Lock, ShoppingCart, Plus } from "lucide-react";
+import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { useCart } from "@/lib/cart-context";
 
 
 
@@ -74,87 +73,29 @@ function CopyButton({ slug, text }: { slug: string; text: string }) {
   );
 }
 
-function PromptCard({ p, accent, isUnlocked, pack }: { p: PromptRow; accent: string; isUnlocked: boolean; pack: { id: string; title?: string | null; price_cents?: number | null; cover_image_url?: string | null } | null }) {
-  const { addItem } = useCart();
-  const onBuy = (e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    if (!pack?.id) return;
-    addItem({
-      id: `pack:${pack.id}`,
-      kind: "pack",
-      packId: pack.id,
-      title: pack.title ?? "Prompt Pack",
-      priceCents: pack.price_cents ?? 4900,
-      image: pack.cover_image_url ?? null,
-    });
-  };
-
-
+function PromptCard({ p, accent }: { p: PromptRow; accent: string }) {
   return (
     <div className="glass group relative w-[78vw] shrink-0 snap-start overflow-hidden rounded-3xl sm:w-[55vw] md:w-auto md:shrink">
-      {isUnlocked && <CopyButton slug={p.slug} text={p.prompt_text} />}
-      {isUnlocked ? (
-        <Link to="/prompt/$slug" params={{ slug: p.slug }} className="block">
-          <div className="relative aspect-[4/3] overflow-hidden">
-            {p.cover_image_url ? (
-              <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
-            ) : (
-              <div className="h-full w-full" style={{
-                background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
-              }} />
-            )}
-            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
-          </div>
-        </Link>
-      ) : (
-        <div className="block">
-          <div className="relative aspect-[4/3] overflow-hidden">
-            {p.cover_image_url ? (
-              <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
-            ) : (
-              <div className="h-full w-full" style={{
-                background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
-              }} />
-            )}
-            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
-          </div>
-        </div>
-      )}
-      <div className="p-5">
-        {isUnlocked ? (
-          <Link to="/prompt/$slug" params={{ slug: p.slug }} className="font-display text-lg font-semibold hover:text-[#a78bfa] focus:outline-none">
-            {p.title}
-          </Link>
-        ) : (
-          <span className="font-display text-lg font-semibold text-foreground">
-            {p.title}
-          </span>
-        )}
-        <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
-
-        <div className="relative mt-4 min-h-[88px] overflow-hidden rounded-xl border border-white/5 bg-black/30 p-3">
-          {isUnlocked ? (
-            <p className="line-clamp-4 font-mono text-xs leading-relaxed text-white/80">{p.prompt_text}</p>
+      <CopyButton slug={p.slug} text={p.prompt_text} />
+      <Link to="/prompt/$slug" params={{ slug: p.slug }} className="block">
+        <div className="relative aspect-[4/3] overflow-hidden">
+          {p.cover_image_url ? (
+            <img src={p.cover_image_url} alt={p.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" decoding="async" />
           ) : (
-            <>
-              <div className="pointer-events-none select-none" style={{ filter: "blur(6px)" }} aria-hidden>
-                <p className="line-clamp-4 font-mono text-xs leading-relaxed text-white/80">{p.prompt_text}</p>
-              </div>
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30 backdrop-blur-[2px]">
-                <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/90">
-                  <Lock className="h-3.5 w-3.5 text-[#a78bfa]" /> Purchase to unlock
-                </div>
-                <button
-                  onClick={onBuy}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#a78bfa] px-3 py-1.5 text-[11px] font-semibold text-black transition hover:bg-[#c4b5fd]"
-                >
-                  <Plus className="h-3 w-3" /> Add to cart
-                </button>
-
-
-              </div>
-            </>
+            <div className="h-full w-full" style={{
+              background: `radial-gradient(circle at 30% 30%, ${accent}55, transparent 60%), radial-gradient(circle at 70% 70%, #22d3ee35, transparent 60%), #1a1830`,
+            }} />
           )}
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+        </div>
+      </Link>
+      <div className="p-5">
+        <Link to="/prompt/$slug" params={{ slug: p.slug }} className="font-display text-lg font-semibold hover:text-[#a78bfa] focus:outline-none">
+          {p.title}
+        </Link>
+        <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
+        <div className="relative mt-4 min-h-[88px] overflow-hidden rounded-xl border border-white/5 bg-black/30 p-3">
+          <p className="line-clamp-4 font-mono text-xs leading-relaxed text-white/80">{p.prompt_text}</p>
         </div>
       </div>
     </div>
@@ -167,9 +108,6 @@ function PackPage() {
   const { data: pack, isLoading: packLoading } = usePack(slug);
   const { data: cats } = useCategories();
   const { data: prompts, isLoading } = usePromptsByPack(pack?.id);
-  const { data: purchases } = useUserPurchases();
-  const { addItem } = useCart();
-  const isUnlocked = !!(pack && (purchases?.hasMembership || purchases?.packIds.has(pack.id)));
 
 
 
@@ -221,32 +159,6 @@ function PackPage() {
             </p>
           )}
 
-          {!isUnlocked && pack?.id && (
-            <div className="mx-auto mt-6 flex max-w-lg flex-col items-center gap-3 rounded-3xl border border-[rgba(167,139,250,0.25)] bg-[rgba(167,139,250,0.08)] px-8 py-6 text-center">
-              <Lock className="h-5 w-5 text-[#a78bfa]" />
-              <p className="text-sm text-muted-foreground">
-                Purchase this pack to unlock all prompts and copy them directly to your AI tools.
-              </p>
-              <button
-                onClick={() => {
-                  if (!pack?.id) return;
-                  addItem({
-                    id: `pack:${pack.id}`,
-                    kind: "pack",
-                    packId: pack.id,
-                    title: pack.title ?? "Prompt Pack",
-                    priceCents: pack.price_cents ?? 4900,
-                    image: pack.cover_image_url ?? null,
-                  });
-                }}
-                className="ring-glow inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                Add to cart — ${((pack.price_cents ?? 4900) / 100).toFixed(0)}
-              </button>
-
-            </div>
-          )}
 
         </section>
         )}
@@ -275,7 +187,7 @@ function PackPage() {
                   <span className="font-mono text-xs text-muted-foreground">{items.length} prompts</span>
                 </div>
                 <div className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:snap-none md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
-                  {items.map((p) => <PromptCard key={p.id} p={p} accent={accent} isUnlocked={isUnlocked} pack={pack ?? null} />)}
+                  {items.map((p) => <PromptCard key={p.id} p={p} accent={accent} />)}
                 </div>
               </div>
             );
@@ -289,7 +201,7 @@ function PackPage() {
               <div>
                 <div className="mb-5"><h2 className="font-display text-2xl font-bold lowercase">other</h2></div>
                 <div className="grid gap-4 md:grid-cols-3">
-                  {uncat.map((p) => <PromptCard key={p.id} p={p} accent="#a78bfa" isUnlocked={isUnlocked} pack={pack ?? null} />)}
+                  {uncat.map((p) => <PromptCard key={p.id} p={p} accent="#a78bfa" />)}
                 </div>
               </div>
             );
