@@ -1,5 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { grantStripePurchase, type StripeCheckoutSession } from "@/lib/stripe-purchase.server";
+
+/**
+ * Stripe webhook receiver.
+ *
+ * Everything on the site is free and Stripe is used only for optional
+ * donations, so there are no entitlements to grant. This endpoint verifies
+ * the signature and acknowledges the event.
+ *
+ * It previously called grantStripePurchase() on every completed session.
+ * Donation sessions carry no metadata.user_id and no client_reference_id, so
+ * that threw "Checkout session does not belong to this account" and returned
+ * 500 for every successful donation — Stripe would retry for three days and
+ * then disable the endpoint.
+ *
+ * Optional env: STRIPE_WEBHOOK_SECRET. If the endpoint is unregistered in
+ * Stripe this route can be deleted outright.
+ */
+
+type StripeEvent = {
+  id?: string;
+  type: string;
+  data: { object: Record<string, unknown> };
+};
 
 // Verify a Stripe webhook signature header (t=...,v1=...).
 async function verifyStripeSignature(
@@ -47,40 +69,30 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
 
         const payload = await request.text();
         const sig = request.headers.get("stripe-signature");
-        const ok = await verifyStripeSignature(payload, sig, secret);
-        if (!ok) return new Response("Invalid signature", { status: 401 });
+        if (!(await verifyStripeSignature(payload, sig, secret))) {
+          return new Response("Invalid signature", { status: 401 });
+        }
 
-        let event: { type: string; data: { object: Record<string, unknown> } };
+        let event: StripeEvent;
         try {
           event = JSON.parse(payload);
         } catch {
           return new Response("Invalid JSON", { status: 400 });
         }
 
-        if (
-          event.type !== "checkout.session.completed" &&
-          event.type !== "checkout.session.async_payment_succeeded"
-        ) {
-          return new Response("ok", { status: 200 });
-        }
-
-        const session = event.data.object as StripeCheckoutSession;
-        if (session.payment_status && session.payment_status !== "paid") {
-          return new Response("ok", { status: 200 });
-        }
-
-        try {
-          await grantStripePurchase(session);
-        } catch (error) {
-          console.error(
+        if (event.type === "checkout.session.completed") {
+          const session = event.data.object as { id?: string; amount_total?: number };
+          // Observability only — no database writes, nothing to unlock.
+          console.info(
             JSON.stringify({
-              event: "webhook_purchase_grant_failure",
+              event: "donation_completed",
               sessionId: session.id,
-              error: error instanceof Error ? error.message : String(error),
+              amountTotal: session.amount_total,
             }),
           );
-          return new Response("DB error", { status: 500 });
         }
+
+        // Acknowledge everything else so Stripe never retries or disables us.
         return new Response("ok", { status: 200 });
       },
     },
