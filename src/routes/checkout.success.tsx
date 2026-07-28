@@ -12,7 +12,7 @@ export const Route = createFileRoute("/checkout/success")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: DonationSuccess;
+  component: DonationSuccess,
 });
 
 function DonationSuccess() {
