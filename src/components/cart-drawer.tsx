@@ -1,7 +1,6 @@
 import { useCart } from "@/lib/cart-context";
 import { ShoppingBag, X, Trash2, Loader2 } from "lucide-react";
 import { useEffect } from "react";
-import { toast } from "sonner";
 
 function formatMoney(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
@@ -55,7 +54,11 @@ export function CartDrawer() {
                 <li key={line.id} className="glass flex gap-3 rounded-2xl p-3">
                   <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-[rgba(124,92,252,0.1)]">
                     {line.image ? (
-                      <img src={line.image} alt={line.title} className="h-full w-full object-cover" />
+                      <img
+                        src={line.image}
+                        alt={line.title}
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <div
                         className="h-full w-full"
@@ -69,10 +72,14 @@ export function CartDrawer() {
                   <div className="flex flex-1 flex-col justify-between">
                     <div>
                       <div className="text-sm font-semibold leading-tight">{line.title}</div>
-                      <div className="mt-0.5 text-xs text-muted-foreground capitalize">{line.kind}</div>
+                      <div className="mt-0.5 text-xs text-muted-foreground capitalize">
+                        {line.kind}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="text-sm font-bold text-[#a78bfa]">{formatMoney(line.priceCents)}</div>
+                      <div className="text-sm font-bold text-[#a78bfa]">
+                        {formatMoney(line.priceCents)}
+                      </div>
                       <button
                         onClick={() => removeItem(line.id)}
                         className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-[rgba(124,92,252,0.12)] hover:text-foreground"
@@ -98,14 +105,8 @@ export function CartDrawer() {
               onClick={async () => {
                 try {
                   await checkout();
-                  setTimeout(() => {
-                    toast.info("If checkout didn't open, click here to try again.", {
-                      action: { label: "Open checkout", onClick: () => checkout() },
-                      duration: 8000,
-                    });
-                  }, 3000);
-                } catch {
-                  toast.error("Checkout failed. Please try again.");
+                } catch (error) {
+                  console.error("Checkout failed", error);
                 }
               }}
               disabled={isLoading}
