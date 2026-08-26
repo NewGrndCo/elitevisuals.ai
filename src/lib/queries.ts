@@ -88,12 +88,18 @@ const fetchSkills = async (includeUnpublished = false) => {
     .order("created_at", { ascending: false });
   if (!includeUnpublished) q = q.eq("is_published", true);
   const { data, error } = await q;
-  if (error) throw error;
+  if (error) {
+    if (import.meta.env.DEV) return DEMO_SKILLS;
+    throw error;
+  }
   return data as Skill[];
 };
 const fetchSkill = async (slug: string) => {
   const { data, error } = await supabase.from("skills").select("*").eq("slug", slug).maybeSingle();
-  if (error) throw error;
+  if (error) {
+    if (import.meta.env.DEV) return DEMO_SKILLS.find((skill) => skill.slug === slug) ?? null;
+    throw error;
+  }
   return data as Skill | null;
 };
 const fetchSkillVersions = async (skillId: string, includeUnpublished = false) => {
@@ -104,7 +110,10 @@ const fetchSkillVersions = async (skillId: string, includeUnpublished = false) =
     .order("created_at", { ascending: false });
   if (!includeUnpublished) q = q.eq("is_published", true);
   const { data, error } = await q;
-  if (error) throw error;
+  if (error) {
+    if (import.meta.env.DEV && skillId === DEMO_SKILL_ID) return DEMO_SKILL_VERSIONS;
+    throw error;
+  }
   return data as SkillVersion[];
 };
 
@@ -266,6 +275,41 @@ export type SkillVersion = {
   is_published: boolean;
   created_at: string;
 };
+
+const DEMO_SKILL_ID = "11111111-1111-4111-8111-111111111111";
+const DEMO_SKILLS: Skill[] = [
+  {
+    id: DEMO_SKILL_ID,
+    slug: "elite-visuals-reel-script-writer",
+    title: "Elite Visuals Reel Script Writer",
+    summary: "Turn AI news, tools, and ideas into high-retention Instagram Reel scripts.",
+    description:
+      "A production-ready writing system for hooks, pacing, education, and creator-focused calls to action.",
+    cover_image_url: null,
+    compatibility: ["Codex", "ChatGPT"],
+    install_instructions:
+      "Download and extract the ZIP, then place the skill folder inside your Codex skills directory.",
+    price_cents: 0,
+    is_featured: true,
+    is_published: true,
+    sort_order: 0,
+    created_at: new Date(0).toISOString(),
+    updated_at: new Date(0).toISOString(),
+  },
+];
+const DEMO_SKILL_VERSIONS: SkillVersion[] = [
+  {
+    id: "22222222-2222-4222-8222-222222222222",
+    skill_id: DEMO_SKILL_ID,
+    version: "1.0.0",
+    changelog: "Initial release",
+    storage_path: "demo-only",
+    file_size: 1024,
+    sha256: "0".repeat(64),
+    is_published: true,
+    created_at: new Date(0).toISOString(),
+  },
+];
 
 export const useSkills = (includeUnpublished = false) =>
   useQuery(skillsOptions(includeUnpublished));
