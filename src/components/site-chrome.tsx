@@ -45,7 +45,7 @@ export function SiteHeader() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4">
-      <div className="glass flex w-full max-w-6xl items-center justify-between rounded-2xl px-4 py-2.5 sm:px-6">
+      <div className="flex w-full max-w-[920px] items-center justify-between rounded-full border border-black/[0.07] bg-white/90 px-3 py-2 shadow-[0_12px_40px_rgba(38,18,75,0.10)] backdrop-blur-xl sm:px-5">
         <Link
           to="/"
           onClick={handleLogoTap}
@@ -61,7 +61,9 @@ export function SiteHeader() {
             className="h-8 w-8 select-none object-contain sm:h-9 sm:w-9"
             draggable={false}
           />
-          <span className="tracking-[0.18em] text-white">ELITEVISUALS.AI</span>
+          <span className="hidden tracking-[-0.025em] text-foreground sm:inline">
+            ELITEVISUALS.AI
+          </span>
         </Link>
         <nav className="flex items-center gap-1">
           {nav.map((n) => {
@@ -70,7 +72,7 @@ export function SiteHeader() {
               <Link
                 key={n.to}
                 to={n.to}
-                className={`rounded-full px-4 py-1.5 text-sm transition-colors ${active ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                className={`rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${active ? "bg-[#f1ebff] text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {n.label}
               </Link>
@@ -80,7 +82,7 @@ export function SiteHeader() {
             onClick={handleDonate}
             disabled={donating}
             aria-label="Donate to support Elite Visuals"
-            className="ml-1 inline-flex items-center gap-1.5 rounded-full border border-[rgba(124,92,252,0.35)] bg-[rgba(124,92,252,0.12)] px-3.5 py-1.5 text-sm font-semibold text-[#c4b5fd] transition-all hover:bg-[rgba(124,92,252,0.2)] hover:shadow-[0_0_20px_rgba(124,92,252,0.3)] disabled:opacity-60"
+            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#6d28d9] disabled:opacity-60"
           >
             {donating ? (
               <Loader2 className="h-[15px] w-[15px] animate-spin" />
@@ -99,7 +101,7 @@ export function SiteFooter() {
   const { data: site } = useSiteContent();
   const year = new Date().getFullYear();
   const copyright = sc(site, "footer", "copyright", `© ${year} Elite Visuals.`);
-  const tagline = sc(site, "footer", "tagline", "All prompts crafted in the dark.");
+  const tagline = sc(site, "footer", "tagline", "Ideas, engineered visually.");
 
   const cmsLinks = [1, 2, 3, 4]
     .map((i) => ({
@@ -118,8 +120,8 @@ export function SiteFooter() {
         ];
 
   return (
-    <footer className="mt-24 border-t border-border/40 px-6 py-10">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
+    <footer className="mt-20 border-t border-border px-6 py-10">
+      <div className="mx-auto flex max-w-[1500px] flex-col items-center justify-between gap-4 sm:flex-row">
         <p className="text-xs text-muted-foreground">
           {copyright} {tagline}
         </p>

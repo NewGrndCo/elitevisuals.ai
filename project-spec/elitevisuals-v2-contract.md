@@ -25,19 +25,19 @@ The reference informs layout principles only. EliteVisuals.ai will retain its ow
 
 ## Public information architecture
 
-| Route | Purpose | Primary action |
-|---|---|---|
-| `/` | Editorial, image-first landing page | Explore visuals |
-| `/library` | Searchable visual prompt library | Open a prompt |
-| `/prompt/$slug` | Prompt detail and usage workflow | Copy or use prompt |
-| `/pack/$slug` | Curated prompt-pack landing page | Explore or purchase pack |
-| `/login` | Customer authentication | Sign in |
-| `/account` | Purchases, saved prompts, and history | Resume activity |
-| `/pricing` | Packs, membership, and future credits | Purchase access |
-| `/skills` | Browse downloadable AI skills | Open a skill |
-| `/skill/$slug` | Skill details, compatibility, versions, and documentation | Download skill |
-| `/account/downloads` | Customer-owned skill packages and version history | Download owned version |
-| `/admin` | Protected operating dashboard | Manage the product |
+| Route                | Purpose                                                   | Primary action           |
+| -------------------- | --------------------------------------------------------- | ------------------------ |
+| `/`                  | Editorial, image-first landing page                       | Explore visuals          |
+| `/library`           | Searchable visual prompt library                          | Open a prompt            |
+| `/prompt/$slug`      | Prompt detail and usage workflow                          | Copy or use prompt       |
+| `/pack/$slug`        | Curated prompt-pack landing page                          | Explore or purchase pack |
+| `/login`             | Customer authentication                                   | Sign in                  |
+| `/account`           | Purchases, saved prompts, and history                     | Resume activity          |
+| `/pricing`           | Packs, membership, and future credits                     | Purchase access          |
+| `/skills`            | Browse downloadable AI skills                             | Open a skill             |
+| `/skill/$slug`       | Skill details, compatibility, versions, and documentation | Download skill           |
+| `/account/downloads` | Customer-owned skill packages and version history         | Download owned version   |
+| `/admin`             | Protected operating dashboard                             | Manage the product       |
 
 ## Homepage composition
 
@@ -106,12 +106,12 @@ Desktop should feel spacious and editorial. Mobile should prioritize a two-colum
 
 ### Core entities
 
-| Entity | Purpose |
-|---|---|
-| `skills` | Public catalog identity, description, cover, price, compatibility, and publication state |
-| `skill_versions` | Immutable version metadata and private archive location |
-| `skill_entitlements` | Records which user can download which skill and why |
-| `skill_downloads` | Append-only audit record for successful download issuance |
+| Entity               | Purpose                                                                                  |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| `skills`             | Public catalog identity, description, cover, price, compatibility, and publication state |
+| `skill_versions`     | Immutable version metadata and private archive location                                  |
+| `skill_entitlements` | Records which user can download which skill and why                                      |
+| `skill_downloads`    | Append-only audit record for successful download issuance                                |
 
 ### Package lifecycle
 
@@ -132,17 +132,17 @@ The browser never receives a Supabase service-role credential or a permanent pri
 
 ## V1 preservation map
 
-| V1 source | V2 handling |
-|---|---|
-| `packs` | Reuse in place; extend only when approved |
-| `prompts` | Reuse in place; preserve UUIDs and slugs |
-| `categories` | Reuse in place |
-| `site_content` | Reuse initially; add versioned blocks if needed |
-| `ai_logos` | Reuse in place |
-| `purchases` | Reuse without destructive transformation |
-| `user_roles` and Supabase Auth | Reuse; review authorization before release |
-| `admin_whitelist` | Preserve; consider replacing PIN layering with stronger staff controls |
-| `elite-media` bucket | Reuse; generate an asset inventory before launch |
+| V1 source                      | V2 handling                                                            |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `packs`                        | Reuse in place; extend only when approved                              |
+| `prompts`                      | Reuse in place; preserve UUIDs and slugs                               |
+| `categories`                   | Reuse in place                                                         |
+| `site_content`                 | Reuse initially; add versioned blocks if needed                        |
+| `ai_logos`                     | Reuse in place                                                         |
+| `purchases`                    | Reuse without destructive transformation                               |
+| `user_roles` and Supabase Auth | Reuse; review authorization before release                             |
+| `admin_whitelist`              | Preserve; consider replacing PIN layering with stronger staff controls |
+| `elite-media` bucket           | Reuse; generate an asset inventory before launch                       |
 
 ## Migration acceptance criteria
 
@@ -161,13 +161,12 @@ The browser never receives a Supabase service-role credential or a permanent pri
 - `EV2-A01` — The current Supabase project remains the canonical production data source. Confidence: high. Impact: critical. Confirmation required before implementation.
 - `EV2-A02` — V2 remains focused on prompts, packs, downloadable skills, and administration during the first release; built-in image generation is deferred. Confidence: high. Impact: high. Approved by owner on 2026-08-26.
 - `EV2-A03` — Stripe remains the payment provider. Confidence: high based on V1 code. Impact: high. Confirm against the live environment.
-- `EV2-A04` — Existing EliteVisuals brand assets remain authoritative until a Midas-owned V2 creative direction is approved. Confidence: medium. Impact: medium.
+- `EV2-A04` — Approved visual direction: Tunnelbox-inspired structural rhythm with an original EliteVisuals purple-and-white system, light canvas, floating pill navigation, compact centered hero, horizontal visual runway, and dense 4:5 prompt gallery. Existing EliteVisuals content and assets remain authoritative. Approved by owner on 2026-08-26.
 - `EV2-A05` — “Skills” means downloadable ZIP archives compatible with Codex/ChatGPT-style skill packages. Confidence: high. Impact: high. Approved by owner on 2026-08-26.
 
 ## Current blockers
 
 - `EV2-B01` — Live Supabase record and storage-object counts have not been captured.
-- `EV2-B03` — The final V2 creative direction has not been approved.
 - `EV2-B04` — Production hosting, deployment, and rollback access have not been verified.
 - `EV2-B05` — Exact downloadable-skill format and supported platforms require owner confirmation.
 
