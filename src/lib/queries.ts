@@ -3,11 +3,23 @@ import { supabase } from "@/integrations/supabase/client";
 
 /* ─── Shared fetcher fns + queryOptions for SSR prefetch ─── */
 const fetchSiteContent = async (): Promise<SiteContentMap> => {
-  const { data, error } = await (supabase as unknown as { from: (t: string) => { select: (c: string) => Promise<{ data: { key: string; value: Record<string, unknown> }[] | null; error: unknown }> } })
-    .from("site_content").select("key,value");
+  const { data, error } = await (
+    supabase as unknown as {
+      from: (t: string) => {
+        select: (c: string) => Promise<{
+          data: { key: string; value: Record<string, unknown> }[] | null;
+          error: unknown;
+        }>;
+      };
+    }
+  )
+    .from("site_content")
+    .select("key,value");
   if (error) throw error as Error;
   const map: SiteContentMap = {};
-  (data ?? []).forEach((r) => { map[r.key] = r.value ?? {}; });
+  (data ?? []).forEach((r) => {
+    map[r.key] = r.value ?? {};
+  });
   return map;
 };
 const fetchAiLogos = async () => {
@@ -29,11 +41,17 @@ const fetchPacks = async (includeUnpublished = false) => {
 };
 const fetchPrompts = async (categorySlug?: string) => {
   const q = categorySlug
-    ? supabase.from("prompts").select("*, categories!inner(slug,name,accent_color)").order("sort_order").eq("categories.slug", categorySlug)
+    ? supabase
+        .from("prompts")
+        .select("*, categories!inner(slug,name,accent_color)")
+        .order("sort_order")
+        .eq("categories.slug", categorySlug)
     : supabase.from("prompts").select("*, categories(slug,name,accent_color)").order("sort_order");
   const { data, error } = await q;
   if (error) throw error;
-  return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null })[];
+  return data as (Prompt & {
+    categories: { slug: string; name: string; accent_color: string | null } | null;
+  })[];
 };
 const fetchPack = async (slug: string) => {
   const { data, error } = await supabase.from("packs").select("*").eq("slug", slug).maybeSingle();
@@ -47,28 +65,85 @@ const fetchPromptsByPack = async (packId: string) => {
     .eq("pack_id", packId)
     .order("sort_order");
   if (error) throw error;
-  return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null })[];
+  return data as (Prompt & {
+    categories: { slug: string; name: string; accent_color: string | null } | null;
+  })[];
 };
 const fetchPrompt = async (slug: string) => {
-  const { data, error } = await supabase.from("prompts").select("*, categories(slug,name,accent_color)").eq("slug", slug).maybeSingle();
+  const { data, error } = await supabase
+    .from("prompts")
+    .select("*, categories(slug,name,accent_color)")
+    .eq("slug", slug)
+    .maybeSingle();
   if (error) throw error;
-  return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null }) | null;
+  return data as
+    | (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null })
+    | null;
+};
+const fetchSkills = async (includeUnpublished = false) => {
+  let q = supabase
+    .from("skills")
+    .select("*")
+    .order("sort_order")
+    .order("created_at", { ascending: false });
+  if (!includeUnpublished) q = q.eq("is_published", true);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data as Skill[];
+};
+const fetchSkill = async (slug: string) => {
+  const { data, error } = await supabase.from("skills").select("*").eq("slug", slug).maybeSingle();
+  if (error) throw error;
+  return data as Skill | null;
+};
+const fetchSkillVersions = async (skillId: string, includeUnpublished = false) => {
+  let q = supabase
+    .from("skill_versions")
+    .select("*")
+    .eq("skill_id", skillId)
+    .order("created_at", { ascending: false });
+  if (!includeUnpublished) q = q.eq("is_published", true);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data as SkillVersion[];
 };
 
-export const siteContentOptions = () => queryOptions({ queryKey: ["site_content"], queryFn: fetchSiteContent, staleTime: 30_000 });
+export const siteContentOptions = () =>
+  queryOptions({ queryKey: ["site_content"], queryFn: fetchSiteContent, staleTime: 30_000 });
 export const aiLogosOptions = () => queryOptions({ queryKey: ["ai_logos"], queryFn: fetchAiLogos });
-export const categoriesOptions = () => queryOptions({ queryKey: ["categories"], queryFn: fetchCategories });
-export const packsOptions = (includeUnpublished = false) => queryOptions({
-  queryKey: ["packs", includeUnpublished ? "all" : "published"],
-  queryFn: () => fetchPacks(includeUnpublished),
-});
-export const promptsOptions = (categorySlug?: string) => queryOptions({
-  queryKey: ["prompts", categorySlug ?? "all"],
-  queryFn: () => fetchPrompts(categorySlug),
-});
-export const packOptions = (slug: string) => queryOptions({ queryKey: ["pack", slug], queryFn: () => fetchPack(slug) });
-export const promptsByPackOptions = (packId: string) => queryOptions({ queryKey: ["prompts_by_pack", packId], queryFn: () => fetchPromptsByPack(packId) });
-export const promptOptions = (slug: string) => queryOptions({ queryKey: ["prompt", slug], queryFn: () => fetchPrompt(slug) });
+export const categoriesOptions = () =>
+  queryOptions({ queryKey: ["categories"], queryFn: fetchCategories });
+export const packsOptions = (includeUnpublished = false) =>
+  queryOptions({
+    queryKey: ["packs", includeUnpublished ? "all" : "published"],
+    queryFn: () => fetchPacks(includeUnpublished),
+  });
+export const promptsOptions = (categorySlug?: string) =>
+  queryOptions({
+    queryKey: ["prompts", categorySlug ?? "all"],
+    queryFn: () => fetchPrompts(categorySlug),
+  });
+export const packOptions = (slug: string) =>
+  queryOptions({ queryKey: ["pack", slug], queryFn: () => fetchPack(slug) });
+export const promptsByPackOptions = (packId: string) =>
+  queryOptions({
+    queryKey: ["prompts_by_pack", packId],
+    queryFn: () => fetchPromptsByPack(packId),
+  });
+export const promptOptions = (slug: string) =>
+  queryOptions({ queryKey: ["prompt", slug], queryFn: () => fetchPrompt(slug) });
+export const skillsOptions = (includeUnpublished = false) =>
+  queryOptions({
+    queryKey: ["skills", includeUnpublished ? "all" : "published"],
+    queryFn: () => fetchSkills(includeUnpublished),
+  });
+export const skillOptions = (slug: string) =>
+  queryOptions({ queryKey: ["skill", slug], queryFn: () => fetchSkill(slug) });
+export const skillVersionsOptions = (skillId: string, includeUnpublished = false) =>
+  queryOptions({
+    queryKey: ["skill_versions", skillId, includeUnpublished ? "all" : "published"],
+    queryFn: () => fetchSkillVersions(skillId, includeUnpublished),
+  });
 
 /* ─── Site Content (CMS) ─── */
 export type SiteContentMap = Record<string, Record<string, unknown>>;
@@ -84,23 +159,36 @@ export const useSiteContentMutation = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ key, value }: { key: string; value: Record<string, unknown> }) => {
-      const { error } = await (supabase as unknown as { from: (t: string) => { upsert: (v: unknown) => Promise<{ error: unknown }> } })
-        .from("site_content").upsert({ key, value, updated_at: new Date().toISOString() });
+      const { error } = await (
+        supabase as unknown as {
+          from: (t: string) => { upsert: (v: unknown) => Promise<{ error: unknown }> };
+        }
+      )
+        .from("site_content")
+        .upsert({ key, value, updated_at: new Date().toISOString() });
       if (error) throw error as Error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["site_content"] }),
   });
 };
 
-export const sc = (m: SiteContentMap | undefined, key: string, field: string, fallback = ""): string => {
+export const sc = (
+  m: SiteContentMap | undefined,
+  key: string,
+  field: string,
+  fallback = "",
+): string => {
   const v = m?.[key]?.[field];
   return typeof v === "string" ? v : fallback;
 };
 
-
 export type AiLogo = {
-  id: string; name: string; logo_url: string; link_url: string | null;
-  sort_order: number; is_published: boolean;
+  id: string;
+  name: string;
+  logo_url: string;
+  link_url: string | null;
+  sort_order: number;
+  is_published: boolean;
 };
 
 export const useAiLogos = () =>
@@ -113,26 +201,99 @@ export const useAiLogos = () =>
     },
   });
 
-
 export type Category = {
-  id: string; slug: string; name: string; description: string | null;
-  accent_color: string | null; sort_order: number;
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  accent_color: string | null;
+  sort_order: number;
 };
 
 export type Pack = {
-  id: string; slug: string; title: string; description: string | null;
-  cover_image_url: string | null; sort_order: number; is_published: boolean;
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  cover_image_url: string | null;
+  sort_order: number;
+  is_published: boolean;
   price_cents: number;
   hidden_sections: string[];
 };
 
 export type Prompt = {
-  id: string; slug: string; title: string; description: string | null;
-  prompt_text: string; category_id: string | null; pack_id: string | null;
-  cover_image_url: string | null; demo_video_url: string | null;
-  gallery_urls: string[]; is_published: boolean; sort_order: number;
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  prompt_text: string;
+  category_id: string | null;
+  pack_id: string | null;
+  cover_image_url: string | null;
+  demo_video_url: string | null;
+  gallery_urls: string[];
+  is_published: boolean;
+  sort_order: number;
   copy_count: number;
 };
+
+export type Skill = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  description: string;
+  cover_image_url: string | null;
+  compatibility: string[];
+  install_instructions: string;
+  price_cents: number;
+  is_featured: boolean;
+  is_published: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SkillVersion = {
+  id: string;
+  skill_id: string;
+  version: string;
+  changelog: string;
+  storage_path: string;
+  file_size: number;
+  sha256: string;
+  is_published: boolean;
+  created_at: string;
+};
+
+export const useSkills = (includeUnpublished = false) =>
+  useQuery(skillsOptions(includeUnpublished));
+
+export const useSkill = (slug: string) => useQuery(skillOptions(slug));
+
+export const useSkillVersions = (skillId: string | undefined, includeUnpublished = false) =>
+  useQuery({
+    ...skillVersionsOptions(skillId ?? "", includeUnpublished),
+    enabled: !!skillId,
+  });
+
+export const useSkillEntitlements = () =>
+  useQuery({
+    queryKey: ["skill_entitlements"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return [] as { skill_id: string; source: string; granted_at: string }[];
+      const { data, error } = await supabase
+        .from("skill_entitlements")
+        .select("skill_id,source,granted_at")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return data;
+    },
+  });
 
 export const useCategories = () =>
   useQuery({
@@ -162,7 +323,11 @@ export const usePack = (slug: string) =>
   useQuery({
     queryKey: ["pack", slug],
     queryFn: async () => {
-      const { data, error } = await supabase.from("packs").select("*").eq("slug", slug).maybeSingle();
+      const { data, error } = await supabase
+        .from("packs")
+        .select("*")
+        .eq("slug", slug)
+        .maybeSingle();
       if (error) throw error;
       return data as Pack | null;
     },
@@ -185,12 +350,21 @@ export const usePrompts = (categorySlug?: string) =>
   useQuery({
     queryKey: ["prompts", categorySlug ?? "all"],
     queryFn: async () => {
-      let q = categorySlug
-        ? supabase.from("prompts").select("*, categories!inner(slug,name,accent_color)").order("sort_order").eq("categories.slug", categorySlug)
-        : supabase.from("prompts").select("*, categories(slug,name,accent_color)").order("sort_order");
+      const q = categorySlug
+        ? supabase
+            .from("prompts")
+            .select("*, categories!inner(slug,name,accent_color)")
+            .order("sort_order")
+            .eq("categories.slug", categorySlug)
+        : supabase
+            .from("prompts")
+            .select("*, categories(slug,name,accent_color)")
+            .order("sort_order");
       const { data, error } = await q;
       if (error) throw error;
-      return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null })[];
+      return data as (Prompt & {
+        categories: { slug: string; name: string; accent_color: string | null } | null;
+      })[];
     },
   });
 
@@ -205,7 +379,9 @@ export const usePromptsByPack = (packId: string | undefined) =>
         .eq("pack_id", packId!)
         .order("sort_order");
       if (error) throw error;
-      return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null })[];
+      return data as (Prompt & {
+        categories: { slug: string; name: string; accent_color: string | null } | null;
+      })[];
     },
   });
 
@@ -214,9 +390,16 @@ export const usePrompt = (slug: string) =>
     queryKey: ["prompt", slug],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("prompts").select("*, categories(slug,name,accent_color)").eq("slug", slug).maybeSingle();
+        .from("prompts")
+        .select("*, categories(slug,name,accent_color)")
+        .eq("slug", slug)
+        .maybeSingle();
       if (error) throw error;
-      return data as (Prompt & { categories: { slug: string; name: string; accent_color: string | null } | null }) | null;
+      return data as
+        | (Prompt & {
+            categories: { slug: string; name: string; accent_color: string | null } | null;
+          })
+        | null;
     },
   });
 
@@ -229,8 +412,24 @@ export const useUserPurchases = () =>
       const { data: sess } = await supabase.auth.getSession();
       const uid = sess.session?.user?.id;
       if (!uid) return { packIds: new Set<string>(), hasMembership: false };
-      const { data, error } = await (supabase as unknown as { from: (t: string) => { select: (c: string) => { eq: (k: string, v: string) => Promise<{ data: { pack_id: string | null; is_membership: boolean }[] | null; error: unknown }> } } })
-        .from("purchases").select("pack_id,is_membership").eq("user_id", uid);
+      const { data, error } = await (
+        supabase as unknown as {
+          from: (t: string) => {
+            select: (c: string) => {
+              eq: (
+                k: string,
+                v: string,
+              ) => Promise<{
+                data: { pack_id: string | null; is_membership: boolean }[] | null;
+                error: unknown;
+              }>;
+            };
+          };
+        }
+      )
+        .from("purchases")
+        .select("pack_id,is_membership")
+        .eq("user_id", uid);
       if (error) throw error as Error;
       const packIds = new Set<string>();
       let hasMembership = false;
@@ -248,7 +447,9 @@ export const useIsAdmin = () =>
     queryKey: ["is_admin"],
     staleTime: 60_000,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return false;
       const { data } = await supabase
         .from("user_roles")
@@ -259,4 +460,3 @@ export const useIsAdmin = () =>
       return !!data;
     },
   });
-

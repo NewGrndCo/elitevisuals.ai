@@ -27,7 +27,6 @@ export function SiteHeader() {
     }
   };
 
-
   const handleLogoTap = (e: React.MouseEvent) => {
     const now = Date.now();
     tapsRef.current = [...tapsRef.current.filter((t) => now - t < ADMIN_TAP_WINDOW_MS), now];
@@ -41,12 +40,17 @@ export function SiteHeader() {
   const nav = [
     { to: "/", label: "Home" },
     { to: "/library", label: "Library" },
+    { to: "/skills", label: "Skills" },
   ];
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4">
       <div className="glass flex w-full max-w-6xl items-center justify-between rounded-2xl px-4 py-2.5 sm:px-6">
-        <Link to="/" onClick={handleLogoTap} className="flex items-center gap-2 font-display text-base font-semibold sm:text-lg">
+        <Link
+          to="/"
+          onClick={handleLogoTap}
+          className="flex items-center gap-2 font-display text-base font-semibold sm:text-lg"
+        >
           <img
             src={logoUrl}
             alt="ELITEVISUALS.AI logo"
@@ -104,13 +108,14 @@ export function SiteFooter() {
     }))
     .filter((l) => l.label && l.url);
 
-  const links = cmsLinks.length > 0
-    ? cmsLinks
-    : [
-        { label: "Library", url: "/library" },
-        { label: "Discord", url: "#" },
-        { label: "Twitter", url: "#" },
-      ];
+  const links =
+    cmsLinks.length > 0
+      ? cmsLinks
+      : [
+          { label: "Library", url: "/library" },
+          { label: "Discord", url: "#" },
+          { label: "Twitter", url: "#" },
+        ];
 
   return (
     <footer className="mt-24 border-t border-border/40 px-6 py-10">
@@ -121,10 +126,20 @@ export function SiteFooter() {
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           {links.map((l) =>
             l.url.startsWith("/") ? (
-              <Link key={l.label} to={l.url} className="hover:text-foreground">{l.label}</Link>
+              <Link key={l.label} to={l.url} className="hover:text-foreground">
+                {l.label}
+              </Link>
             ) : (
-              <a key={l.label} href={l.url} target="_blank" rel="noreferrer" className="hover:text-foreground">{l.label}</a>
-            )
+              <a
+                key={l.label}
+                href={l.url}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-foreground"
+              >
+                {l.label}
+              </a>
+            ),
           )}
         </div>
       </div>

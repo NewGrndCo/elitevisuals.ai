@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
  * Stripe webhook receiver.
@@ -81,11 +82,35 @@ export const Route = createFileRoute("/api/public/stripe-webhook")({
         }
 
         if (event.type === "checkout.session.completed") {
-          const session = event.data.object as { id?: string; amount_total?: number };
-          // Observability only — no database writes, nothing to unlock.
+          const session = event.data.object as {
+            id?: string;
+            amount_total?: number;
+            payment_status?: string;
+            client_reference_id?: string;
+            metadata?: Record<string, string>;
+          };
+          if (session.payment_status === "paid" && session.metadata?.kind === "skill") {
+            const userId = session.metadata.user_id ?? session.client_reference_id;
+            const skillId = session.metadata.skill_id;
+            if (userId && skillId && session.id) {
+              const { error } = await supabaseAdmin.from("skill_entitlements").upsert(
+                {
+                  user_id: userId,
+                  skill_id: skillId,
+                  source: "purchase",
+                  stripe_session_id: session.id,
+                },
+                { onConflict: "user_id,skill_id" },
+              );
+              if (error) return new Response("Entitlement failed", { status: 500 });
+            }
+          }
           console.info(
             JSON.stringify({
-              event: "donation_completed",
+              event:
+                session.metadata?.kind === "skill"
+                  ? "skill_purchase_completed"
+                  : "donation_completed",
               sessionId: session.id,
               amountTotal: session.amount_total,
             }),

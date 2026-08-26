@@ -16,6 +16,7 @@ import { PromptManager } from "@/components/admin/prompt-manager";
 import { CategoryManager } from "@/components/admin/category-manager";
 import { AiLogoManager } from "@/components/admin/logo-manager";
 import { WhitelistManager } from "@/components/admin/whitelist-manager";
+import { SkillManager } from "@/components/admin/skill-manager";
 
 export const Route = createFileRoute("/admin")({
   // The active tab lives in the URL, so refresh, back/forward and deep links
@@ -27,10 +28,7 @@ export const Route = createFileRoute("/admin")({
     tab: isAdminTab(s.tab) ? s.tab : "overview",
   }),
   head: () => ({
-    meta: [
-      { title: "Admin — Elite Visuals" },
-      { name: "robots", content: "noindex,nofollow" },
-    ],
+    meta: [{ title: "Admin — Elite Visuals" }, { name: "robots", content: "noindex,nofollow" }],
   }),
   component: AdminPage,
 });
@@ -179,6 +177,7 @@ function AdminDashboard() {
           {tab === "sections" && <SectionOrderManager />}
           {tab === "packs" && <PackManager />}
           {tab === "prompts" && <PromptManager />}
+          {tab === "skills" && <SkillManager />}
           {tab === "categories" && <CategoryManager />}
           {tab === "logos" && <AiLogoManager />}
           {tab === "whitelist" && <WhitelistManager />}

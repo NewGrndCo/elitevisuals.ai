@@ -9,16 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SkillsRouteImport } from './routes/skills'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SkillSlugRouteImport } from './routes/skill.$slug'
 import { Route as PromptSlugRouteImport } from './routes/prompt.$slug'
 import { Route as PackSlugRouteImport } from './routes/pack.$slug'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
+import { Route as AccountDownloadsRouteImport } from './routes/account.downloads'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 import { Route as ApiPublicPurchaseEmailRouteImport } from './routes/api/public/purchase-email'
 
+const SkillsRoute = SkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -39,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SkillSlugRoute = SkillSlugRouteImport.update({
+  id: '/skill/$slug',
+  path: '/skill/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PromptSlugRoute = PromptSlugRouteImport.update({
   id: '/prompt/$slug',
   path: '/prompt/$slug',
@@ -52,6 +65,11 @@ const PackSlugRoute = PackSlugRouteImport.update({
 const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
   id: '/checkout/success',
   path: '/checkout/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountDownloadsRoute = AccountDownloadsRouteImport.update({
+  id: '/account/downloads',
+  path: '/account/downloads',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
@@ -70,9 +88,12 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/skills': typeof SkillsRoute
+  '/account/downloads': typeof AccountDownloadsRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
+  '/skill/$slug': typeof SkillSlugRoute
   '/api/public/purchase-email': typeof ApiPublicPurchaseEmailRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
@@ -81,9 +102,12 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/skills': typeof SkillsRoute
+  '/account/downloads': typeof AccountDownloadsRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
+  '/skill/$slug': typeof SkillSlugRoute
   '/api/public/purchase-email': typeof ApiPublicPurchaseEmailRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
@@ -93,9 +117,12 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/skills': typeof SkillsRoute
+  '/account/downloads': typeof AccountDownloadsRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
   '/prompt/$slug': typeof PromptSlugRoute
+  '/skill/$slug': typeof SkillSlugRoute
   '/api/public/purchase-email': typeof ApiPublicPurchaseEmailRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
@@ -106,9 +133,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/library'
     | '/login'
+    | '/skills'
+    | '/account/downloads'
     | '/checkout/success'
     | '/pack/$slug'
     | '/prompt/$slug'
+    | '/skill/$slug'
     | '/api/public/purchase-email'
     | '/api/public/stripe-webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -117,9 +147,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/library'
     | '/login'
+    | '/skills'
+    | '/account/downloads'
     | '/checkout/success'
     | '/pack/$slug'
     | '/prompt/$slug'
+    | '/skill/$slug'
     | '/api/public/purchase-email'
     | '/api/public/stripe-webhook'
   id:
@@ -128,9 +161,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/library'
     | '/login'
+    | '/skills'
+    | '/account/downloads'
     | '/checkout/success'
     | '/pack/$slug'
     | '/prompt/$slug'
+    | '/skill/$slug'
     | '/api/public/purchase-email'
     | '/api/public/stripe-webhook'
   fileRoutesById: FileRoutesById
@@ -140,15 +176,25 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   LibraryRoute: typeof LibraryRoute
   LoginRoute: typeof LoginRoute
+  SkillsRoute: typeof SkillsRoute
+  AccountDownloadsRoute: typeof AccountDownloadsRoute
   CheckoutSuccessRoute: typeof CheckoutSuccessRoute
   PackSlugRoute: typeof PackSlugRoute
   PromptSlugRoute: typeof PromptSlugRoute
+  SkillSlugRoute: typeof SkillSlugRoute
   ApiPublicPurchaseEmailRoute: typeof ApiPublicPurchaseEmailRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/skills': {
+      id: '/skills'
+      path: '/skills'
+      fullPath: '/skills'
+      preLoaderRoute: typeof SkillsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -177,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/skill/$slug': {
+      id: '/skill/$slug'
+      path: '/skill/$slug'
+      fullPath: '/skill/$slug'
+      preLoaderRoute: typeof SkillSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/prompt/$slug': {
       id: '/prompt/$slug'
       path: '/prompt/$slug'
@@ -196,6 +249,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout/success'
       fullPath: '/checkout/success'
       preLoaderRoute: typeof CheckoutSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/downloads': {
+      id: '/account/downloads'
+      path: '/account/downloads'
+      fullPath: '/account/downloads'
+      preLoaderRoute: typeof AccountDownloadsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/stripe-webhook': {
@@ -220,9 +280,12 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   LibraryRoute: LibraryRoute,
   LoginRoute: LoginRoute,
+  SkillsRoute: SkillsRoute,
+  AccountDownloadsRoute: AccountDownloadsRoute,
   CheckoutSuccessRoute: CheckoutSuccessRoute,
   PackSlugRoute: PackSlugRoute,
   PromptSlugRoute: PromptSlugRoute,
+  SkillSlugRoute: SkillSlugRoute,
   ApiPublicPurchaseEmailRoute: ApiPublicPurchaseEmailRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
 }
