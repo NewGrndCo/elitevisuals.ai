@@ -4,6 +4,54 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SESSION_RE = /^cs_(?:test|live)_[A-Za-z0-9]{10,}$/;
+
+export const finalizeSkillCheckout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { sessionId: string }) => {
+    if (!SESSION_RE.test(input.sessionId)) throw new Error("Invalid checkout session");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const secret = process.env.STRIPE_SECRET_KEY;
+    if (!secret) throw new Error("Stripe is not configured");
+    const response = await fetch(
+      `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(data.sessionId)}`,
+      {
+        headers: { Authorization: `Bearer ${secret}` },
+      },
+    );
+    const session = (await response.json()) as {
+      id?: string;
+      payment_status?: string;
+      client_reference_id?: string;
+      metadata?: Record<string, string>;
+      error?: { message?: string };
+    };
+    if (!response.ok) throw new Error(session.error?.message ?? "Could not verify checkout");
+    const userId = session.metadata?.user_id ?? session.client_reference_id;
+    const skillId = session.metadata?.skill_id;
+    if (
+      session.payment_status !== "paid" ||
+      session.metadata?.kind !== "skill" ||
+      userId !== context.userId ||
+      !skillId ||
+      !UUID_RE.test(skillId)
+    ) {
+      throw new Error("Checkout does not grant access to this account");
+    }
+    const { error } = await supabaseAdmin.from("skill_entitlements").upsert(
+      {
+        user_id: context.userId,
+        skill_id: skillId,
+        source: "purchase",
+        stripe_session_id: session.id ?? data.sessionId,
+      },
+      { onConflict: "user_id,skill_id" },
+    );
+    if (error) throw error;
+    return { ok: true, skillId };
+  });
 
 export const requestSkillDownload = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

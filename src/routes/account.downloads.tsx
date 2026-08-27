@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { supabase } from "@/integrations/supabase/client";
-import { requestSkillDownload } from "@/lib/skill-download.functions";
+import { finalizeSkillCheckout, requestSkillDownload } from "@/lib/skill-download.functions";
 type Owned = {
   skill_id: string;
   source: string;
@@ -15,8 +15,14 @@ type Owned = {
     cover_image_url: string | null;
   } | null;
 };
-export const Route = createFileRoute("/account/downloads")({ component: Downloads });
+export const Route = createFileRoute("/account/downloads")({
+  validateSearch: (search: Record<string, unknown>): { session_id?: string } => ({
+    session_id: typeof search.session_id === "string" ? search.session_id : undefined,
+  }),
+  component: Downloads,
+});
 function Downloads() {
+  const { session_id } = Route.useSearch();
   const [items, setItems] = useState<Owned[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -25,6 +31,13 @@ function Downloads() {
         location.href = "/login?next=/account/downloads";
         return;
       }
+      if (session_id) {
+        try {
+          await finalizeSkillCheckout({ data: { sessionId: session_id } });
+        } catch (error) {
+          console.error("Checkout verification failed", error);
+        }
+      }
       const { data: rows } = await supabase
         .from("skill_entitlements")
         .select("skill_id,source,skills(id,slug,title,summary,cover_image_url)")
@@ -32,7 +45,7 @@ function Downloads() {
       setItems((rows ?? []) as unknown as Owned[]);
       setLoading(false);
     });
-  }, []);
+  }, [session_id]);
   const download = async (skillId: string) => {
     const { data: v } = await supabase
       .from("skill_versions")

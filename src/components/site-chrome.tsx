@@ -1,9 +1,10 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Heart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import logoUrl from "@/assets/logo.png";
 import { useSiteContent, sc } from "@/lib/queries";
+import { supabase } from "@/integrations/supabase/client";
 
 const ADMIN_TAP_COUNT = 4;
 const ADMIN_TAP_WINDOW_MS = 1500;
@@ -13,6 +14,13 @@ export function SiteHeader() {
   const navigate = useNavigate();
   const tapsRef = useRef<number[]>([]);
   const [donating, setDonating] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => setSignedIn(!!session));
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   const handleDonate = async () => {
     if (donating) return;
@@ -41,6 +49,7 @@ export function SiteHeader() {
     { to: "/", label: "Home" },
     { to: "/library", label: "Library" },
     { to: "/skills", label: "Skills" },
+    { to: "/waitlist", label: "Waitlist" },
   ];
 
   return (
@@ -72,17 +81,33 @@ export function SiteHeader() {
               <Link
                 key={n.to}
                 to={n.to}
-                className={`rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${active ? "bg-[#f1ebff] text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                className={`rounded-full px-2.5 py-2 text-xs font-medium transition-colors sm:px-4 sm:text-sm ${active ? "bg-[#f1ebff] text-primary" : "text-muted-foreground hover:text-foreground"} ${n.to === "/waitlist" ? "hidden md:inline-flex" : ""}`}
               >
                 {n.label}
               </Link>
             );
           })}
+          {signedIn ? (
+            <Link
+              to="/account/downloads"
+              className="ml-1 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-white sm:text-sm"
+            >
+              Account
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              search={{ next: "/account/downloads" }}
+              className="ml-1 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-white sm:text-sm"
+            >
+              Sign in
+            </Link>
+          )}
           <button
             onClick={handleDonate}
             disabled={donating}
             aria-label="Donate to support Elite Visuals"
-            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#6d28d9] disabled:opacity-60"
+            className="ml-1 hidden items-center gap-1.5 rounded-full border border-border bg-white px-3.5 py-2 text-sm font-semibold text-foreground transition-all hover:-translate-y-0.5 disabled:opacity-60 lg:inline-flex"
           >
             {donating ? (
               <Loader2 className="h-[15px] w-[15px] animate-spin" />

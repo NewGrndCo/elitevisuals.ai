@@ -13,8 +13,13 @@ dist-ssr
 .output
 .vinxi
 .tanstack/**
+.netlify/
+supabase/.temp/
 .nitro
 *.local
+.env
+.env.*
+!.env.example
 
 # Wrangler / Cloudflare
 .wrangler/

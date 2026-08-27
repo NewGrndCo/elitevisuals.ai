@@ -42,7 +42,7 @@ function Login() {
             Sign in to access secure skill downloads.
           </p>
           <input
-            className="mt-7 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3"
+            className="mt-7 w-full rounded-2xl border border-border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-primary/30"
             type="email"
             required
             placeholder="Email"
@@ -50,7 +50,7 @@ function Login() {
             onChange={(e) => setEmail(e.target.value)}
           />
           <input
-            className="mt-3 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3"
+            className="mt-3 w-full rounded-2xl border border-border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-primary/30"
             type="password"
             minLength={8}
             required

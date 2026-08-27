@@ -33,6 +33,10 @@ function HomePage() {
   const { data: site } = useSiteContent();
   const featured = prompts.slice(0, 10);
   const runway = [...featured.slice(0, 7), ...featured.slice(0, 7)];
+  const reverseRunway = [
+    ...featured.slice().reverse().slice(0, 7),
+    ...featured.slice().reverse().slice(0, 7),
+  ];
   return (
     <>
       <SiteHeader />
@@ -59,45 +63,112 @@ function HomePage() {
             <Link to="/skills" className="ev-button ev-button-secondary">
               Download skills <Download className="h-4 w-4" />
             </Link>
+            <Link to="/waitlist" className="ev-button ev-button-secondary">
+              Join waitlist
+            </Link>
           </div>
         </section>
-        <section aria-label="Featured visual prompts" className="pb-24">
-          <div className="ev-runway">
-            <div className="flex w-max animate-[marquee_38s_linear_infinite] gap-3 px-3 hover:[animation-play-state:paused]">
-              {runway.length
-                ? runway.map((prompt, index) => (
-                    <Link
-                      key={`${prompt.id}-${index}`}
-                      to="/prompt/$slug"
-                      params={{ slug: prompt.slug }}
-                      className="group relative h-[380px] w-[270px] shrink-0 overflow-hidden rounded-[24px] bg-[#e9e4f5] sm:h-[470px] sm:w-[335px]"
-                    >
-                      {prompt.cover_image_url ? (
-                        <img
-                          src={prompt.cover_image_url}
-                          alt={prompt.title}
-                          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                        />
-                      ) : (
-                        <FallbackArt index={index} />
-                      )}
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-5 pt-20 text-left text-white">
-                        <p className="text-sm font-semibold">{prompt.title}</p>
-                        <p className="mt-1 text-xs text-white/70">View prompt</p>
+        <section aria-label="Featured visual prompts" className="space-y-3 pb-24">
+          {[
+            { items: runway, reverse: false },
+            { items: reverseRunway, reverse: true },
+          ].map((row, rowIndex) => (
+            <div className="ev-runway" key={rowIndex}>
+              <div
+                className={`flex w-max gap-3 px-3 hover:[animation-play-state:paused] ${row.reverse ? "animate-[marquee-reverse_42s_linear_infinite]" : "animate-[marquee_38s_linear_infinite]"}`}
+              >
+                {row.items.length
+                  ? row.items.map((prompt, index) => (
+                      <Link
+                        key={`${prompt.id}-${index}`}
+                        to="/prompt/$slug"
+                        params={{ slug: prompt.slug }}
+                        className="group relative h-[190px] w-[190px] shrink-0 overflow-hidden rounded-[22px] bg-[#e9e4f5] sm:h-[260px] sm:w-[260px]"
+                      >
+                        {prompt.cover_image_url ? (
+                          <img
+                            src={prompt.cover_image_url}
+                            alt={prompt.title}
+                            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                          />
+                        ) : (
+                          <FallbackArt index={index} />
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-5 pt-20 text-left text-white">
+                          <p className="text-sm font-semibold">{prompt.title}</p>
+                          <p className="mt-1 text-xs text-white/70">View prompt</p>
+                        </div>
+                      </Link>
+                    ))
+                  : Array.from({ length: 8 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-[190px] w-[190px] shrink-0 overflow-hidden rounded-[22px] sm:h-[260px] sm:w-[260px]"
+                      >
+                        <FallbackArt index={i} />
                       </div>
-                    </Link>
-                  ))
-                : Array.from({ length: 8 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-[380px] w-[270px] shrink-0 overflow-hidden rounded-[24px] sm:h-[470px] sm:w-[335px]"
-                    >
-                      <FallbackArt index={i} />
-                    </div>
-                  ))}
+                    ))}
+              </div>
             </div>
-          </div>
+          ))}
         </section>
+        {packs.length > 0 && (
+          <section className="mx-auto max-w-[1500px] px-4 py-14 sm:px-7 sm:py-20">
+            <div className="mb-8 flex items-end justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[.2em] text-primary">
+                  Prompt packs
+                </p>
+                <h2 className="mt-2 text-3xl font-semibold tracking-[-.045em] sm:text-5xl">
+                  Curated creative worlds.
+                </h2>
+              </div>
+              <Link to="/library" className="ev-button ev-button-secondary hidden sm:inline-flex">
+                Explore all <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-3 [&::-webkit-scrollbar]:hidden">
+              {packs.slice(0, 6).map((pack, index) => (
+                <Link
+                  key={pack.id}
+                  to="/pack/$slug"
+                  params={{ slug: pack.slug }}
+                  className="group relative min-h-64 min-w-[78vw] overflow-hidden rounded-[28px] p-6 sm:min-w-[420px]"
+                  style={{
+                    background: [
+                      "linear-gradient(135deg,#ede9fe,#faf5ff)",
+                      "linear-gradient(135deg,#ddd6fe,#f5f3ff)",
+                      "linear-gradient(135deg,#f3e8ff,#ffffff)",
+                    ][index % 3],
+                  }}
+                >
+                  {pack.cover_image_url && (
+                    <img
+                      src={pack.cover_image_url}
+                      alt=""
+                      className="absolute right-0 top-0 h-full w-1/2 object-cover opacity-80 [mask-image:linear-gradient(to_right,transparent,black)] transition group-hover:scale-105"
+                    />
+                  )}
+                  <div className="relative flex h-full max-w-[60%] flex-col justify-end">
+                    <span className="text-xs font-bold uppercase tracking-[.16em] text-primary">
+                      Pack {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <h3 className="mt-2 text-2xl font-semibold tracking-[-.035em]">{pack.title}</h3>
+                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                      {pack.description}
+                    </p>
+                    <span className="mt-5 inline-flex items-center gap-2 text-sm font-bold">
+                      Explore pack <ArrowRight className="h-4 w-4" />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <Link to="/library" className="ev-button ev-button-secondary mt-5 sm:hidden">
+              Explore all <ArrowRight className="h-4 w-4" />
+            </Link>
+          </section>
+        )}
         <section className="mx-auto max-w-[1500px] px-4 py-14 sm:px-7 sm:py-24">
           <div className="mb-9 flex items-end justify-between gap-5">
             <div>

@@ -79,12 +79,7 @@
     radial-gradient(circle at 20% 20%, oklch(0.55 0.22 295 / 35%), transparent 55%),
     radial-gradient(circle at 80% 30%, oklch(0.65 0.18 200 / 30%), transparent 55%),
     radial-gradient(circle at 50% 100%, oklch(0.5 0.18 240 / 30%), transparent 60%);
-  --gradient-text: linear-gradient(
-    120deg,
-    oklch(0.95 0.05 295),
-    oklch(0.85 0.14 200) 60%,
-    oklch(0.8 0.15 240)
-  );
+  --gradient-text: linear-gradient(120deg, #17131f, #7c3aed 72%, #a855f7);
   --shadow-glow: 0 30px 80px -30px oklch(0.55 0.22 295 / 50%);
   --glass-bg: oklch(0.2 0.04 275 / 58%);
   --glass-border: oklch(0.85 0.08 285 / 13%);
@@ -132,8 +127,8 @@
       0 12px 48px -16px oklch(0 0 0 / 70%);
   }
   .glass-strong {
-    background: oklch(0.22 0.03 270 / 75%);
-    border: 1px solid oklch(0.85 0.05 270 / 16%);
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(35, 20, 55, 0.1);
     backdrop-filter: blur(28px) saturate(160%);
   }
   .glass-card {
@@ -206,6 +201,14 @@
   }
   100% {
     transform: translateX(-50%);
+  }
+}
+@keyframes marquee-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
   }
 }
 @keyframes scrollPulse {

@@ -70,7 +70,10 @@ function SkillPage() {
           <section>
             <div className="flex flex-wrap gap-2">
               {s.compatibility.map((x) => (
-                <span key={x} className="rounded-full border border-white/10 px-3 py-1 text-xs">
+                <span
+                  key={x}
+                  className="rounded-full border border-border bg-white px-3 py-1 text-xs"
+                >
                   {x}
                 </span>
               ))}

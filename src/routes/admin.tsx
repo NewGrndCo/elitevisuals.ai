@@ -17,6 +17,7 @@ import { CategoryManager } from "@/components/admin/category-manager";
 import { AiLogoManager } from "@/components/admin/logo-manager";
 import { WhitelistManager } from "@/components/admin/whitelist-manager";
 import { SkillManager } from "@/components/admin/skill-manager";
+import { WaitlistManager } from "@/components/admin/waitlist-manager";
 
 export const Route = createFileRoute("/admin")({
   // The active tab lives in the URL, so refresh, back/forward and deep links
@@ -178,6 +179,7 @@ function AdminDashboard() {
           {tab === "packs" && <PackManager />}
           {tab === "prompts" && <PromptManager />}
           {tab === "skills" && <SkillManager />}
+          {tab === "waitlist" && <WaitlistManager />}
           {tab === "categories" && <CategoryManager />}
           {tab === "logos" && <AiLogoManager />}
           {tab === "whitelist" && <WhitelistManager />}

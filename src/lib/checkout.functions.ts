@@ -30,6 +30,7 @@ export const createDonationCheckout = createServerFn({ method: "POST" })
     form.set("submit_type", "donate");
     form.set("success_url", `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`);
     form.set("cancel_url", `${origin}/`);
+    form.set("integration_identifier", "elitevisuals_donate_jvkrpcta");
 
     form.set("line_items[0][quantity]", String(data.amountDollars));
     form.set("line_items[0][price_data][currency]", "usd");

@@ -6,6 +6,7 @@ import {
   LayoutList,
   Package,
   Download,
+  Users,
   ShieldCheck,
   Type,
 } from "lucide-react";
@@ -17,6 +18,7 @@ export const ADMIN_TABS = [
   { key: "packs", label: "Packs", icon: Package, group: "Content" },
   { key: "prompts", label: "Prompts", icon: FileText, group: "Content" },
   { key: "skills", label: "Skills", icon: Download, group: "Content" },
+  { key: "waitlist", label: "Waitlist", icon: Users, group: "Content" },
   { key: "categories", label: "Categories", icon: FolderKanban, group: "Content" },
   { key: "logos", label: "AI Models", icon: ImageIcon, group: "Content" },
   { key: "whitelist", label: "Admins", icon: ShieldCheck, group: "Access" },

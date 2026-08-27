@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as SkillsRouteImport } from './routes/skills'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LibraryRouteImport } from './routes/library'
@@ -22,6 +23,11 @@ import { Route as AccountDownloadsRouteImport } from './routes/account.downloads
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 import { Route as ApiPublicPurchaseEmailRouteImport } from './routes/api/public/purchase-email'
 
+const WaitlistRoute = WaitlistRouteImport.update({
+  id: '/waitlist',
+  path: '/waitlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SkillsRoute = SkillsRouteImport.update({
   id: '/skills',
   path: '/skills',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
   '/skills': typeof SkillsRoute
+  '/waitlist': typeof WaitlistRoute
   '/account/downloads': typeof AccountDownloadsRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
   '/skills': typeof SkillsRoute
+  '/waitlist': typeof WaitlistRoute
   '/account/downloads': typeof AccountDownloadsRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
   '/skills': typeof SkillsRoute
+  '/waitlist': typeof WaitlistRoute
   '/account/downloads': typeof AccountDownloadsRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/pack/$slug': typeof PackSlugRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/login'
     | '/skills'
+    | '/waitlist'
     | '/account/downloads'
     | '/checkout/success'
     | '/pack/$slug'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/login'
     | '/skills'
+    | '/waitlist'
     | '/account/downloads'
     | '/checkout/success'
     | '/pack/$slug'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/login'
     | '/skills'
+    | '/waitlist'
     | '/account/downloads'
     | '/checkout/success'
     | '/pack/$slug'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   LibraryRoute: typeof LibraryRoute
   LoginRoute: typeof LoginRoute
   SkillsRoute: typeof SkillsRoute
+  WaitlistRoute: typeof WaitlistRoute
   AccountDownloadsRoute: typeof AccountDownloadsRoute
   CheckoutSuccessRoute: typeof CheckoutSuccessRoute
   PackSlugRoute: typeof PackSlugRoute
@@ -188,6 +201,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/waitlist': {
+      id: '/waitlist'
+      path: '/waitlist'
+      fullPath: '/waitlist'
+      preLoaderRoute: typeof WaitlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/skills': {
       id: '/skills'
       path: '/skills'
@@ -281,6 +301,7 @@ const rootRouteChildren: RootRouteChildren = {
   LibraryRoute: LibraryRoute,
   LoginRoute: LoginRoute,
   SkillsRoute: SkillsRoute,
+  WaitlistRoute: WaitlistRoute,
   AccountDownloadsRoute: AccountDownloadsRoute,
   CheckoutSuccessRoute: CheckoutSuccessRoute,
   PackSlugRoute: PackSlugRoute,
