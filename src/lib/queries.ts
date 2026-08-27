@@ -276,6 +276,59 @@ export type SkillVersion = {
   created_at: string;
 };
 
+export type ResourceItem = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  url: string;
+  image_url: string | null;
+  resource_type: "tool" | "platform" | "creator" | "news" | "workflow" | "community" | "other";
+  tags: string[];
+  is_featured: boolean;
+  is_published: boolean;
+  sort_order: number;
+};
+
+export type SiteAsset = {
+  id: string;
+  asset_key: string;
+  name: string;
+  asset_type: "image" | "video" | "icon" | "document" | "other";
+  url: string;
+  alt_text: string;
+  notes: string;
+  is_published: boolean;
+};
+
+// Generated database types are refreshed after the migration is applied remotely.
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const dynamicTable = (name: string): any =>
+  (supabase as unknown as { from: (table: string) => any }).from(name);
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export const useResources = (includeUnpublished = false) =>
+  useQuery({
+    queryKey: ["resources", includeUnpublished ? "all" : "published"],
+    queryFn: async () => {
+      let q = dynamicTable("resources").select("*").order("sort_order").order("title");
+      if (!includeUnpublished) q = q.eq("is_published", true);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as ResourceItem[];
+    },
+  });
+
+export const useSiteAssets = () =>
+  useQuery({
+    queryKey: ["site_assets"],
+    queryFn: async () => {
+      const { data, error } = await dynamicTable("site_assets").select("*").order("name");
+      if (error) throw error;
+      return data as SiteAsset[];
+    },
+  });
+
 const DEMO_SKILL_ID = "11111111-1111-4111-8111-111111111111";
 const DEMO_SKILLS: Skill[] = [
   {

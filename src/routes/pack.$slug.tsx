@@ -9,7 +9,7 @@ import {
   categoriesOptions,
 } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Sparkles, UploadCloud, Play, Copy, Check, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -88,7 +88,7 @@ function CopyButton({ slug, text }: { slug: string; text: string }) {
   );
 }
 
-function PromptCard({ p, accent }: { p: PromptRow; accent: string }) {
+function PromptCard({ p, accent, signedIn }: { p: PromptRow; accent: string; signedIn: boolean }) {
   return (
     <div className="glass group relative w-[78vw] shrink-0 snap-start overflow-hidden rounded-3xl sm:w-[55vw] md:w-auto md:shrink">
       <CopyButton slug={p.slug} text={p.prompt_text} />
@@ -123,9 +123,16 @@ function PromptCard({ p, accent }: { p: PromptRow; accent: string }) {
         </Link>
         <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
         <div className="relative mt-4 min-h-[88px] overflow-hidden rounded-xl border border-white/5 bg-black/30 p-3">
-          <p className="line-clamp-4 font-mono text-xs leading-relaxed text-white/80">
+          <p
+            className={`line-clamp-4 font-mono text-xs leading-relaxed text-white/80 ${signedIn ? "" : "select-none blur-sm"}`}
+          >
             {p.prompt_text}
           </p>
+          {!signedIn && (
+            <span className="absolute inset-0 grid place-items-center bg-black/20 text-xs font-semibold text-white">
+              Sign in to reveal
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -137,6 +144,13 @@ function PackPage() {
   const { data: pack, isLoading: packLoading } = usePack(slug);
   const { data: cats } = useCategories();
   const { data: prompts, isLoading } = usePromptsByPack(pack?.id);
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => setSignedIn(!!session));
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   const hidden = new Set(pack?.hidden_sections ?? []);
 
@@ -228,7 +242,7 @@ function PackPage() {
                   </div>
                   <div className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 md:mx-0 md:grid md:snap-none md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
                     {items.map((p) => (
-                      <PromptCard key={p.id} p={p} accent={accent} />
+                      <PromptCard key={p.id} p={p} accent={accent} signedIn={signedIn} />
                     ))}
                   </div>
                 </div>
@@ -246,7 +260,7 @@ function PackPage() {
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
                     {uncat.map((p) => (
-                      <PromptCard key={p.id} p={p} accent="#a78bfa" />
+                      <PromptCard key={p.id} p={p} accent="#a78bfa" signedIn={signedIn} />
                     ))}
                   </div>
                 </div>

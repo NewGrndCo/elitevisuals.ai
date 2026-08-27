@@ -210,9 +210,24 @@ function PromptPage() {
                     )}
                   </button>
                 </div>
-                <pre className="mt-4 max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-2xl bg-black/40 p-4 font-mono text-[13px] leading-relaxed text-foreground/90">
-                  {prompt.prompt_text}
-                </pre>
+                <div className="relative mt-4 overflow-hidden rounded-2xl bg-black/40">
+                  <pre
+                    className={`max-h-[60vh] overflow-auto whitespace-pre-wrap p-4 font-mono text-[13px] leading-relaxed text-foreground/90 ${signedIn ? "" : "pointer-events-none select-none blur-md"}`}
+                  >
+                    {prompt.prompt_text}
+                  </pre>
+                  {!signedIn && (
+                    <Link
+                      to="/login"
+                      search={{ next: `/prompt/${prompt.slug}` }}
+                      className="absolute inset-0 grid place-items-center bg-black/25 backdrop-blur-[2px]"
+                    >
+                      <span className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-xl">
+                        Sign in to reveal prompt
+                      </span>
+                    </Link>
+                  )}
+                </div>
                 <p className="mt-4 text-xs text-muted-foreground">
                   Paste into any modern image or video model. Adjust subject, lens, and palette to
                   taste.

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as SkillsRouteImport } from './routes/skills'
+import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -31,6 +32,11 @@ const WaitlistRoute = WaitlistRouteImport.update({
 const SkillsRoute = SkillsRouteImport.update({
   id: '/skills',
   path: '/skills',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResourcesRoute = ResourcesRouteImport.update({
+  id: '/resources',
+  path: '/resources',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/resources': typeof ResourcesRoute
   '/skills': typeof SkillsRoute
   '/waitlist': typeof WaitlistRoute
   '/account/downloads': typeof AccountDownloadsRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/resources': typeof ResourcesRoute
   '/skills': typeof SkillsRoute
   '/waitlist': typeof WaitlistRoute
   '/account/downloads': typeof AccountDownloadsRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/resources': typeof ResourcesRoute
   '/skills': typeof SkillsRoute
   '/waitlist': typeof WaitlistRoute
   '/account/downloads': typeof AccountDownloadsRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/library'
     | '/login'
+    | '/resources'
     | '/skills'
     | '/waitlist'
     | '/account/downloads'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/library'
     | '/login'
+    | '/resources'
     | '/skills'
     | '/waitlist'
     | '/account/downloads'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/library'
     | '/login'
+    | '/resources'
     | '/skills'
     | '/waitlist'
     | '/account/downloads'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   LibraryRoute: typeof LibraryRoute
   LoginRoute: typeof LoginRoute
+  ResourcesRoute: typeof ResourcesRoute
   SkillsRoute: typeof SkillsRoute
   WaitlistRoute: typeof WaitlistRoute
   AccountDownloadsRoute: typeof AccountDownloadsRoute
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/skills'
       fullPath: '/skills'
       preLoaderRoute: typeof SkillsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resources': {
+      id: '/resources'
+      path: '/resources'
+      fullPath: '/resources'
+      preLoaderRoute: typeof ResourcesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -300,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   LibraryRoute: LibraryRoute,
   LoginRoute: LoginRoute,
+  ResourcesRoute: ResourcesRoute,
   SkillsRoute: SkillsRoute,
   WaitlistRoute: WaitlistRoute,
   AccountDownloadsRoute: AccountDownloadsRoute,

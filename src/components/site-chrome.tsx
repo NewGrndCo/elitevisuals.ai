@@ -47,8 +47,9 @@ export function SiteHeader() {
 
   const nav = [
     { to: "/", label: "Home" },
-    { to: "/library", label: "Library" },
+    { to: "/library", label: "Prompt Packs" },
     { to: "/skills", label: "Skills" },
+    { to: "/resources", label: "Resources" },
     { to: "/waitlist", label: "Waitlist" },
   ];
 
@@ -81,7 +82,7 @@ export function SiteHeader() {
               <Link
                 key={n.to}
                 to={n.to}
-                className={`rounded-full px-2.5 py-2 text-xs font-medium transition-colors sm:px-4 sm:text-sm ${active ? "bg-[#f1ebff] text-primary" : "text-muted-foreground hover:text-foreground"} ${n.to === "/waitlist" ? "hidden md:inline-flex" : ""}`}
+                className={`rounded-full px-2.5 py-2 text-xs font-medium transition-colors sm:px-4 sm:text-sm ${active ? "bg-[#f1ebff] text-primary" : "text-muted-foreground hover:text-foreground"} ${n.to === "/" ? "hidden sm:inline-flex" : ""} ${n.to === "/waitlist" || n.to === "/resources" ? "hidden lg:inline-flex" : ""}`}
               >
                 {n.label}
               </Link>
@@ -139,9 +140,9 @@ export function SiteFooter() {
     cmsLinks.length > 0
       ? cmsLinks
       : [
-          { label: "Library", url: "/library" },
-          { label: "Discord", url: "#" },
-          { label: "Twitter", url: "#" },
+          { label: "Prompt Packs", url: "/library" },
+          { label: "Resources", url: "/resources" },
+          { label: "Waitlist", url: "/waitlist" },
         ];
 
   return (

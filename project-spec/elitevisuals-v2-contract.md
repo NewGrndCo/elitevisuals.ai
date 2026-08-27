@@ -184,3 +184,15 @@ The browser never receives a Supabase service-role credential or a permanent pri
 ## Next gate
 
 Confirm the downloadable-skill package format and supported platforms, then approve the V2 creative direction.
+
+### EV2-R19 — Auth-gated prompt visibility
+
+Signed-out visitors may discover prompts, but prompt text must be visually obscured and non-selectable until authentication. Copy remains authentication-gated.
+
+### EV2-R20 — Curated resources directory
+
+The public product includes a searchable, filterable Resources page for AI tools, platforms, creators, news sources, and illustrated workflows. Admins can create, publish, unpublish, and remove entries.
+
+### EV2-R21 — Global site asset library
+
+Admins can upload and catalog reusable site images, videos, icons, and documents with stable keys, alt text, notes, and publication status.
