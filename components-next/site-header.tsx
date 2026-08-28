@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useRef } from "react";
 import { Menu } from "lucide-react";
 import eliteVisualsLogo from "@/assets/logo.png";
 import { ThemeToggle } from "./theme-toggle";
@@ -14,13 +15,23 @@ const links = [
 
 export function SiteHeader() {
   const path = usePathname();
+  const router = useRouter();
+  const logoClicks = useRef<number[]>([]);
+  const handleLogoClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const now = Date.now();
+    logoClicks.current = [...logoClicks.current.filter((time) => now - time < 1800), now];
+    if (logoClicks.current.length < 4) return;
+    event.preventDefault();
+    logoClicks.current = [];
+    router.push("/admin");
+  };
   return (
     <header className="site-header">
       <div className="nav-pill">
         <button className="menu-button" aria-label="Open menu">
           <Menu size={20} />
         </button>
-        <Link href="/" className="brand">
+        <Link href="/" className="brand" onClick={handleLogoClick}>
           <Image className="brand-logo" src={eliteVisualsLogo} alt="EliteVisuals.ai" priority />
           <span>elitevisuals.ai</span>
         </Link>

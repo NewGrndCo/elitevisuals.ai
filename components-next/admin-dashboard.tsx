@@ -153,26 +153,26 @@ export function AdminDashboard() {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
-    [readOnly, setReadOnly] = useState(false),
     [editing, setEditing] = useState<Row | null>(null),
     [draft, setDraft] = useState<Record<string, string | boolean>>({});
   const activeFields = useMemo(() => fields[tab], [tab]);
   const load = useCallback(async () => {
     setBusy(true);
     setError("");
-    const response = await fetch(`/api/admin/content?table=${tab}`, { cache: "no-store" });
-    const body = await response.json();
-    setBusy(false);
-    if (response.status === 401) {
-      setUnlocked(false);
-      return;
+    try {
+      const response = await fetch(`/api/admin/content?table=${tab}`, { cache: "no-store" });
+      const body = await response.json();
+      if (response.status === 401) {
+        setUnlocked(false);
+        return;
+      }
+      if (!response.ok) throw new Error(body.error || "Unable to load admin data");
+      setRows(body.data || []);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to load admin data");
+    } finally {
+      setBusy(false);
     }
-    if (!response.ok) {
-      setError(body.error || "Unable to load admin data");
-      return;
-    }
-    setRows(body.data || []);
-    setReadOnly(Boolean(body.readOnly));
   }, [tab]);
   useEffect(() => {
     if (unlocked) void load();
@@ -334,24 +334,11 @@ export function AdminDashboard() {
             <button onClick={load} className="admin-icon" aria-label="Refresh">
               <RefreshCw size={17} />
             </button>
-            <button
-              onClick={() => openEditor()}
-              className="button button-solid"
-              disabled={readOnly}
-            >
+            <button onClick={() => openEditor()} className="button button-solid" disabled={busy}>
               <Plus size={16} /> Add new
             </button>
           </div>
         </header>
-        {readOnly && (
-          <div className="admin-error admin-config-error">
-            Editing is not connected yet
-            <small>
-              Add SUPABASE_SERVICE_ROLE_KEY to .env and Netlify, then restart. Your PIN alone cannot
-              safely bypass database permissions.
-            </small>
-          </div>
-        )}
         {error && <div className="admin-error admin-config-error">{error}</div>}
         {message && <div className="admin-success">{message}</div>}
         {editing && (
@@ -414,7 +401,7 @@ export function AdminDashboard() {
                 </label>
               ))}
             </div>
-            <button className="button button-solid" disabled={busy || readOnly}>
+            <button className="button button-solid" disabled={busy}>
               <Save size={16} /> {busy ? "Saving…" : "Save changes"}
             </button>
           </form>
@@ -447,7 +434,7 @@ export function AdminDashboard() {
                     <button
                       className={`publish ${published ? "live" : "draft"}`}
                       onClick={() => void publish(row)}
-                      disabled={readOnly}
+                      disabled={busy}
                     >
                       {published ? <Eye size={14} /> : <EyeOff size={14} />}{" "}
                       {published ? "Live" : "Draft"}
@@ -456,7 +443,7 @@ export function AdminDashboard() {
                   <button
                     className="admin-edit"
                     onClick={() => openEditor(row)}
-                    disabled={readOnly}
+                    disabled={busy}
                     aria-label="Edit"
                   >
                     <Pencil size={16} />
@@ -464,7 +451,7 @@ export function AdminDashboard() {
                   <button
                     className="admin-delete"
                     onClick={() => void remove(row)}
-                    disabled={readOnly}
+                    disabled={busy}
                     aria-label="Delete"
                   >
                     <Trash2 size={16} />

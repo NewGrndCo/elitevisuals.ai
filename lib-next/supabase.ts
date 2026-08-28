@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { readBetaTable, type AdminTable } from "./beta-content";
 
 function env(name: string, legacy: string) {
   const value = process.env[name] ?? process.env[legacy];
@@ -44,7 +45,13 @@ export type Skill = {
   price_cents: number;
   is_published: boolean;
 };
-export type AiLogo = { id: string; name: string; logo_url?: string; image_url?: string };
+export type AiLogo = {
+  id: string;
+  name: string;
+  logo_url?: string;
+  image_url?: string;
+  is_published?: boolean;
+};
 export type ResourceItem = {
   id: string;
   title: string;
@@ -52,7 +59,12 @@ export type ResourceItem = {
   url: string;
   image_url: string | null;
   resource_type: string;
+  is_published?: boolean;
 };
+
+async function betaOr<T>(table: AdminTable, fallback: T[]) {
+  return ((await readBetaTable(table)) ?? fallback) as T[];
+}
 
 export async function getHomeData() {
   const db = createPublicClient();
@@ -63,10 +75,18 @@ export async function getHomeData() {
     db.from("ai_logos").select("*").eq("is_published", true).order("sort_order").limit(8),
   ]);
   return {
-    packs: (packs.data ?? []) as Pack[],
-    prompts: (prompts.data ?? []) as Prompt[],
-    skills: (skills.data ?? []) as Skill[],
-    logos: (logos.data ?? []) as AiLogo[],
+    packs: (await betaOr("packs", (packs.data ?? []) as Pack[]))
+      .filter((row) => row.is_published)
+      .slice(0, 3),
+    prompts: (await betaOr("prompts", (prompts.data ?? []) as Prompt[]))
+      .filter((row) => row.is_published)
+      .slice(0, 12),
+    skills: (await betaOr("skills", (skills.data ?? []) as Skill[]))
+      .filter((row) => row.is_published)
+      .slice(0, 3),
+    logos: (await betaOr("ai_logos", (logos.data ?? []) as AiLogo[]))
+      .filter((row) => row.is_published !== false)
+      .slice(0, 8),
   };
 }
 
@@ -76,7 +96,7 @@ export async function getPacks() {
     .select("*")
     .eq("is_published", true)
     .order("sort_order");
-  return (data ?? []) as Pack[];
+  return (await betaOr("packs", (data ?? []) as Pack[])).filter((row) => row.is_published);
 }
 export async function getPrompts() {
   const { data } = await createPublicClient()
@@ -84,9 +104,14 @@ export async function getPrompts() {
     .select("*")
     .eq("is_published", true)
     .order("sort_order");
-  return (data ?? []) as Prompt[];
+  return (await betaOr("prompts", (data ?? []) as Prompt[])).filter((row) => row.is_published);
 }
 export async function getPrompt(slug: string) {
+  const beta = await readBetaTable("prompts");
+  if (beta)
+    return (beta.find((row) => row.slug === slug) ?? null) as
+      | (Prompt & { categories: { name: string; accent_color: string | null } | null })
+      | null;
   const { data } = await createPublicClient()
     .from("prompts")
     .select("*,categories(name,accent_color)")
@@ -102,9 +127,19 @@ export async function getSkills() {
     .select("*")
     .eq("is_published", true)
     .order("sort_order");
-  return (data ?? []) as Skill[];
+  return (await betaOr("skills", (data ?? []) as Skill[])).filter((row) => row.is_published);
 }
 export async function getPack(slug: string) {
+  const betaPacks = await readBetaTable("packs");
+  const betaPrompts = await readBetaTable("prompts");
+  if (betaPacks && betaPrompts) {
+    const pack = betaPacks.find((row) => row.slug === slug) as Pack | undefined;
+    if (!pack) return null;
+    return {
+      pack,
+      prompts: betaPrompts.filter((row) => row.pack_id === pack.id && row.is_published) as Prompt[],
+    };
+  }
   const db = createPublicClient();
   const { data: pack } = await db.from("packs").select("*").eq("slug", slug).maybeSingle();
   if (!pack) return null;
@@ -117,6 +152,11 @@ export async function getPack(slug: string) {
   return { pack: pack as Pack, prompts: (prompts ?? []) as Prompt[] };
 }
 export async function getSkill(slug: string) {
+  const beta = await readBetaTable("skills");
+  if (beta)
+    return (beta.find((row) => row.slug === slug) ?? null) as
+      | (Skill & { description: string; compatibility: string[]; install_instructions: string })
+      | null;
   const { data } = await createPublicClient()
     .from("skills")
     .select("*")
@@ -133,5 +173,7 @@ export async function getResources() {
     .eq("is_published", true)
     .order("sort_order");
   if (error) return [];
-  return (data ?? []) as ResourceItem[];
+  return (await betaOr("resources", (data ?? []) as ResourceItem[])).filter(
+    (row) => row.is_published !== false,
+  );
 }
