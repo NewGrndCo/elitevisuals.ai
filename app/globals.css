@@ -7,6 +7,18 @@
   --muted: #6f6b78;
   --paper: #f1f2f4;
   --line: rgba(23, 21, 29, 0.09);
+  --surface: #ffffff;
+  --surface-soft: #f8f6fb;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --ink: #f5f1fb;
+  --muted: #aaa2b7;
+  --paper: #110e16;
+  --line: rgba(255, 255, 255, 0.11);
+  --surface: #1a1621;
+  --surface-soft: #211b2a;
+  color-scheme: dark;
 }
 * {
   box-sizing: border-box;
@@ -46,6 +58,18 @@ img {
   display: flex;
   align-items: center;
   gap: 18px;
+}
+.theme-toggle {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--ink);
+  cursor: pointer;
 }
 .menu-button {
   display: none;
@@ -1050,6 +1074,9 @@ footer p {
   margin: 0 0 23px;
 }
 .pack-hero img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
   border-radius: 27px;
   box-shadow: 0 20px 45px rgba(30, 20, 50, 0.16);
   margin-bottom: 28px;
@@ -1058,6 +1085,70 @@ footer p {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 19px;
+}
+.skill-prompt-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.skill-visual-card {
+  position: relative;
+  min-height: 470px;
+  overflow: hidden;
+  border: 7px solid var(--surface);
+  border-radius: 27px;
+  background: linear-gradient(145deg, #d7c4ff, #7750c8);
+  box-shadow: 0 18px 45px rgba(31, 17, 55, 0.13);
+}
+.skill-visual-card > img {
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.skill-visual-card:hover > img {
+  transform: scale(1.04);
+}
+.skill-visual-card .skill-placeholder {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  aspect-ratio: auto;
+}
+.skill-card-overlay {
+  position: absolute;
+  inset: 38% 0 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 80px 24px 23px;
+  color: white;
+  background: linear-gradient(transparent, rgba(12, 7, 20, 0.94));
+}
+.skill-card-overlay h2 {
+  margin: 9px 0 7px;
+  font-size: 27px;
+  line-height: 1.05;
+}
+.skill-card-overlay p {
+  margin: 0 0 17px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.skill-card-overlay b {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+}
+.skill-price {
+  width: max-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: white !important;
+  background: rgba(118, 56, 238, 0.88);
+  backdrop-filter: blur(8px);
 }
 .skill-card {
   overflow: hidden;
@@ -1102,45 +1193,110 @@ footer p {
   gap: 7px;
   font-size: 13px;
 }
-.resource-grid {
+.resource-directory {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 19px;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
 }
 .resource-card {
-  background: #fff;
-  border-radius: 27px;
-  padding: 8px 8px 24px;
+  display: grid;
+  grid-template-columns: 68px 1fr 40px;
+  gap: 17px;
+  align-items: center;
+  min-height: 155px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: 0 12px 35px rgba(30, 20, 50, 0.05);
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease;
+}
+.resource-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(118, 56, 238, 0.42);
+}
+.resource-logo {
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
   overflow: hidden;
-}
-.resource-card img,
-.resource-placeholder {
-  width: 100%;
-  aspect-ratio: 16/9;
-  object-fit: cover;
-  border-radius: 20px;
+  border-radius: 18px;
   background: linear-gradient(135deg, #e8dcff, #d6f4ff);
+  color: var(--purple);
 }
-.resource-card > span,
-.resource-card > h2,
-.resource-card > p,
-.resource-card > b {
-  margin-left: 16px;
-  margin-right: 16px;
+.resource-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
-.resource-card > span {
+.resource-copy {
+  min-width: 0;
+}
+.resource-copy > span {
   display: block;
   color: var(--purple);
   text-transform: uppercase;
   font-size: 10px;
   font-weight: 750;
   letter-spacing: 0.12em;
-  margin-top: 18px;
 }
-.resource-card h2 {
-  font-size: 23px;
-  margin-top: 6px;
-  margin-bottom: 0;
+.resource-copy h2 {
+  font-size: 21px;
+  margin: 5px 0 4px;
+}
+.resource-copy p {
+  margin: 0 0 9px;
+  font-size: 14px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.resource-copy small {
+  display: block;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.resource-visit {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--purple);
+}
+:root[data-theme="dark"] .nav-pill {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(25, 20, 32, 0.91);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.28);
+}
+:root[data-theme="dark"] .nav-pill nav a:hover,
+:root[data-theme="dark"] .nav-pill nav a.active {
+  background: #2b203c;
+}
+:root[data-theme="dark"] .button-outline,
+:root[data-theme="dark"] .skill-purchase,
+:root[data-theme="dark"] .admin-editor,
+:root[data-theme="dark"] .empty-state,
+:root[data-theme="dark"] .form-card,
+:root[data-theme="dark"] .auth-card {
+  background: var(--surface);
+}
+:root[data-theme="dark"] .prompt-card {
+  border-color: var(--surface);
+}
+:root[data-theme="dark"] .visual-fade.left {
+  background: linear-gradient(90deg, var(--paper), transparent);
+}
+:root[data-theme="dark"] .visual-fade.right {
+  background: linear-gradient(-90deg, var(--paper), transparent);
 }
 .empty-state {
   text-align: center;
@@ -1237,6 +1393,9 @@ footer p {
   .resource-grid {
     grid-template-columns: 1fr 1fr;
   }
+  .resource-directory {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 600px) {
   .catalog-grid,
@@ -1257,6 +1416,22 @@ footer p {
   .resource-grid,
   .skill-grid {
     grid-template-columns: 1fr;
+  }
+  .skill-prompt-grid {
+    grid-template-columns: 1fr;
+  }
+  .skill-visual-card {
+    min-height: 430px;
+  }
+  .resource-card {
+    grid-template-columns: 56px 1fr 34px;
+    padding: 16px;
+    gap: 13px;
+  }
+  .resource-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 15px;
   }
   .detail-page {
     padding-top: 100px;

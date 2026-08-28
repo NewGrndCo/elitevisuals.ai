@@ -4,6 +4,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import eliteVisualsLogo from "@/src/assets/logo.png";
+import { ThemeToggle } from "./theme-toggle";
 
 const links = [
   { href: "/promptbox", label: "Prompt Packs" },
@@ -21,6 +22,7 @@ export function SiteHeader() {
         </button>
         <Link href="/" className="brand">
           <Image className="brand-logo" src={eliteVisualsLogo} alt="EliteVisuals.ai" priority />
+          <span>elitevisuals.ai</span>
         </Link>
         <nav>
           {links.map((l) => (
@@ -29,6 +31,7 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
+        <ThemeToggle />
         <Link href="/login" className="button button-solid nav-signin">
           Sign In
         </Link>
@@ -43,6 +46,7 @@ export function SiteFooter() {
       <div>
         <Link href="/" className="brand">
           <Image className="brand-logo" src={eliteVisualsLogo} alt="EliteVisuals.ai" />
+          <span>elitevisuals.ai</span>
         </Link>
         <p>Ideas, engineered visually.</p>
       </div>
