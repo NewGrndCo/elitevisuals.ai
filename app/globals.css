@@ -62,6 +62,11 @@ img {
   letter-spacing: -0.03em;
   text-transform: lowercase;
 }
+.brand-logo {
+  width: auto;
+  height: 28px;
+  object-fit: contain;
+}
 .brand-mark {
   display: grid;
   place-items: center;
@@ -500,8 +505,9 @@ footer p {
   }
 }
 @media (max-width: 540px) {
-  .brand span:last-child {
-    display: none;
+  .brand-logo {
+    height: 23px;
+    max-width: 145px;
   }
   .hero {
     padding-top: 105px;
@@ -794,7 +800,7 @@ footer p {
 }
 .admin-list article {
   display: grid;
-  grid-template-columns: 52px 1fr auto auto;
+  grid-template-columns: 52px 1fr auto auto auto;
   gap: 13px;
   align-items: center;
   padding: 11px;
@@ -853,6 +859,90 @@ footer p {
   background: #f5f2f6;
   color: #8c8091;
 }
+.admin-edit {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: #eee7ff;
+  color: var(--purple);
+}
+.admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-success {
+  margin: 12px 0;
+  padding: 11px 15px;
+  border-radius: 12px;
+  background: #e5f8ee;
+  color: #18774b;
+  font-size: 13px;
+}
+.admin-editor {
+  margin: 4px 0 24px;
+  padding: 24px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: 0 16px 45px rgba(30, 20, 50, 0.08);
+}
+.admin-editor > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.admin-editor h3 {
+  margin: 4px 0 0;
+  font-size: 24px;
+}
+.admin-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.admin-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+.admin-fields label.wide {
+  grid-column: 1 / -1;
+}
+.admin-fields input:not([type="checkbox"]),
+.admin-fields textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: #faf9fb;
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+.admin-fields input:focus,
+.admin-fields textarea:focus {
+  outline: 2px solid #dbcaff;
+  border-color: var(--purple);
+}
+.admin-check {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+}
+.admin-list button:disabled,
+.admin-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
 .admin-loading {
   display: flex;
   gap: 8px;
@@ -889,14 +979,20 @@ footer p {
     padding: 25px 14px;
   }
   .admin-list article {
-    grid-template-columns: 45px 1fr auto;
+    grid-template-columns: 45px 1fr auto auto;
   }
   .admin-list .publish {
     grid-column: 2;
   }
   .admin-delete {
-    grid-column: 3;
+    grid-column: 4;
     grid-row: 1;
+  }
+  .admin-fields {
+    grid-template-columns: 1fr;
+  }
+  .admin-fields label.wide {
+    grid-column: auto;
   }
 }
 .skill-purchase > span {

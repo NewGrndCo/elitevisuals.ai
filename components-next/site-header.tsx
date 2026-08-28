@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
+import eliteVisualsLogo from "@/src/assets/logo.png";
 
 const links = [
   { href: "/promptbox", label: "Prompt Packs" },
@@ -18,8 +20,7 @@ export function SiteHeader() {
           <Menu size={20} />
         </button>
         <Link href="/" className="brand">
-          <span className="brand-mark">E</span>
-          <span>elitevisuals.ai</span>
+          <Image className="brand-logo" src={eliteVisualsLogo} alt="EliteVisuals.ai" priority />
         </Link>
         <nav>
           {links.map((l) => (
@@ -41,8 +42,7 @@ export function SiteFooter() {
     <footer>
       <div>
         <Link href="/" className="brand">
-          <span className="brand-mark">E</span>
-          <span>elitevisuals.ai</span>
+          <Image className="brand-logo" src={eliteVisualsLogo} alt="EliteVisuals.ai" />
         </Link>
         <p>Ideas, engineered visually.</p>
       </div>
