@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
-import eliteVisualsLogo from "@/src/assets/logo.png";
+import eliteVisualsLogo from "@/assets/logo.png";
 import { ThemeToggle } from "./theme-toggle";
 
 const links = [
