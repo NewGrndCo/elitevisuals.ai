@@ -36,5 +36,6 @@ supabase/.temp/
 *.sln
 *.sw?
 .next/
+public/media/prompts/*.gif
 AGENTS.md
 CLAUDE.md
