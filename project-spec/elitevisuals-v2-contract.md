@@ -196,3 +196,11 @@ The public product includes a searchable, filterable Resources page for AI tools
 ### EV2-R21 — Global site asset library
 
 Admins can upload and catalog reusable site images, videos, icons, and documents with stable keys, alt text, notes, and publication status.
+
+### CR-004 — Next.js App Router rebuild
+
+- Reason: user-directed framework and visual architecture migration based on approved Tunnelbox reference evidence.
+- Decision: replace the TanStack Start production runtime with Next.js App Router 16, React 19, and Tailwind CSS 4 while preserving the existing Supabase data model.
+- Visual constraint: reproduce hierarchy, restraint, rhythm, and interaction patterns—not Tunnelbox branding, copy, or proprietary assets. Elite Visuals remains purple/white with original content.
+- Migration gate: public discovery routes may reach verification candidate independently; authentication, checkout, waitlist submission, downloads, and admin remain blocked until their Next.js server boundaries are migrated and retested.
+- Status: approved by user; implementation in progress.
