@@ -2,11 +2,11 @@
 
 Status: validated focused implementation; production candidate with environment-dependent build verification outstanding.
 
-Scope: connect the user-approved purple-glass icon to browser favicon, Apple home-screen metadata, and a web app manifest. Preserve the current browser title until the user selects new wording. No offline support, service worker, backend changes, or deployment configuration changes.
+Scope: connect the user-approved purple-glass icon to browser favicon, Apple home-screen metadata, and a web app manifest. Use the user-selected default browser title "EliteVisuals | Your AI Creative Toolkit" and consistent child-page template "%s | EliteVisuals". Keep the home-screen label "EliteVisuals". No offline support, service worker, backend changes, or deployment configuration changes.
 
 Source: generated master in Desktop/elitevisuals-app-icons, approved by the user on 2026-08-30. Derivatives: 32px browser favicon, 180px Apple touch icon, 192px and 512px manifest icons. The artwork is not declared maskable because its mark extends outside the maskable safe zone.
 
-Acceptance: the rendered page includes icon, apple-touch-icon and manifest links; linked PNGs return successfully at declared dimensions; manifest uses the existing purple palette and root launch URL; existing browser title remains unchanged.
+Acceptance: the rendered page includes icon, apple-touch-icon and manifest links; linked PNGs return successfully at declared dimensions; manifest uses the existing purple palette and root launch URL; default browser title matches the user-selected wording exactly.
 
 Quality memory: no active global lessons. Athena applied for scoped integration and verification. No unrelated product scope changes.
 

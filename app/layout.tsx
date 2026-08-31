@@ -4,7 +4,7 @@ import "./globals.css";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 export const metadata: Metadata = {
-  title: { default: "Elite Visuals — AI Prompt Library", template: "%s — Elite Visuals" },
+  title: { default: "EliteVisuals | Your AI Creative Toolkit", template: "%s | EliteVisuals" },
   description: "Curated AI prompt packs, visual workflows, and downloadable creative skills.",
   applicationName: "EliteVisuals",
   manifest: "/site.webmanifest",
