@@ -7,7 +7,7 @@ import { getHomeData } from "@/lib-next/supabase";
 
 export const revalidate = 60;
 export default async function Home() {
-  const { packs, prompts, skills, logos } = await getHomeData();
+  const { packs, prompts, transitionPrompts, imagePrompts, skills, logos } = await getHomeData();
   return (
     <>
       <SiteHeader />
@@ -39,27 +39,61 @@ export default async function Home() {
             <h2>Curated prompts for your next creation</h2>
             <p>Explore visual ideas built for modern image and video models.</p>
           </div>
-          <div className="prompt-row">
-            {prompts.slice(0, 6).map((p) => (
-              <Link href={`/prompt/${p.slug}`} className="prompt-card" key={p.id}>
-                {p.cover_image_url ? (
-                  <Image
-                    src={p.cover_image_url}
-                    alt={p.title}
-                    fill
-                    sizes="(max-width: 700px) 80vw, 33vw"
-                  />
-                ) : (
-                  <div className="image-fallback" />
-                )}
-                <div className="card-overlay">
-                  <h3>{p.title}</h3>
-                  <span>
-                    View <ArrowRight size={14} />
-                  </span>
-                </div>
-              </Link>
-            ))}
+          <div className="prompt-showcase-group">
+            <div className="prompt-row-heading">
+              <span>Transition prompts</span>
+              <small>From Kinetic V1</small>
+            </div>
+            <div className="prompt-row">
+              {transitionPrompts.map((p) => (
+                <Link href={`/prompt/${p.slug}`} className="prompt-card" key={p.id}>
+                  {p.cover_image_url ? (
+                    <Image
+                      src={p.cover_image_url}
+                      alt={p.title}
+                      fill
+                      sizes="(max-width: 700px) 80vw, 33vw"
+                    />
+                  ) : (
+                    <div className="image-fallback" />
+                  )}
+                  <div className="card-overlay">
+                    <h3>{p.title}</h3>
+                    <span>
+                      View <ArrowRight size={14} />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="prompt-showcase-group">
+            <div className="prompt-row-heading">
+              <span>Image prompts</span>
+              <small>Fresh inspiration</small>
+            </div>
+            <div className="prompt-row">
+              {imagePrompts.map((p) => (
+                <Link href={`/prompt/${p.slug}`} className="prompt-card" key={p.id}>
+                  {p.cover_image_url ? (
+                    <Image
+                      src={p.cover_image_url}
+                      alt={p.title}
+                      fill
+                      sizes="(max-width: 700px) 80vw, 33vw"
+                    />
+                  ) : (
+                    <div className="image-fallback" />
+                  )}
+                  <div className="card-overlay">
+                    <h3>{p.title}</h3>
+                    <span>
+                      View <ArrowRight size={14} />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
           <Link href="/promptbox" className="button button-outline center-button">
             Explore all <ArrowRight size={16} />

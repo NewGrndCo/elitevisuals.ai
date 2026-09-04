@@ -35,6 +35,7 @@ export type Prompt = {
   copy_count: number;
   is_published: boolean;
   sort_order: number;
+  pack_id?: string | null;
 };
 export type Skill = {
   id: string;
@@ -75,13 +76,27 @@ export async function getHomeData() {
     db.from("skills").select("*").eq("is_published", true).order("sort_order").limit(3),
     db.from("ai_logos").select("*").eq("is_published", true).order("sort_order").limit(8),
   ]);
+  const allPacks = (await betaOr("packs", (packs.data ?? []) as Pack[])).filter(
+    (row) => row.is_published,
+  );
+  const allPrompts = (await betaOr("prompts", (prompts.data ?? []) as Prompt[])).filter(
+    (row) => row.is_published,
+  );
+  const transitionPack = allPacks.find((pack) => pack.slug.toLowerCase() === "kinetic-v1");
+  const transitionPrompts = allPrompts
+    .filter((prompt) => prompt.pack_id === transitionPack?.id)
+    .slice(0, 3);
+  const imagePrompts = allPrompts
+    .filter((prompt) => !prompt.pack_id)
+    .map((prompt) => ({ prompt, rank: Math.random() }))
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, 3)
+    .map(({ prompt }) => prompt);
   return {
-    packs: (await betaOr("packs", (packs.data ?? []) as Pack[]))
-      .filter((row) => row.is_published)
-      .slice(0, 3),
-    prompts: (await betaOr("prompts", (prompts.data ?? []) as Prompt[]))
-      .filter((row) => row.is_published)
-      .slice(0, 12),
+    packs: allPacks.slice(0, 3),
+    prompts: allPrompts.slice(0, 12),
+    transitionPrompts,
+    imagePrompts,
     skills: (await betaOr("skills", (skills.data ?? []) as Skill[]))
       .filter((row) => row.is_published)
       .slice(0, 3),

@@ -315,6 +315,25 @@ main {
   grid-template-columns: repeat(3, 1fr);
   gap: 18px;
 }
+.prompt-showcase-group + .prompt-showcase-group {
+  margin-top: 34px;
+}
+.prompt-row-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0 4px 13px;
+}
+.prompt-row-heading span {
+  font-size: 18px;
+  font-weight: 650;
+}
+.prompt-row-heading small {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
 .prompt-card {
   position: relative;
   aspect-ratio: 1/1.12;
