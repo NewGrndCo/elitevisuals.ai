@@ -110,7 +110,10 @@ const fields: Record<Table, Field[]> = {
     f("name", "Name", "text", true),
     f("asset_key", "Asset key", "text", true),
     f("asset_type", "Asset type"),
-    f("url", "Asset URL", "text", true),
+    {
+      ...f("url", "Asset URL", "text", true),
+      upload: { kind: "site-asset", accept: "image/*,video/*,.zip,.pdf", label: "Upload asset" },
+    },
     f("alt_text", "Alt text"),
     f("notes", "Notes", "textarea"),
     f("is_published", "Published", "boolean"),
@@ -514,7 +517,11 @@ export function AdminDashboard() {
           <div className="admin-list">
             {rows.map((row) => {
               const published = typeof row.is_published === "boolean" ? row.is_published : null;
-              const media = row.cover_image_url || row.image_url || row.logo_url;
+              const media =
+                row.cover_image_url ||
+                row.image_url ||
+                row.logo_url ||
+                (["image", "icon"].includes(String(row.asset_type)) ? row.url : null);
               return (
                 <article key={rowId(row)}>
                   <div className="admin-thumb">
