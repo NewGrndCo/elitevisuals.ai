@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Download } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components-next/site-header";
+import { SkillDownload } from "@/components-next/skill-download";
 import { getSkill } from "@/lib-next/supabase";
 
 export default async function SkillPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -32,9 +33,7 @@ export default async function SkillPage({ params }: { params: Promise<{ slug: st
             <h2>Install the complete system.</h2>
             <p>{skill.summary}</p>
             {skill.download_url ? (
-              <a className="button button-solid" href={skill.download_url} download>
-                <Download size={16} /> Download ZIP
-              </a>
+              <SkillDownload downloadUrl={skill.download_url} slug={skill.slug} />
             ) : (
               <button className="button button-solid" disabled>
                 <Download size={16} /> Package coming soon

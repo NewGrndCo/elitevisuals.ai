@@ -36,6 +36,8 @@ export type Prompt = {
   is_published: boolean;
   sort_order: number;
   pack_id?: string | null;
+  tags?: string[];
+  category_name?: string | null;
 };
 export type Skill = {
   id: string;

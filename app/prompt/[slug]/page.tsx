@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Lock } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components-next/site-header";
+import { PromptAccess } from "@/components-next/prompt-access";
 import { getPrompt } from "@/lib-next/supabase";
 export default async function PromptPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -27,17 +28,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
             <p className="detail-description">{p.description}</p>
           </div>
           <aside>
-            <div className="prompt-lock">
-              <div className="blurred-copy">{p.prompt_text}</div>
-              <div className="lock-cover">
-                <Lock size={23} />
-                <h2>Sign in to reveal prompt</h2>
-                <p>Create a free account to view and copy the complete prompt.</p>
-                <Link className="button button-solid" href={`/login?next=/prompt/${p.slug}`}>
-                  Sign In
-                </Link>
-              </div>
-            </div>
+            <PromptAccess prompt={p.prompt_text} slug={p.slug} />
           </aside>
         </div>
       </main>

@@ -7,6 +7,13 @@ export const metadata = { title: "Prompts" };
 export const revalidate = 60;
 export default async function Promptbox() {
   const [packs, prompts] = await Promise.all([getPacks(), getPrompts()]);
+  const imagePrompts = prompts.filter((prompt) => !prompt.pack_id);
+  const grouped = imagePrompts.reduce<Record<string, typeof imagePrompts>>((groups, prompt) => {
+    const category = prompt.category_name || "More image prompts";
+    groups[category] ??= [];
+    groups[category].push(prompt);
+    return groups;
+  }, {});
   return (
     <PageShell
       eyebrow="Prompts"
@@ -34,23 +41,31 @@ export default async function Promptbox() {
         </div>
         <div className="catalog-title">
           <h2>Image prompts</h2>
-          <span>{prompts.length} visuals</span>
+          <span>{imagePrompts.length} visuals</span>
         </div>
-        <div className="catalog-grid">
-          {prompts.map((p) => (
-            <Link href={`/prompt/${p.slug}`} className="catalog-card" key={p.id}>
-              {p.cover_image_url ? (
-                <Image src={p.cover_image_url} alt={p.title} fill sizes="25vw" />
-              ) : (
-                <div className="image-fallback" />
-              )}
-              <div>
-                <h3>{p.title}</h3>
-                <span>{p.copy_count || 0} uses</span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {Object.entries(grouped).map(([category, categoryPrompts]) => (
+          <section className="prompt-category" key={category}>
+            <div className="prompt-category-heading">
+              <h3>{category}</h3>
+              <span>{categoryPrompts.length} prompts</span>
+            </div>
+            <div className="catalog-grid">
+              {categoryPrompts.map((p) => (
+                <Link href={`/prompt/${p.slug}`} className="catalog-card" key={p.id}>
+                  {p.cover_image_url ? (
+                    <Image src={p.cover_image_url} alt={p.title} fill sizes="25vw" />
+                  ) : (
+                    <div className="image-fallback" />
+                  )}
+                  <div>
+                    <h3>{p.title}</h3>
+                    <span>{p.copy_count || 0} uses</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ))}
       </section>
     </PageShell>
   );

@@ -67,6 +67,7 @@ const fields: Record<Table, Field[]> = {
     },
     f("gallery_urls", "Gallery URLs (one per line)", "textarea"),
     f("tags", "Tags (one per line)", "textarea"),
+    f("category_name", "Display category"),
     f("source_url", "Original source URL"),
     f("category_id", "Category ID"),
     f("pack_id", "Pack ID"),

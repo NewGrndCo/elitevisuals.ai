@@ -6,6 +6,7 @@ import { useRef } from "react";
 import { Menu } from "lucide-react";
 import eliteVisualsLogo from "@/assets/logo.png";
 import { ThemeToggle } from "./theme-toggle";
+import { MemberButton } from "./member-button";
 
 const links = [
   { href: "/promptbox", label: "Prompts" },
@@ -43,9 +44,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <ThemeToggle />
-        <Link href="/login" className="button button-solid nav-signin">
-          Sign In
-        </Link>
+        <MemberButton />
       </div>
     </header>
   );
