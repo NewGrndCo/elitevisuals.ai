@@ -14,14 +14,14 @@ export default async function Home() {
       <main>
         <section className="hero">
           <div className="eyebrow">
-            <Sparkles size={14} /> The visual prompt library
+            <Sparkles size={14} /> The AI creator toolkit
           </div>
           <h1>
             Create Beyond <span>Ordinary</span>
           </h1>
           <p>
-            Turn still frames into cinematic AI visuals with curated prompts, production-ready
-            packs, and installable creative systems.
+            Create stronger AI visuals with curated prompts, downloadable skills, practical tools,
+            and creator-ready resources.
           </p>
           <div className="hero-actions">
             <Link href="/promptbox" className="button button-outline">
