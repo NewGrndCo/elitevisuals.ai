@@ -9,6 +9,7 @@ export const ADMIN_TABLES = [
   "site_content",
   "categories",
   "ai_logos",
+  "waitlist_signups",
 ] as const;
 
 export type AdminTable = (typeof ADMIN_TABLES)[number];

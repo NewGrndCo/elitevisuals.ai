@@ -1345,8 +1345,21 @@ footer p {
 .form-card form,
 .auth-card form {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: end;
+}
+.waitlist-trap {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+}
+.form-card .admin-error,
+.form-card .admin-success {
+  width: 100%;
 }
 .form-card label,
 .auth-card label {

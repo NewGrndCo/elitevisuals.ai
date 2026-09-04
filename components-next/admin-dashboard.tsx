@@ -13,6 +13,7 @@ import {
   Save,
   Trash2,
   Upload,
+  Download,
   X,
 } from "lucide-react";
 
@@ -25,6 +26,7 @@ const tabs = [
   ["site_content", "Page Copy"],
   ["categories", "Categories"],
   ["ai_logos", "AI Models"],
+  ["waitlist_signups", "Waitlist"],
 ] as const;
 type Table = (typeof tabs)[number][0];
 type Row = Record<string, unknown> & { id?: string; key?: string };
@@ -135,6 +137,12 @@ const fields: Record<Table, Field[]> = {
     f("image_url", "Image URL"),
     f("sort_order", "Sort order", "number"),
     f("is_published", "Published", "boolean"),
+  ],
+  waitlist_signups: [
+    f("email", "Email address", "text", true),
+    f("name", "Name"),
+    f("interests", "Interests", "textarea"),
+    f("source", "Signup source"),
   ],
 };
 const rowId = (row: Row) => String(row.id ?? row.key ?? "");
@@ -348,6 +356,21 @@ export function AdminDashboard() {
     setUnlocked(false);
     setRows([]);
   };
+  const exportWaitlist = () => {
+    const cells = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+    const csv = [
+      ["email", "name", "interests", "source", "created_at"].join(","),
+      ...rows.map((row) =>
+        [row.email, row.name, row.interests, row.source, row.created_at].map(cells).join(","),
+      ),
+    ].join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `elitevisuals-waitlist-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
   if (!unlocked)
     return (
       <main className="admin-gate">
@@ -406,6 +429,15 @@ export function AdminDashboard() {
             <h2>{tabs.find(([key]) => key === tab)?.[1]}</h2>
           </div>
           <div className="admin-actions">
+            {tab === "waitlist_signups" && (
+              <button
+                onClick={exportWaitlist}
+                className="button button-outline"
+                disabled={!rows.length}
+              >
+                <Download size={16} /> Export CSV
+              </button>
+            )}
             <button onClick={load} className="admin-icon" aria-label="Refresh">
               <RefreshCw size={17} />
             </button>
@@ -533,9 +565,25 @@ export function AdminDashboard() {
                   </div>
                   <div>
                     <h3>
-                      {String(row.title || row.name || row.asset_key || row.key || "Untitled")}
+                      {String(
+                        row.title ||
+                          row.name ||
+                          row.email ||
+                          row.asset_key ||
+                          row.key ||
+                          "Untitled",
+                      )}
                     </h3>
-                    <p>{String(row.slug || row.resource_type || row.asset_type || "")}</p>
+                    <p>
+                      {String(
+                        row.slug ||
+                          row.resource_type ||
+                          row.asset_type ||
+                          row.source ||
+                          row.created_at ||
+                          "",
+                      )}
+                    </p>
                   </div>
                   {published !== null && (
                     <button
