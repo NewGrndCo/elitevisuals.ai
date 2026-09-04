@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Save,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 
@@ -32,6 +33,7 @@ type Field = {
   label: string;
   type?: "text" | "textarea" | "number" | "boolean" | "json";
   required?: boolean;
+  upload?: { kind: string; accept: string; label: string };
 };
 const f = (key: string, label: string, type: Field["type"] = "text", required = false): Field => ({
   key,
@@ -53,8 +55,14 @@ const fields: Record<Table, Field[]> = {
     f("slug", "URL slug", "text", true),
     f("description", "Description", "textarea"),
     f("prompt_text", "Prompt text", "textarea", true),
-    f("cover_image_url", "Cover image URL"),
-    f("demo_video_url", "Demo video URL"),
+    {
+      ...f("cover_image_url", "Cover image URL"),
+      upload: { kind: "prompt-cover", accept: "image/*", label: "Upload cover" },
+    },
+    {
+      ...f("demo_video_url", "Demo video URL"),
+      upload: { kind: "prompt-demo", accept: "video/*", label: "Upload video" },
+    },
     f("gallery_urls", "Gallery URLs (one per line)", "textarea"),
     f("category_id", "Category ID"),
     f("pack_id", "Pack ID"),
@@ -66,7 +74,14 @@ const fields: Record<Table, Field[]> = {
     f("slug", "URL slug", "text", true),
     f("summary", "Summary", "textarea"),
     f("description", "Description", "textarea"),
-    f("cover_image_url", "Cover image URL"),
+    {
+      ...f("cover_image_url", "Cover image URL"),
+      upload: { kind: "skill-cover", accept: "image/*", label: "Upload cover" },
+    },
+    {
+      ...f("download_url", "Skill ZIP URL"),
+      upload: { kind: "skill-package", accept: ".zip,application/zip", label: "Upload ZIP" },
+    },
     f("compatibility", "Compatibility (one per line)", "textarea"),
     f("install_instructions", "Install instructions", "textarea"),
     f("price_cents", "Price in cents", "number"),
@@ -79,7 +94,10 @@ const fields: Record<Table, Field[]> = {
     f("slug", "URL slug", "text", true),
     f("description", "Description", "textarea"),
     f("url", "Destination URL", "text", true),
-    f("image_url", "Image URL"),
+    {
+      ...f("image_url", "Image URL"),
+      upload: { kind: "resource-image", accept: "image/*", label: "Upload image" },
+    },
     f("resource_type", "Type"),
     f("tags", "Tags (one per line)", "textarea"),
     f("sort_order", "Sort order", "number"),
@@ -140,6 +158,7 @@ function parsed(value: string | boolean, field: Field) {
       "demo_video_url",
       "image_url",
       "logo_url",
+      "download_url",
     ].includes(field.key)
     ? null
     : value;
@@ -154,6 +173,8 @@ export function AdminDashboard() {
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
     [editing, setEditing] = useState<Row | null>(null),
+    [uploading, setUploading] = useState<string | null>(null),
+    [uploadProgress, setUploadProgress] = useState(0),
     [draft, setDraft] = useState<Record<string, string | boolean>>({});
   const activeFields = useMemo(() => fields[tab], [tab]);
   const load = useCallback(async () => {
@@ -208,6 +229,54 @@ export function AdminDashboard() {
     }
     setUnlocked(true);
     setPin("");
+  };
+  const uploadFile = async (field: Field, file?: File) => {
+    if (!field.upload || !file) return;
+    if (file.size > 18 * 1024 * 1024) {
+      setError("Files must be 18 MB or smaller.");
+      return;
+    }
+    const chunkSize = 4 * 1024 * 1024;
+    const total = Math.ceil(file.size / chunkSize);
+    const uploadId = crypto.randomUUID();
+    const base = new URLSearchParams({
+      kind: field.upload.kind,
+      uploadId,
+      total: String(total),
+    });
+    const headers = {
+      "content-type": "application/octet-stream",
+      "x-file-name": encodeURIComponent(file.name),
+      "x-file-type": file.type || "application/octet-stream",
+    };
+    try {
+      setUploading(field.key);
+      setUploadProgress(0);
+      setError("");
+      for (let index = 0; index < total; index += 1) {
+        const response = await fetch(`/api/admin/upload?${base}&stage=chunk&index=${index}`, {
+          method: "POST",
+          headers,
+          body: file.slice(index * chunkSize, Math.min(file.size, (index + 1) * chunkSize)),
+        });
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "Upload failed");
+        setUploadProgress(Math.round(((index + 1) / (total + 1)) * 100));
+      }
+      const response = await fetch(`/api/admin/upload?${base}&stage=complete`, {
+        method: "POST",
+        headers,
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Upload could not be completed");
+      setDraft((current) => ({ ...current, [field.key]: body.url }));
+      setMessage(`${file.name} uploaded. Save the item to publish this file.`);
+      setUploadProgress(100);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Upload failed");
+    } finally {
+      setUploading(null);
+    }
   };
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -359,12 +428,12 @@ export function AdminDashboard() {
             </header>
             <div className="admin-fields">
               {activeFields.map((field) => (
-                <label
+                <div
                   key={field.key}
                   className={field.type === "textarea" || field.type === "json" ? "wide" : ""}
                 >
                   {field.type === "boolean" ? (
-                    <span className="admin-check">
+                    <label className="admin-check">
                       <input
                         type="checkbox"
                         checked={Boolean(draft[field.key])}
@@ -373,12 +442,13 @@ export function AdminDashboard() {
                         }
                       />{" "}
                       {field.label}
-                    </span>
+                    </label>
                   ) : (
                     <>
-                      <span>{field.label}</span>
+                      <label htmlFor={`admin-field-${field.key}`}>{field.label}</label>
                       {field.type === "textarea" || field.type === "json" ? (
                         <textarea
+                          id={`admin-field-${field.key}`}
                           rows={field.type === "json" ? 10 : 5}
                           required={field.required}
                           value={String(draft[field.key] ?? "")}
@@ -387,18 +457,45 @@ export function AdminDashboard() {
                           }
                         />
                       ) : (
-                        <input
-                          type={field.type === "number" ? "number" : "text"}
-                          required={field.required}
-                          value={String(draft[field.key] ?? "")}
-                          onChange={(e) =>
-                            setDraft((current) => ({ ...current, [field.key]: e.target.value }))
-                          }
-                        />
+                        <>
+                          <input
+                            id={`admin-field-${field.key}`}
+                            type={field.type === "number" ? "number" : "text"}
+                            required={field.required}
+                            value={String(draft[field.key] ?? "")}
+                            onChange={(e) =>
+                              setDraft((current) => ({ ...current, [field.key]: e.target.value }))
+                            }
+                          />
+                          {field.upload && (
+                            <span className="admin-upload-row">
+                              <label className="button button-outline admin-upload-button">
+                                {uploading === field.key ? (
+                                  <Loader2 className="spin" size={15} />
+                                ) : (
+                                  <Upload size={15} />
+                                )}
+                                {uploading === field.key
+                                  ? `Uploading ${uploadProgress}%`
+                                  : field.upload.label}
+                                <input
+                                  type="file"
+                                  accept={field.upload.accept}
+                                  disabled={Boolean(uploading)}
+                                  onChange={(event) => {
+                                    void uploadFile(field, event.target.files?.[0]);
+                                    event.target.value = "";
+                                  }}
+                                />
+                              </label>
+                              <small>Up to 18 MB</small>
+                            </span>
+                          )}
+                        </>
                       )}
                     </>
                   )}
-                </label>
+                </div>
               ))}
             </div>
             <button className="button button-solid" disabled={busy}>

@@ -31,9 +31,15 @@ export default async function SkillPage({ params }: { params: Promise<{ slug: st
             <span>{skill.price_cents ? `$${(skill.price_cents / 100).toFixed(0)}` : "Free"}</span>
             <h2>Install the complete system.</h2>
             <p>{skill.summary}</p>
-            <button className="button button-solid">
-              <Download size={16} /> Get this skill
-            </button>
+            {skill.download_url ? (
+              <a className="button button-solid" href={skill.download_url} download>
+                <Download size={16} /> Download ZIP
+              </a>
+            ) : (
+              <button className="button button-solid" disabled>
+                <Download size={16} /> Package coming soon
+              </button>
+            )}
             <div className="compatibility">Works with {skill.compatibility?.join(", ")}</div>
           </aside>
         </div>

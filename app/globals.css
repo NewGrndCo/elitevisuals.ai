@@ -928,15 +928,17 @@ footer p {
   gap: 15px;
   margin-bottom: 20px;
 }
-.admin-fields label {
+.admin-fields > div {
   display: flex;
   flex-direction: column;
   gap: 7px;
+}
+.admin-fields > div > label {
   color: var(--muted);
   font-size: 12px;
   font-weight: 650;
 }
-.admin-fields label.wide {
+.admin-fields > div.wide {
   grid-column: 1 / -1;
 }
 .admin-fields input:not([type="checkbox"]),
@@ -954,6 +956,30 @@ footer p {
 .admin-fields textarea:focus {
   outline: 2px solid #dbcaff;
   border-color: var(--purple);
+}
+.admin-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.55rem;
+}
+.admin-upload-row small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.admin-upload-button {
+  position: relative;
+  width: fit-content;
+  min-height: 38px;
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+}
+.admin-upload-button input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 .admin-check {
   min-height: 44px;

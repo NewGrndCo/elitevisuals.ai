@@ -26,7 +26,9 @@ async function publicSeed(table: ReturnType<typeof tableFrom>) {
     .from(table)
     .select("*")
     .order(table === "site_content" ? "key" : "created_at", { ascending: false });
-  if (error) throw error;
+  // V2-only tables may not exist in the legacy Supabase project yet. In beta,
+  // Netlify Blobs is authoritative and an empty seed lets the first item be created.
+  if (error) return [];
   return (data ?? []) as ContentRow[];
 }
 

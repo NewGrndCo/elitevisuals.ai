@@ -44,6 +44,7 @@ export type Skill = {
   cover_image_url: string | null;
   price_cents: number;
   is_published: boolean;
+  download_url?: string | null;
 };
 export type AiLogo = {
   id: string;
@@ -167,13 +168,13 @@ export async function getSkill(slug: string) {
     | null;
 }
 export async function getResources() {
+  const beta = await readBetaTable("resources");
+  if (beta) return (beta as ResourceItem[]).filter((row) => row.is_published !== false);
   const { data, error } = await createPublicClient()
     .from("resources")
     .select("*")
     .eq("is_published", true)
     .order("sort_order");
   if (error) return [];
-  return (await betaOr("resources", (data ?? []) as ResourceItem[])).filter(
-    (row) => row.is_published !== false,
-  );
+  return ((data ?? []) as ResourceItem[]).filter((row) => row.is_published !== false);
 }

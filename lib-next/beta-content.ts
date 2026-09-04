@@ -21,6 +21,10 @@ function store() {
   return getStore({ name: storeName, consistency: "strong" });
 }
 
+export function getBetaAssetStore() {
+  return getStore({ name: "elitevisuals-beta-assets", consistency: "strong" });
+}
+
 export function isAdminTable(value: string): value is AdminTable {
   return (ADMIN_TABLES as readonly string[]).includes(value);
 }
