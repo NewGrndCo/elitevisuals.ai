@@ -3,6 +3,7 @@ import { ExternalLink, Link2 } from "lucide-react";
 import { PageShell } from "@/components-next/page-shell";
 import { getResources } from "@/lib-next/supabase";
 export const metadata = { title: "AI Resources" };
+export const dynamic = "force-dynamic";
 export default async function Resources() {
   const items = await getResources();
   return (
