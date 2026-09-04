@@ -33,7 +33,7 @@ export default async function SkillPage({ params }: { params: Promise<{ slug: st
             <h2>Install the complete system.</h2>
             <p>{skill.summary}</p>
             {skill.download_url ? (
-              <SkillDownload downloadUrl={skill.download_url} slug={skill.slug} />
+              <SkillDownload slug={skill.slug} />
             ) : (
               <button className="button button-solid" disabled>
                 <Download size={16} /> Package coming soon

@@ -26,6 +26,7 @@ const tabs = [
   ["site_content", "Page Copy"],
   ["categories", "Categories"],
   ["ai_logos", "AI Models"],
+  ["members", "Members"],
   ["waitlist_signups", "Waitlist"],
 ] as const;
 type Table = (typeof tabs)[number][0];
@@ -139,6 +140,7 @@ const fields: Record<Table, Field[]> = {
     f("sort_order", "Sort order", "number"),
     f("is_published", "Published", "boolean"),
   ],
+  members: [f("email", "Email address"), f("created_at", "Joined"), f("source", "Signup source")],
   waitlist_signups: [
     f("email", "Email address", "text", true),
     f("name", "Name"),
@@ -196,7 +198,8 @@ export function AdminDashboard() {
     setBusy(true);
     setError("");
     try {
-      const response = await fetch(`/api/admin/content?table=${tab}`, { cache: "no-store" });
+      const endpoint = tab === "members" ? "/api/admin/members" : `/api/admin/content?table=${tab}`;
+      const response = await fetch(endpoint, { cache: "no-store" });
       const body = await response.json();
       if (response.status === 401) {
         setUnlocked(false);
@@ -381,18 +384,18 @@ export function AdminDashboard() {
           </div>
           <p className="kicker">Elite Visuals CMS</p>
           <h1>Admin access</h1>
-          <p>Enter your four-digit PIN.</p>
+          <p>Enter your eight-digit PIN.</p>
           <input
             aria-label="Admin PIN"
             inputMode="numeric"
             pattern="[0-9]*"
-            maxLength={4}
+            maxLength={8}
             type="password"
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
           />
           {error && <div className="admin-error">{error}</div>}
-          <button className="button button-solid" disabled={busy || pin.length !== 4}>
+          <button className="button button-solid" disabled={busy || pin.length !== 8}>
             {busy ? <Loader2 className="spin" /> : "Unlock"}
           </button>
         </form>
@@ -442,9 +445,11 @@ export function AdminDashboard() {
             <button onClick={load} className="admin-icon" aria-label="Refresh">
               <RefreshCw size={17} />
             </button>
-            <button onClick={() => openEditor()} className="button button-solid" disabled={busy}>
-              <Plus size={16} /> Add new
-            </button>
+            {tab !== "members" && (
+              <button onClick={() => openEditor()} className="button button-solid" disabled={busy}>
+                <Plus size={16} /> Add new
+              </button>
+            )}
           </div>
         </header>
         {error && <div className="admin-error admin-config-error">{error}</div>}
@@ -596,29 +601,37 @@ export function AdminDashboard() {
                       {published ? "Live" : "Draft"}
                     </button>
                   )}
-                  <button
-                    className="admin-edit"
-                    onClick={() => openEditor(row)}
-                    disabled={busy}
-                    aria-label="Edit"
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    className="admin-delete"
-                    onClick={() => void remove(row)}
-                    disabled={busy}
-                    aria-label="Delete"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  {tab !== "members" && (
+                    <>
+                      <button
+                        className="admin-edit"
+                        onClick={() => openEditor(row)}
+                        disabled={busy}
+                        aria-label="Edit"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        className="admin-delete"
+                        onClick={() => void remove(row)}
+                        disabled={busy}
+                        aria-label="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </>
+                  )}
                 </article>
               );
             })}
             {!rows.length && !error && (
               <div className="empty-state">
                 <h3>No items found.</h3>
-                <p>Create the first item with “Add new.”</p>
+                <p>
+                  {tab === "members"
+                    ? "No member accounts yet."
+                    : "Create the first item with “Add new.”"}
+                </p>
               </div>
             )}
           </div>

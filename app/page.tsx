@@ -53,6 +53,7 @@ export default async function Home() {
                       alt={p.title}
                       fill
                       sizes="(max-width: 700px) 80vw, 33vw"
+                      unoptimized
                     />
                   ) : (
                     <div className="image-fallback" />
@@ -81,6 +82,7 @@ export default async function Home() {
                       alt={p.title}
                       fill
                       sizes="(max-width: 700px) 80vw, 33vw"
+                      unoptimized
                     />
                   ) : (
                     <div className="image-fallback" />

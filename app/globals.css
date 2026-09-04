@@ -107,6 +107,12 @@ img {
   gap: 4px;
   margin-left: auto;
 }
+.nav-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
 .nav-pill nav a {
   padding: 10px 16px;
   border-radius: 999px;
@@ -312,7 +318,8 @@ main {
 }
 .prompt-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 193px));
+  justify-content: center;
   gap: 18px;
 }
 .prompt-showcase-group + .prompt-showcase-group {
@@ -342,6 +349,12 @@ main {
   overflow: hidden;
   background: #ddd;
   box-shadow: 0 18px 40px rgba(21, 15, 35, 0.1);
+}
+.promptbox {
+  padding-bottom: 0;
+}
+.packs {
+  padding-top: 0;
 }
 .prompt-card img {
   transition: transform 0.6s ease;
@@ -507,6 +520,26 @@ footer p {
   .nav-pill nav {
     display: none;
   }
+  .nav-pill nav.open {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 10px;
+    right: 10px;
+    display: grid;
+    gap: 4px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: var(--surface);
+    box-shadow: 0 18px 45px rgba(40, 25, 70, 0.16);
+  }
+  .nav-pill nav.open a {
+    text-align: center;
+  }
+  .nav-actions {
+    margin-left: auto;
+    gap: 8px;
+  }
   .brand {
     font-size: 16px;
   }
@@ -525,6 +558,15 @@ footer p {
   .pack-card {
     min-width: 78vw;
     scroll-snap-align: start;
+  }
+  .promptbox .prompt-card {
+    min-width: 48vw;
+  }
+  .promptbox {
+    padding-bottom: 0;
+  }
+  .packs {
+    padding-top: 0;
   }
   .section {
     padding: 82px 20px;
@@ -598,6 +640,81 @@ footer p {
   color: var(--muted);
   font-size: 18px;
   line-height: 1.55;
+}
+.waitlist-showcase {
+  width: min(100%, 760px);
+  margin: 30px auto 38px;
+  padding: 12px 0 28px;
+  overflow: visible;
+}
+.waitlist-showcase-track {
+  min-height: 265px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.waitlist-showcase-card {
+  --offset: calc(var(--card-index) - 2.5);
+  position: relative;
+  flex: 0 0 178px;
+  aspect-ratio: 4 / 5;
+  margin-left: -42px;
+  overflow: hidden;
+  border: 6px solid #fff;
+  border-radius: 23px;
+  background: #ddd;
+  box-shadow: 0 20px 45px rgba(34, 19, 61, 0.16);
+  transform: translateY(calc(abs(var(--offset)) * 7px)) rotate(calc(var(--offset) * 3.6deg));
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.waitlist-showcase-card:first-child {
+  margin-left: 0;
+}
+.waitlist-showcase-card:nth-child(3),
+.waitlist-showcase-card:nth-child(4) {
+  z-index: 2;
+}
+.waitlist-showcase-card img {
+  object-fit: cover;
+}
+.waitlist-showcase-card::after {
+  content: "";
+  position: absolute;
+  inset: 40% 0 0;
+  background: linear-gradient(transparent, rgba(15, 10, 24, 0.88));
+}
+.waitlist-showcase-card span,
+.waitlist-showcase-card strong {
+  position: absolute;
+  z-index: 1;
+  left: 14px;
+  right: 14px;
+  color: #fff;
+  text-align: left;
+}
+.waitlist-showcase-card span {
+  bottom: 38px;
+  color: #d9c8ff;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.waitlist-showcase-card strong {
+  bottom: 15px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.waitlist-showcase-card:hover,
+.waitlist-showcase-card:focus-visible {
+  z-index: 4;
+  box-shadow: 0 26px 55px rgba(34, 19, 61, 0.24);
+  transform: translateY(-10px) rotate(0);
 }
 .catalog-section {
   max-width: 1240px;
@@ -1464,6 +1581,29 @@ footer p {
   background: #fff;
   box-shadow: 0 20px 55px rgba(30, 20, 50, 0.08);
 }
+.legal-card {
+  max-width: 820px;
+  margin: 0 auto 110px;
+  padding: 42px;
+  border-radius: 30px;
+  background: var(--surface);
+  box-shadow: 0 20px 55px rgba(30, 20, 50, 0.08);
+}
+.legal-card h2 {
+  margin: 34px 0 8px;
+  font-size: 23px;
+  letter-spacing: -0.025em;
+}
+.legal-card p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+.legal-card .legal-updated {
+  margin-top: 0;
+  color: var(--purple);
+  font-size: 13px;
+  font-weight: 650;
+}
 .form-card form,
 .auth-card form {
   display: flex;
@@ -1559,6 +1699,28 @@ footer p {
   }
 }
 @media (max-width: 600px) {
+  .waitlist-showcase {
+    width: calc(100vw - 24px);
+    margin: 24px 0 30px calc(50% - 50vw + 12px);
+    padding: 8px 6px 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .waitlist-showcase::-webkit-scrollbar {
+    display: none;
+  }
+  .waitlist-showcase-track {
+    width: max-content;
+    min-height: 225px;
+    justify-content: flex-start;
+    padding: 0 10px;
+  }
+  .waitlist-showcase-card {
+    flex-basis: 158px;
+    margin-left: -22px;
+    scroll-snap-align: center;
+    transform: rotate(calc(var(--offset) * 1.5deg));
+  }
   .catalog-grid,
   .skill-grid,
   .resource-grid {

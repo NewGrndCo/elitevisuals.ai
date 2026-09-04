@@ -3,7 +3,6 @@
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { getMemberClient } from "@/lib-next/member-auth";
 
 export function LoginForm() {
   const search = useSearchParams();
@@ -19,11 +18,13 @@ export function LoginForm() {
     const next = search.get("next");
     const destination = next?.startsWith("/") ? next : "/promptbox";
     try {
-      const { error: authError } = await getMemberClient().auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${window.location.origin}${destination}` },
+      const response = await fetch("/api/member-signup", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, next: destination }),
       });
-      if (authError) throw authError;
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Unable to send the sign-in link.");
       setMessage("Check your email for your secure sign-in link.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to send the sign-in link.");

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Download, Loader2, Lock } from "lucide-react";
 import { useMemberSession } from "@/lib-next/member-auth";
 
-export function SkillDownload({ downloadUrl, slug }: { downloadUrl: string; slug: string }) {
+export function SkillDownload({ slug }: { slug: string }) {
   const { session, loading } = useMemberSession();
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
@@ -26,7 +26,7 @@ export function SkillDownload({ downloadUrl, slug }: { downloadUrl: string; slug
     setDownloading(true);
     setError("");
     try {
-      const response = await fetch(downloadUrl, {
+      const response = await fetch(`/api/skills/${encodeURIComponent(slug)}/download`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (!response.ok) throw new Error("The download could not be authorized.");
@@ -34,10 +34,7 @@ export function SkillDownload({ downloadUrl, slug }: { downloadUrl: string; slug
       const objectUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = objectUrl;
-      anchor.download = decodeURIComponent(downloadUrl.split("/").pop() || `${slug}.zip`).replace(
-        /^[0-9a-f-]+-/i,
-        "",
-      );
+      anchor.download = `${slug}.zip`;
       anchor.click();
       URL.revokeObjectURL(objectUrl);
     } catch (cause) {

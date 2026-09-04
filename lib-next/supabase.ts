@@ -85,9 +85,15 @@ export async function getHomeData() {
     (row) => row.is_published,
   );
   const transitionPack = allPacks.find((pack) => pack.slug.toLowerCase() === "kinetic-v1");
-  const transitionPrompts = allPrompts
-    .filter((prompt) => prompt.pack_id === transitionPack?.id)
-    .slice(0, 3);
+  const transitionPool = allPrompts.filter((prompt) => prompt.pack_id === transitionPack?.id);
+  const flagshipNames = ["particle dissolution", "shattered mirror", "chrono distortion"];
+  const transitionPrompts = flagshipNames
+    .map((name) =>
+      transitionPool.find((prompt) =>
+        [prompt.title, prompt.slug].join(" ").toLowerCase().replaceAll("-", " ").includes(name),
+      ),
+    )
+    .filter((prompt): prompt is Prompt => Boolean(prompt));
   const imagePrompts = allPrompts
     .filter((prompt) => !prompt.pack_id)
     .map((prompt) => ({ prompt, rank: Math.random() }))
