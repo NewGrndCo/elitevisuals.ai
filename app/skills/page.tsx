@@ -4,6 +4,7 @@ import { ArrowRight, Download, Sparkles } from "lucide-react";
 import { PageShell } from "@/components-next/page-shell";
 import { getSkills } from "@/lib-next/supabase";
 export const metadata = { title: "Downloadable Skills" };
+export const dynamic = "force-dynamic";
 export default async function Skills() {
   const skills = await getSkills();
   return (
