@@ -3,13 +3,13 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PageShell } from "@/components-next/page-shell";
 import { getPacks, getPrompts } from "@/lib-next/supabase";
-export const metadata = { title: "Promptbox" };
+export const metadata = { title: "Prompts" };
 export const revalidate = 60;
 export default async function Promptbox() {
   const [packs, prompts] = await Promise.all([getPacks(), getPrompts()]);
   return (
     <PageShell
-      eyebrow="Promptbox"
+      eyebrow="Prompts"
       title="Find your next visual."
       description="Curated prompts and complete creative packs built for modern AI image and video models."
     >
@@ -33,7 +33,7 @@ export default async function Promptbox() {
           ))}
         </div>
         <div className="catalog-title">
-          <h2>Individual prompts</h2>
+          <h2>Image prompts</h2>
           <span>{prompts.length} visuals</span>
         </div>
         <div className="catalog-grid">

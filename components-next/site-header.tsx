@@ -8,7 +8,7 @@ import eliteVisualsLogo from "@/assets/logo.png";
 import { ThemeToggle } from "./theme-toggle";
 
 const links = [
-  { href: "/promptbox", label: "Prompt Packs" },
+  { href: "/promptbox", label: "Prompts" },
   { href: "/skills", label: "Skills" },
   { href: "/resources", label: "Resources" },
 ];
@@ -62,7 +62,7 @@ export function SiteFooter() {
         <p>Ideas, engineered visually.</p>
       </div>
       <div className="footer-links">
-        <Link href="/promptbox">Prompt Packs</Link>
+        <Link href="/promptbox">Prompts</Link>
         <Link href="/skills">Skills</Link>
         <Link href="/resources">Resources</Link>
         <Link href="/waitlist">Waitlist</Link>

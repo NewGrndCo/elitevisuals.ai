@@ -18,7 +18,7 @@ import {
 
 const tabs = [
   ["packs", "Prompt Packs"],
-  ["prompts", "Prompts"],
+  ["prompts", "Image Prompts"],
   ["skills", "Skills"],
   ["resources", "Resources"],
   ["site_assets", "Site Assets"],
@@ -64,6 +64,8 @@ const fields: Record<Table, Field[]> = {
       upload: { kind: "prompt-demo", accept: "video/*", label: "Upload video" },
     },
     f("gallery_urls", "Gallery URLs (one per line)", "textarea"),
+    f("tags", "Tags (one per line)", "textarea"),
+    f("source_url", "Original source URL"),
     f("category_id", "Category ID"),
     f("pack_id", "Pack ID"),
     f("sort_order", "Sort order", "number"),
@@ -159,6 +161,7 @@ function parsed(value: string | boolean, field: Field) {
       "image_url",
       "logo_url",
       "download_url",
+      "source_url",
     ].includes(field.key)
     ? null
     : value;
