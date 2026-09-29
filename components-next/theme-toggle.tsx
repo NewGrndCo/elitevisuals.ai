@@ -17,8 +17,9 @@ export function ThemeToggle() {
     } catch {
       /* Theme still works when browser storage is disabled. */
     }
-    const next =
-      saved ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    // Start new visitors in the brand's light mode. An explicit in-app choice
+    // is still respected across visits, regardless of the OS color scheme.
+    const next = saved ?? "light";
     setTheme(next);
     document.documentElement.dataset.theme = next;
   }, []);
