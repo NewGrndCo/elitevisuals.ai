@@ -322,9 +322,13 @@ main {
 }
 .prompt-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 193px));
+  grid-template-columns: repeat(3, minmax(0, 240px));
   justify-content: center;
-  gap: 18px;
+  gap: 24px;
+}
+.prompt-showcase-group {
+  max-width: 900px;
+  margin-inline: auto;
 }
 .prompt-showcase-group + .prompt-showcase-group {
   margin-top: 34px;
@@ -820,6 +824,9 @@ footer p {
     /* Keep prompt artwork readable on phones while preserving the swipe row. */
     flex: 0 0 min(78vw, 340px);
     scroll-snap-align: start;
+  }
+  .prompt-showcase-group {
+    max-width: none;
   }
   .promptbox {
     padding-bottom: 0;
