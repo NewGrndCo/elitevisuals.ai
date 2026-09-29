@@ -816,8 +816,10 @@ footer p {
     min-width: 78vw;
     scroll-snap-align: start;
   }
-  .promptbox .prompt-card {
-    min-width: 48vw;
+  .promptbox .interactive-3d-card {
+    /* Keep prompt artwork readable on phones while preserving the swipe row. */
+    flex: 0 0 min(78vw, 340px);
+    scroll-snap-align: start;
   }
   .promptbox {
     padding-bottom: 0;
