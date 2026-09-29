@@ -39,3 +39,5 @@ supabase/.temp/
 public/media/prompts/*.gif
 AGENTS.md
 CLAUDE.md
+
+*.tsbuildinfo

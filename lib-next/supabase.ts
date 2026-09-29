@@ -1,3 +1,6 @@
+import { cache } from "react";
+import { connection } from "next/server";
+import { isVisible } from "./content-policy";
 import { createClient } from "@supabase/supabase-js";
 import { readBetaTable, type AdminTable } from "./beta-content";
 
@@ -66,24 +69,55 @@ export type ResourceItem = {
   is_published?: boolean;
 };
 
-async function betaOr<T>(table: AdminTable, fallback: T[]) {
-  return ((await readBetaTable(table)) ?? fallback) as T[];
-}
-
+// React cache deduplicates reads within one render without retaining private data across users.
+const publishedRows = cache(async (table: AdminTable, defaultPublished = false) => {
+  await connection();
+  const beta = await readBetaTable(table);
+  let rows: Record<string, unknown>[];
+  if (beta !== null) rows = beta;
+  else {
+    const { data, error } = await createPublicClient()
+      .from(table)
+      .select("*")
+      .eq("is_published", true)
+      .order("sort_order");
+    if (error) throw new Error(`Unable to load ${table}. Please retry.`);
+    rows = data ?? [];
+  }
+  return rows
+    .filter((row) => isVisible(row, defaultPublished))
+    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+});
+export const getPacks = cache(async () => (await publishedRows("packs")) as Pack[]);
+export const getPrompts = cache(async () => (await publishedRows("prompts")) as Prompt[]);
+export const getSkills = cache(async () => (await publishedRows("skills")) as Skill[]);
+export const getResources = cache(
+  async () => (await publishedRows("resources", true)) as ResourceItem[],
+);
+export const getPrompt = cache(
+  async (slug: string) =>
+    ((await getPrompts()).find((row) => row.slug === slug) as
+      | (Prompt & { categories: { name: string; accent_color: string | null } | null })
+      | undefined) ?? null,
+);
+export const getSkill = cache(
+  async (slug: string) =>
+    ((await getSkills()).find((row) => row.slug === slug) as
+      | (Skill & { description: string; compatibility: string[]; install_instructions: string })
+      | undefined) ?? null,
+);
+export const getPack = cache(async (slug: string) => {
+  const [packs, prompts] = await Promise.all([getPacks(), getPrompts()]);
+  const pack = packs.find((row) => row.slug === slug);
+  return pack ? { pack, prompts: prompts.filter((row) => row.pack_id === pack.id) } : null;
+});
 export async function getHomeData() {
-  const db = createPublicClient();
-  const [packs, prompts, skills, logos] = await Promise.all([
-    db.from("packs").select("*").eq("is_published", true).order("sort_order").limit(3),
-    db.from("prompts").select("*").eq("is_published", true).order("sort_order").limit(12),
-    db.from("skills").select("*").eq("is_published", true).order("sort_order").limit(3),
-    db.from("ai_logos").select("*").eq("is_published", true).order("sort_order").limit(8),
+  const [allPacks, allPrompts, skills, logos] = await Promise.all([
+    getPacks(),
+    getPrompts(),
+    getSkills(),
+    publishedRows("ai_logos", true) as Promise<AiLogo[]>,
   ]);
-  const allPacks = (await betaOr("packs", (packs.data ?? []) as Pack[])).filter(
-    (row) => row.is_published,
-  );
-  const allPrompts = (await betaOr("prompts", (prompts.data ?? []) as Prompt[])).filter(
-    (row) => row.is_published,
-  );
   const transitionPack = allPacks.find((pack) => pack.slug.toLowerCase() === "kinetic-v1");
   const transitionPool = allPrompts.filter((prompt) => prompt.pack_id === transitionPack?.id);
   const flagshipNames = ["particle dissolution", "shattered mirror", "chrono distortion"];
@@ -102,102 +136,10 @@ export async function getHomeData() {
     .map(({ prompt }) => prompt);
   return {
     packs: allPacks.slice(0, 3),
-    prompts: allPrompts.slice(0, 12),
+    prompts: allPrompts.filter((prompt) => !prompt.pack_id).slice(0, 12),
     transitionPrompts,
     imagePrompts,
-    skills: (await betaOr("skills", (skills.data ?? []) as Skill[]))
-      .filter((row) => row.is_published)
-      .slice(0, 3),
-    logos: (await betaOr("ai_logos", (logos.data ?? []) as AiLogo[]))
-      .filter((row) => row.is_published !== false)
-      .slice(0, 8),
+    skills: skills.slice(0, 3),
+    logos: logos.slice(0, 8),
   };
-}
-
-export async function getPacks() {
-  const { data } = await createPublicClient()
-    .from("packs")
-    .select("*")
-    .eq("is_published", true)
-    .order("sort_order");
-  return (await betaOr("packs", (data ?? []) as Pack[])).filter((row) => row.is_published);
-}
-export async function getPrompts() {
-  const { data } = await createPublicClient()
-    .from("prompts")
-    .select("*")
-    .eq("is_published", true)
-    .order("sort_order");
-  return (await betaOr("prompts", (data ?? []) as Prompt[])).filter((row) => row.is_published);
-}
-export async function getPrompt(slug: string) {
-  const beta = await readBetaTable("prompts");
-  if (beta)
-    return (beta.find((row) => row.slug === slug) ?? null) as
-      | (Prompt & { categories: { name: string; accent_color: string | null } | null })
-      | null;
-  const { data } = await createPublicClient()
-    .from("prompts")
-    .select("*,categories(name,accent_color)")
-    .eq("slug", slug)
-    .maybeSingle();
-  return data as
-    | (Prompt & { categories: { name: string; accent_color: string | null } | null })
-    | null;
-}
-export async function getSkills() {
-  const { data } = await createPublicClient()
-    .from("skills")
-    .select("*")
-    .eq("is_published", true)
-    .order("sort_order");
-  return (await betaOr("skills", (data ?? []) as Skill[])).filter((row) => row.is_published);
-}
-export async function getPack(slug: string) {
-  const betaPacks = await readBetaTable("packs");
-  const betaPrompts = await readBetaTable("prompts");
-  if (betaPacks && betaPrompts) {
-    const pack = betaPacks.find((row) => row.slug === slug) as Pack | undefined;
-    if (!pack) return null;
-    return {
-      pack,
-      prompts: betaPrompts.filter((row) => row.pack_id === pack.id && row.is_published) as Prompt[],
-    };
-  }
-  const db = createPublicClient();
-  const { data: pack } = await db.from("packs").select("*").eq("slug", slug).maybeSingle();
-  if (!pack) return null;
-  const { data: prompts } = await db
-    .from("prompts")
-    .select("*")
-    .eq("pack_id", pack.id)
-    .eq("is_published", true)
-    .order("sort_order");
-  return { pack: pack as Pack, prompts: (prompts ?? []) as Prompt[] };
-}
-export async function getSkill(slug: string) {
-  const beta = await readBetaTable("skills");
-  if (beta)
-    return (beta.find((row) => row.slug === slug) ?? null) as
-      | (Skill & { description: string; compatibility: string[]; install_instructions: string })
-      | null;
-  const { data } = await createPublicClient()
-    .from("skills")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
-  return data as
-    | (Skill & { description: string; compatibility: string[]; install_instructions: string })
-    | null;
-}
-export async function getResources() {
-  const beta = await readBetaTable("resources");
-  if (beta) return (beta as ResourceItem[]).filter((row) => row.is_published !== false);
-  const { data, error } = await createPublicClient()
-    .from("resources")
-    .select("*")
-    .eq("is_published", true)
-    .order("sort_order");
-  if (error) return [];
-  return ((data ?? []) as ResourceItem[]).filter((row) => row.is_published !== false);
 }

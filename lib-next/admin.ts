@@ -16,7 +16,7 @@ export function createAdminToken() {
 }
 
 export function verifyAdminToken(token?: string) {
-  if (!token || !secret()) return false;
+  if (!token || !secret() || !/^\d{10}\.[a-f0-9]{64}$/.test(token)) return false;
   const [expiresRaw, signature = ""] = token.split(".");
   const expires = Number(expiresRaw);
   if (!Number.isFinite(expires) || expires < Date.now() / 1000) return false;

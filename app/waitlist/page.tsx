@@ -1,57 +1,55 @@
-import Image from "next/image";
-import Link from "next/link";
 import { PageShell } from "@/components-next/page-shell";
 import { WaitlistForm } from "@/components-next/waitlist-form";
-import { getPacks, getPrompts } from "@/lib-next/supabase";
-export const metadata = { title: "Join the Waitlist" };
-
-type ShowcaseItem = {
-  id: string;
-  title: string;
-  image: string | null;
-  href: string;
-  kind: string;
-};
-
-function ShowcaseCard({ item, index }: { item: ShowcaseItem; index: number }) {
-  return (
-    <Link
-      href={item.href}
-      className="waitlist-showcase-card"
-      style={{ "--card-index": index } as React.CSSProperties}
-      aria-label={`${item.kind}: ${item.title}`}
-    >
-      {item.image ? (
-        <Image src={item.image} alt="" fill sizes="(max-width: 600px) 62vw, 190px" unoptimized />
-      ) : (
-        <div className="image-fallback" />
-      )}
-      <span>{item.kind}</span>
-      <strong>{item.title}</strong>
-    </Link>
-  );
-}
+import { WaitlistCardStack } from "@/components-next/waitlist-card-stack";
+import { getPacks, getPrompts, getSkills } from "@/lib-next/supabase";
+import type { CardStackItem } from "@/components/ui/card-stack";
+export const metadata = { alternates: { canonical: "/waitlist" }, title: "Join the Waitlist" };
 
 export default async function Waitlist() {
-  const [packs, prompts] = await Promise.all([getPacks(), getPrompts()]);
+  const [packs, prompts, skills] = await Promise.all([getPacks(), getPrompts(), getSkills()]);
   const transitionPack = packs.find((pack) => pack.slug.toLowerCase() === "kinetic-v1");
   const transitionPrompts = prompts
     .filter((prompt) => prompt.pack_id === transitionPack?.id && prompt.cover_image_url)
     .slice(0, 3);
-  const showcase: ShowcaseItem[] = [
+  const showcase: CardStackItem[] = [
     ...transitionPrompts.map((prompt) => ({
       id: prompt.id,
       title: prompt.title,
-      image: prompt.cover_image_url,
+      description: "Ready-to-use motion direction for your next AI video.",
+      imageSrc: prompt.cover_image_url,
       href: `/prompt/${prompt.slug}`,
-      kind: "AI Transition",
+      tag: "AI Transition",
+      ctaLabel: "View prompt",
     })),
-    ...packs.slice(0, 3).map((pack) => ({
+    ...prompts
+      .filter((prompt) => !prompt.pack_id && prompt.cover_image_url)
+      .slice(0, 2)
+      .map((prompt) => ({
+        id: `image-${prompt.id}`,
+        title: prompt.title,
+        description: prompt.description ?? "A fresh visual direction for modern image models.",
+        imageSrc: prompt.cover_image_url,
+        href: `/prompt/${prompt.slug}`,
+        tag: "Image Prompt",
+        ctaLabel: "View prompt",
+      })),
+    ...skills.slice(0, 2).map((skill) => ({
+      id: `skill-${skill.id}`,
+      title: skill.title,
+      description: skill.summary,
+      imageSrc: skill.cover_image_url,
+      href: `/skill/${skill.slug}`,
+      tag: "Downloadable Skill",
+      ctaLabel: "View skill",
+    })),
+    ...packs.slice(0, 2).map((pack) => ({
       id: pack.id,
       title: pack.title,
-      image: pack.cover_image_url,
+      description: pack.description ?? "A complete creative world built for your next drop.",
+      imageSrc: pack.cover_image_url,
       href: `/pack/${pack.slug}`,
-      kind: "Prompt Pack",
+      tag: "Prompt Pack",
+      ctaLabel: "Explore pack",
     })),
   ];
 
@@ -60,17 +58,7 @@ export default async function Waitlist() {
       eyebrow="Early access"
       title="Be first inside."
       description="Join the Elite Visuals list for new prompt packs, downloadable skills, and creator workflow drops."
-      heroFeature={
-        showcase.length > 0 ? (
-          <div className="waitlist-showcase" aria-label="Featured prompts and AI transitions">
-            <div className="waitlist-showcase-track">
-              {showcase.map((item, index) => (
-                <ShowcaseCard key={item.id} item={item} index={index} />
-              ))}
-            </div>
-          </div>
-        ) : null
-      }
+      heroFeature={showcase.length > 0 ? <WaitlistCardStack items={showcase} /> : null}
     >
       <section className="form-card">
         <WaitlistForm />

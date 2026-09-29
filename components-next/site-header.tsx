@@ -2,7 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Menu } from "lucide-react";
 import eliteVisualsLogo from "@/assets/logo.png";
 import { ThemeToggle } from "./theme-toggle";
@@ -18,6 +18,10 @@ export function SiteHeader() {
   const path = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [path]);
   const logoClicks = useRef<number[]>([]);
   const handleLogoClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     const now = Date.now();
@@ -28,9 +32,21 @@ export function SiteHeader() {
     router.push("/admin");
   };
   return (
-    <header className="site-header">
+    <header
+      className="site-header"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          setMenuOpen(false);
+          menuButton.current?.focus();
+        }
+      }}
+    >
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <div className="nav-pill">
         <button
+          ref={menuButton}
           className="menu-button"
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
@@ -43,9 +59,15 @@ export function SiteHeader() {
           <Image className="brand-logo" src={eliteVisualsLogo} alt="EliteVisuals.ai" priority />
           <span>elitevisuals.ai</span>
         </Link>
-        <nav id="site-navigation" className={menuOpen ? "open" : ""}>
+        <nav aria-label="Main navigation" id="site-navigation" className={menuOpen ? "open" : ""}>
           {links.map((l) => (
-            <Link key={l.href} href={l.href} className={path.startsWith(l.href) ? "active" : ""}>
+            <Link
+              key={l.href}
+              href={l.href}
+              aria-current={path.startsWith(l.href) ? "page" : undefined}
+              onClick={() => setMenuOpen(false)}
+              className={path.startsWith(l.href) ? "active" : ""}
+            >
               {l.label}
             </Link>
           ))}

@@ -11,7 +11,7 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
   return (
     <>
       <SiteHeader />
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <section className="subhero pack-hero">
           <Link href="/promptbox" className="back">
             <ArrowLeft size={16} /> All packs
@@ -42,4 +42,22 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
       <SiteFooter />
     </>
   );
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const result = await getPack(slug);
+  const item = result?.pack;
+  return item
+    ? {
+        title: item.title,
+        description: item.description || undefined,
+        alternates: { canonical: `/pack/${encodeURIComponent(slug)}` },
+        openGraph: {
+          title: item.title,
+          url: `/pack/${encodeURIComponent(slug)}`,
+          ...(item.cover_image_url ? { images: [{ url: item.cover_image_url }] } : {}),
+        },
+      }
+    : { title: "Not found", robots: { index: false } };
 }

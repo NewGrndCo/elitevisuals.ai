@@ -12,7 +12,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
   return (
     <>
       <SiteHeader />
-      <main className="detail-page">
+      <main id="main-content" tabIndex={-1} className="detail-page">
         <Link href="/promptbox" className="back">
           <ArrowLeft size={16} /> Back to Promptbox
         </Link>
@@ -20,7 +20,13 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
           <div>
             {p.cover_image_url && (
               <div className="detail-image">
-                <Image src={p.cover_image_url} alt={p.title} fill priority sizes="60vw" />
+                <Image
+                  src={p.cover_image_url}
+                  alt={p.title}
+                  fill
+                  priority
+                  sizes="(max-width: 800px) 100vw, 60vw"
+                />
               </div>
             )}
             <p className="kicker">{p.categories?.name || "Visual Prompt"}</p>
@@ -28,11 +34,29 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
             <p className="detail-description">{p.description}</p>
           </div>
           <aside>
-            <PromptAccess prompt={p.prompt_text} slug={p.slug} />
+            <PromptAccess slug={p.slug} />
           </aside>
         </div>
       </main>
       <SiteFooter />
     </>
   );
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const result = await getPrompt(slug);
+  const item = result;
+  return item
+    ? {
+        title: item.title,
+        description: item.description || undefined,
+        alternates: { canonical: `/prompt/${encodeURIComponent(slug)}` },
+        openGraph: {
+          title: item.title,
+          url: `/prompt/${encodeURIComponent(slug)}`,
+          ...(item.cover_image_url ? { images: [{ url: item.cover_image_url }] } : {}),
+        },
+      }
+    : { title: "Not found", robots: { index: false } };
 }

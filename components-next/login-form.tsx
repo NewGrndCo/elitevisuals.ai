@@ -1,5 +1,6 @@
 "use client";
 
+import { safeDestination } from "@/lib-next/content-policy";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -16,7 +17,7 @@ export function LoginForm() {
     setBusy(true);
     setError("");
     const next = search.get("next");
-    const destination = next?.startsWith("/") ? next : "/promptbox";
+    const destination = safeDestination(next);
     try {
       const response = await fetch("/api/member-signup", {
         method: "POST",

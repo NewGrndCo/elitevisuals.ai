@@ -1,42 +1,81 @@
 "use client";
-
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Copy, Lock } from "lucide-react";
 import { useMemberSession } from "@/lib-next/member-auth";
-
-export function PromptAccess({ prompt, slug }: { prompt: string; slug: string }) {
+export function PromptAccess({ slug }: { slug: string }) {
   const { session, loading } = useMemberSession();
-  const [copied, setCopied] = useState(false);
+  const [prompt, setPrompt] = useState(""),
+    [error, setError] = useState(""),
+    [copied, setCopied] = useState(false),
+    [retry, setRetry] = useState(0);
+  const token = session?.access_token;
+  useEffect(() => {
+    setPrompt("");
+    setError("");
+    if (!token) return;
+    const controller = new AbortController();
+    void fetch(`/api/prompts/${encodeURIComponent(slug)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+      cache: "no-store",
+    })
+      .then(async (r) => {
+        const body = await r.json();
+        if (!r.ok) throw new Error(body.error || "Unable to load prompt.");
+        return body;
+      })
+      .then((b) => setPrompt(b.prompt))
+      .catch((e) => {
+        if (!controller.signal.aborted)
+          setError(e instanceof Error ? e.message : "Connection interrupted.");
+      });
+    return () => controller.abort();
+  }, [token, slug, retry]);
   if (loading || !session)
     return (
       <div className="prompt-lock">
-        <div className="blurred-copy">{prompt}</div>
+        <div className="blurred-copy" aria-hidden="true">
+          Your next creative idea starts here. Sign in to reveal the complete prompt and make it
+          your own.
+        </div>
         <div className="lock-cover">
           <Lock size={23} />
           <h2>Sign in to reveal prompt</h2>
           <p>Create a free account to view and copy the complete prompt.</p>
-          <Link className="button button-solid" href={`/login?next=/prompt/${slug}`}>
+          <Link
+            className="button button-solid"
+            href={`/login?next=/prompt/${encodeURIComponent(slug)}`}
+          >
             Sign In
           </Link>
         </div>
       </div>
     );
   const copy = async () => {
-    await navigator.clipboard.writeText(prompt);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setError("Clipboard access failed. Select and copy the prompt below.");
+    }
   };
   return (
     <div className="prompt-revealed">
       <div className="prompt-revealed-heading">
         <span>Prompt</span>
-        <button className="button button-solid" onClick={() => void copy()}>
-          {copied ? <Check size={15} /> : <Copy size={15} />}
-          {copied ? "Copied" : "Copy"}
+        <button className="button button-solid" disabled={!prompt} onClick={() => void copy()}>
+          {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre>{prompt}</pre>
+      {error && (
+        <div role="alert" className="admin-error">
+          {error}
+          <button onClick={() => setRetry((n) => n + 1)}>Retry</button>
+        </div>
+      )}
+      {prompt ? <pre>{prompt}</pre> : !error && <p role="status">Loading prompt…</p>}
     </div>
   );
 }

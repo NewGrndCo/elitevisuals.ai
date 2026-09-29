@@ -13,7 +13,7 @@ export default async function SkillPage({ params }: { params: Promise<{ slug: st
   return (
     <>
       <SiteHeader />
-      <main className="detail-page">
+      <main id="main-content" tabIndex={-1} className="detail-page">
         <Link href="/skills" className="back">
           <ArrowLeft size={16} /> All skills
         </Link>
@@ -21,7 +21,13 @@ export default async function SkillPage({ params }: { params: Promise<{ slug: st
           <div>
             {skill.cover_image_url && (
               <div className="detail-image">
-                <Image src={skill.cover_image_url} alt={skill.title} fill priority sizes="60vw" />
+                <Image
+                  src={skill.cover_image_url}
+                  alt={skill.title}
+                  fill
+                  priority
+                  sizes="(max-width: 800px) 100vw, 60vw"
+                />
               </div>
             )}
             <p className="kicker">Downloadable skill</p>
@@ -46,4 +52,22 @@ export default async function SkillPage({ params }: { params: Promise<{ slug: st
       <SiteFooter />
     </>
   );
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const result = await getSkill(slug);
+  const item = result;
+  return item
+    ? {
+        title: item.title,
+        description: item.summary || undefined,
+        alternates: { canonical: `/skill/${encodeURIComponent(slug)}` },
+        openGraph: {
+          title: item.title,
+          url: `/skill/${encodeURIComponent(slug)}`,
+          ...(item.cover_image_url ? { images: [{ url: item.cover_image_url }] } : {}),
+        },
+      }
+    : { title: "Not found", robots: { index: false } };
 }

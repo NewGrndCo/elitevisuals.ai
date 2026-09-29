@@ -23,12 +23,20 @@ export function useMemberSession() {
 
   useEffect(() => {
     let active = true;
-    void client.auth.getSession().then(({ data }) => {
-      if (active) {
-        setSession(data.session);
-        setLoading(false);
-      }
-    });
+    void client.auth
+      .getSession()
+      .then(({ data }) => {
+        if (active) {
+          setSession(data.session);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setSession(null);
+          setLoading(false);
+        }
+      });
     const { data } = client.auth.onAuthStateChange((_event, nextSession) => {
       if (active) {
         setSession(nextSession);

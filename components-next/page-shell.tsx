@@ -15,7 +15,7 @@ export function PageShell({
   return (
     <>
       <SiteHeader />
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <section className="subhero">
           <p className="kicker">{eyebrow}</p>
           {heroFeature}

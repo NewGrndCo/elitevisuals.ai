@@ -1,7 +1,7 @@
 import { PageShell } from "@/components-next/page-shell";
 import { ResourceDirectory } from "@/components-next/resource-directory";
 import { getResources } from "@/lib-next/supabase";
-export const metadata = { title: "AI Resources" };
+export const metadata = { alternates: { canonical: "/resources" }, title: "AI Resources" };
 export const dynamic = "force-dynamic";
 export default async function Resources() {
   const items = await getResources();

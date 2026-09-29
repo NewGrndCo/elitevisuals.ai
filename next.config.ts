@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   agentRules: false,
+  poweredByHeader: false,
+  async redirects() {
+    return [{ source: '/library', destination: '/promptbox', permanent: true }];
+  },
   async headers() {
     return [
       {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Prompt } from "@/lib-next/supabase";
+import { MotionControl } from "./motion-control";
 import { MediaTile } from "./media-tile";
 
 function Track({ prompts, reverse = false }: { prompts: Prompt[]; reverse?: boolean }) {
@@ -15,7 +16,13 @@ function Track({ prompts, reverse = false }: { prompts: Prompt[]; reverse?: bool
             aria-hidden={index >= prompts.length}
             tabIndex={index >= prompts.length ? -1 : 0}
           >
-            <MediaTile prompt={prompt} />
+            <MediaTile
+              prompt={{
+                title: prompt.title,
+                cover_image_url: prompt.cover_image_url,
+                demo_video_url: prompt.demo_video_url,
+              }}
+            />
             <span>{prompt.title}</span>
           </Link>
         ))}
@@ -31,11 +38,11 @@ export function VisualGrid({ prompts }: { prompts: Prompt[] }) {
   const second = media.slice(midpoint);
   if (!first.length) return null;
   return (
-    <div className="visual-stage" aria-label="Featured visual prompts">
+    <MotionControl>
       <div className="visual-fade left" />
       <div className="visual-fade right" />
       <Track prompts={first} />
       <Track prompts={second.length ? second : [...first].reverse()} reverse />
-    </div>
+    </MotionControl>
   );
 }

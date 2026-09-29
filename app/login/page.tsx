@@ -7,7 +7,7 @@ export default function Login() {
   return (
     <>
       <SiteHeader />
-      <main className="auth-page">
+      <main id="main-content" tabIndex={-1} className="auth-page">
         <div className="auth-card">
           <p className="kicker">Member access</p>
           <h1>Sign in to reveal prompts.</h1>

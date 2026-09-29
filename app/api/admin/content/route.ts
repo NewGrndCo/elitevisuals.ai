@@ -8,16 +8,17 @@ import {
   isAdminTable,
   readBetaTable,
   seedBetaTable,
-  writeBetaTable,
+  mutateBetaTable,
+  ContentConflict,
 } from "@/lib-next/beta-content";
 
-const immutableFields = new Set(["id", "created_at", "updated_at"]);
+import { validateContent, InputError } from "@/lib-next/cms-validation";
 async function authorized() {
   return verifyAdminToken((await cookies()).get("ev_admin")?.value);
 }
 function tableFrom(request: Request) {
   const table = new URL(request.url).searchParams.get("table") || "";
-  if (!isAdminTable(table)) throw new Error("Unsupported content type");
+  if (!isAdminTable(table)) throw new InputError("Unsupported content type");
   return table;
 }
 
@@ -28,12 +29,14 @@ async function publicSeed(table: ReturnType<typeof tableFrom>) {
     .order(table === "site_content" ? "key" : "created_at", { ascending: false });
   // V2-only tables may not exist in the legacy Supabase project yet. In beta,
   // Netlify Blobs is authoritative and an empty seed lets the first item be created.
-  if (error) return [];
+  if (error && ["42P01", "PGRST205"].includes(error.code)) return [];
+  if (error) throw new Error("Content source is unavailable. Retry before editing.");
   return (data ?? []) as ContentRow[];
 }
 
 function refreshSite() {
-  revalidatePath("/", "layout");
+  for (const path of ["/", "/promptbox", "/skills", "/resources", "/sitemap.xml"])
+    revalidatePath(path);
 }
 
 const assetReferences = {
@@ -86,6 +89,7 @@ async function allReferencedAssets() {
               notes: `Used by ${table.slice(0, -1)}: ${owner}`,
               is_published: row.is_published !== false,
               referenced: true,
+              updated_at: row.updated_at,
             },
           ];
         }),
@@ -129,112 +133,120 @@ export async function GET(request: Request) {
   }
 }
 
-export async function PATCH(request: Request) {
+function failed(error: unknown) {
+  return NextResponse.json(
+    {
+      error:
+        error instanceof InputError || error instanceof ContentConflict
+          ? error.message
+          : "Unable to save content. Please retry.",
+    },
+    { status: error instanceof InputError ? 400 : error instanceof ContentConflict ? 409 : 503 },
+  );
+}
+function sameOrigin(request: Request) {
+  const origin = request.headers.get("origin");
+  return !origin || origin === new URL(request.url).origin;
+}
+async function mutate(request: Request, action: "POST" | "PATCH" | "DELETE") {
   if (!(await authorized())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!sameOrigin(request))
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   try {
     const table = tableFrom(request);
-    const { id, patch } = (await request.json()) as { id: string; patch: Record<string, unknown> };
-    const reference = table === "site_assets" ? parseReferencedAssetId(id) : null;
-    if (reference) {
-      const rows =
-        (await readBetaTable(reference.table)) ??
-        (await seedBetaTable(reference.table, await publicSeed(reference.table)));
-      const index = rows.findIndex((row) => String(row.id) === reference.id);
-      if (index < 0) return NextResponse.json({ error: "Asset owner not found" }, { status: 404 });
-      rows[index] = {
-        ...rows[index],
-        [reference.field]: typeof patch.url === "string" && patch.url ? patch.url : null,
-        updated_at: new Date().toISOString(),
-      };
-      await writeBetaTable(reference.table, rows);
-      refreshSite();
-      return NextResponse.json({ ok: true });
-    }
-    const cleanPatch = Object.fromEntries(
-      Object.entries(patch).filter(([key]) => !immutableFields.has(key)),
-    );
-    const rows =
-      (await readBetaTable(table)) ?? (await seedBetaTable(table, await publicSeed(table)));
-    const index = rows.findIndex(
-      (row) => String(row[table === "site_content" ? "key" : "id"]) === id,
-    );
-    if (index < 0) return NextResponse.json({ error: "Item not found" }, { status: 404 });
-    rows[index] = { ...rows[index], ...cleanPatch, updated_at: new Date().toISOString() };
-    await writeBetaTable(table, rows);
+    if (table === "member_signups") throw new InputError("Member accounts are read-only.");
+    if (Number(request.headers.get("content-length")) > 500000)
+      throw new InputError("Content is too large.");
+    const input = await request.json().catch(() => {
+      throw new InputError("Invalid JSON.");
+    });
+    if (!input || typeof input !== "object") throw new InputError("Invalid request.");
+    const { id, expectedUpdatedAt } = input;
+    if (action !== "POST" && (typeof id !== "string" || !id))
+      throw new InputError("An item ID is required.");
+    const reference =
+      table === "site_assets" && action !== "POST" ? parseReferencedAssetId(id) : null;
+    const target = reference?.table ?? table;
+    await seedBetaTable(target, (await readBetaTable(target)) ?? (await publicSeed(target)));
+    let created: ContentRow | undefined;
+    await mutateBetaTable(target, (rows) => {
+      const primary = target === "site_content" ? "key" : "id";
+      const index =
+        action === "POST"
+          ? -1
+          : rows.findIndex((row) => String(row[primary]) === (reference?.id ?? id));
+      if (action !== "POST" && index < 0)
+        throw new InputError("Item no longer exists. Refresh the list.");
+      if (
+        action !== "POST" &&
+        expectedUpdatedAt !== undefined &&
+        String(rows[index].updated_at ?? "") !== String(expectedUpdatedAt ?? "")
+      )
+        throw new ContentConflict();
+      if (reference) {
+        const patch = action === "DELETE" ? { url: null } : input.patch;
+        const clean =
+          action === "DELETE" ? { url: null } : validateContent("site_assets", patch, true);
+        if (!("url" in clean))
+          throw new InputError(
+            "Only the URL of a referenced asset can be changed. Edit its owner for other changes.",
+          );
+        rows[index] = {
+          ...rows[index],
+          [reference.field]: clean.url,
+          updated_at: new Date().toISOString(),
+        };
+        return rows;
+      }
+      if (action === "DELETE") {
+        if (["packs", "categories"].includes(table))
+          throw new InputError(
+            "Archive packs instead of deleting them. Categories may still be referenced by content.",
+          );
+        return rows.filter((_, i) => i !== index);
+      }
+      const clean = validateContent(
+        table,
+        action === "POST" ? input.data : input.patch,
+        action === "PATCH",
+      );
+      if (
+        action === "PATCH" &&
+        table === "site_content" &&
+        clean.key !== undefined &&
+        clean.key !== id
+      )
+        throw new InputError("Section keys cannot be changed.");
+      const slug = clean.slug;
+      if (
+        slug &&
+        rows.some(
+          (row, i) => i !== index && String(row.slug).toLowerCase() === String(slug).toLowerCase(),
+        )
+      )
+        throw new InputError("That URL slug already exists.");
+      const now = new Date().toISOString();
+      if (action === "POST") {
+        created = {
+          ...clean,
+          ...(table === "site_content" ? {} : { id: crypto.randomUUID(), created_at: now }),
+          updated_at: now,
+        };
+        if (rows.some((row) => row[primary] === created?.[primary]))
+          throw new InputError("That key already exists.");
+        return [created, ...rows];
+      }
+      rows[index] = { ...rows[index], ...clean, updated_at: now };
+      return rows;
+    });
     refreshSite();
-    return NextResponse.json({ ok: true });
+    return NextResponse.json(created ? { data: created } : { ok: true }, {
+      status: created ? 201 : 200,
+    });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Admin update failed" },
-      { status: 503 },
-    );
+    return failed(error);
   }
 }
-
-export async function POST(request: Request) {
-  if (!(await authorized())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  try {
-    const table = tableFrom(request);
-    const { data: input } = (await request.json()) as { data: Record<string, unknown> };
-    const clean = Object.fromEntries(
-      Object.entries(input).filter(([key]) => !immutableFields.has(key)),
-    );
-    const rows =
-      (await readBetaTable(table)) ?? (await seedBetaTable(table, await publicSeed(table)));
-    const now = new Date().toISOString();
-    const data: ContentRow =
-      table === "site_content"
-        ? { ...clean, updated_at: now }
-        : { id: crypto.randomUUID(), ...clean, created_at: now, updated_at: now };
-    const identity = String(data[table === "site_content" ? "key" : "id"] ?? "");
-    if (!identity) return NextResponse.json({ error: "A unique key is required" }, { status: 400 });
-    if (rows.some((row) => String(row[table === "site_content" ? "key" : "id"]) === identity))
-      return NextResponse.json({ error: "That key already exists" }, { status: 409 });
-    await writeBetaTable(table, [data, ...rows]);
-    refreshSite();
-    return NextResponse.json({ data }, { status: 201 });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Admin create failed" },
-      { status: 503 },
-    );
-  }
-}
-
-export async function DELETE(request: Request) {
-  if (!(await authorized())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  try {
-    const table = tableFrom(request);
-    const { id } = (await request.json()) as { id: string };
-    const reference = table === "site_assets" ? parseReferencedAssetId(id) : null;
-    if (reference) {
-      const rows =
-        (await readBetaTable(reference.table)) ??
-        (await seedBetaTable(reference.table, await publicSeed(reference.table)));
-      const index = rows.findIndex((row) => String(row.id) === reference.id);
-      if (index < 0) return NextResponse.json({ error: "Asset owner not found" }, { status: 404 });
-      rows[index] = {
-        ...rows[index],
-        [reference.field]: null,
-        updated_at: new Date().toISOString(),
-      };
-      await writeBetaTable(reference.table, rows);
-      refreshSite();
-      return NextResponse.json({ ok: true });
-    }
-    const rows =
-      (await readBetaTable(table)) ?? (await seedBetaTable(table, await publicSeed(table)));
-    const primaryKey = table === "site_content" ? "key" : "id";
-    const nextRows = rows.filter((row) => String(row[primaryKey]) !== id);
-    if (nextRows.length === rows.length)
-      return NextResponse.json({ error: "Item not found" }, { status: 404 });
-    await writeBetaTable(table, nextRows);
-    refreshSite();
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Admin delete failed" },
-      { status: 503 },
-    );
-  }
-}
+export const POST = (request: Request) => mutate(request, "POST");
+export const PATCH = (request: Request) => mutate(request, "PATCH");
+export const DELETE = (request: Request) => mutate(request, "DELETE");

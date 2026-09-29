@@ -6,7 +6,11 @@ import type { Prompt } from "@/lib-next/supabase";
 
 const IMAGE_RE = /\.(gif|png|jpe?g|webp|avif|svg)(\?|$)/i;
 
-export function MediaTile({ prompt }: { prompt: Prompt }) {
+export function MediaTile({
+  prompt,
+}: {
+  prompt: Pick<Prompt, "title" | "cover_image_url" | "demo_video_url">;
+}) {
   const candidates = [prompt.cover_image_url, prompt.demo_video_url].filter(Boolean) as string[];
   const [index, setIndex] = useState(0);
   const [failed, setFailed] = useState(false);
@@ -30,5 +34,5 @@ export function MediaTile({ prompt }: { prompt: Prompt }) {
       />
     );
   }
-  return <video src={src} muted autoPlay loop playsInline preload="metadata" onError={recover} />;
+  return <video src={src} muted controls loop playsInline preload="none" onError={recover} />;
 }

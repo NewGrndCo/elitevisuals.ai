@@ -1,406 +1,273 @@
 "use client";
-
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Archive,
+  Copy,
+  Download,
   Eye,
-  EyeOff,
   Loader2,
   Lock,
   LogOut,
   Pencil,
   Plus,
   RefreshCw,
-  Save,
   Trash2,
-  Upload,
-  Download,
-  X,
 } from "lucide-react";
+import {
+  tabs,
+  fields,
+  rowId,
+  titleOf,
+  statusOf,
+  previewPath,
+  type Row,
+  type Table,
+} from "@/lib-next/cms-model";
+import { cmsRequest, jsonRequest, RequestError } from "@/lib-next/cms-request";
+import { CmsEditor } from "./cms-editor";
+import { MediaUpload } from "./media-upload";
 
-const tabs = [
-  ["packs", "Prompt Packs"],
-  ["prompts", "Image Prompts"],
-  ["skills", "Skills"],
-  ["resources", "Resources"],
-  ["site_assets", "Site Assets"],
-  ["site_content", "Page Copy"],
-  ["categories", "Categories"],
-  ["ai_logos", "AI Models"],
-  ["members", "Members"],
-  ["waitlist_signups", "Waitlist"],
-] as const;
-type Table = (typeof tabs)[number][0];
-type Row = Record<string, unknown> & { id?: string; key?: string };
-type Field = {
-  key: string;
-  label: string;
-  type?: "text" | "textarea" | "number" | "boolean" | "json";
-  required?: boolean;
-  upload?: { kind: string; accept: string; label: string };
-};
-const f = (key: string, label: string, type: Field["type"] = "text", required = false): Field => ({
-  key,
-  label,
-  type,
-  required,
-});
-const fields: Record<Table, Field[]> = {
-  packs: [
-    f("title", "Title", "text", true),
-    f("slug", "URL slug", "text", true),
-    f("description", "Description", "textarea"),
-    f("cover_image_url", "Cover image URL"),
-    f("sort_order", "Sort order", "number"),
-    f("is_published", "Published", "boolean"),
-  ],
-  prompts: [
-    f("title", "Title", "text", true),
-    f("slug", "URL slug", "text", true),
-    f("description", "Description", "textarea"),
-    f("prompt_text", "Prompt text", "textarea", true),
-    {
-      ...f("cover_image_url", "Cover image URL"),
-      upload: { kind: "prompt-cover", accept: "image/*", label: "Upload cover" },
-    },
-    {
-      ...f("demo_video_url", "Demo video URL"),
-      upload: { kind: "prompt-demo", accept: "video/*", label: "Upload video" },
-    },
-    f("gallery_urls", "Gallery URLs (one per line)", "textarea"),
-    f("tags", "Tags (one per line)", "textarea"),
-    f("category_name", "Display category"),
-    f("source_url", "Original source URL"),
-    f("category_id", "Category ID"),
-    f("pack_id", "Pack ID"),
-    f("sort_order", "Sort order", "number"),
-    f("is_published", "Published", "boolean"),
-  ],
-  skills: [
-    f("title", "Title", "text", true),
-    f("slug", "URL slug", "text", true),
-    f("summary", "Summary", "textarea"),
-    f("description", "Description", "textarea"),
-    {
-      ...f("cover_image_url", "Cover image URL"),
-      upload: { kind: "skill-cover", accept: "image/*", label: "Upload cover" },
-    },
-    {
-      ...f("download_url", "Skill ZIP URL"),
-      upload: { kind: "skill-package", accept: ".zip,application/zip", label: "Upload ZIP" },
-    },
-    f("compatibility", "Compatibility (one per line)", "textarea"),
-    f("install_instructions", "Install instructions", "textarea"),
-    f("price_cents", "Price in cents", "number"),
-    f("sort_order", "Sort order", "number"),
-    f("is_featured", "Featured", "boolean"),
-    f("is_published", "Published", "boolean"),
-  ],
-  resources: [
-    f("title", "Title", "text", true),
-    f("slug", "URL slug", "text", true),
-    f("description", "Description", "textarea"),
-    f("url", "Destination URL", "text", true),
-    {
-      ...f("image_url", "Image URL"),
-      upload: { kind: "resource-image", accept: "image/*", label: "Upload image" },
-    },
-    f("resource_type", "Type"),
-    f("tags", "Tags (one per line)", "textarea"),
-    f("sort_order", "Sort order", "number"),
-    f("is_featured", "Featured", "boolean"),
-    f("is_published", "Published", "boolean"),
-  ],
-  site_assets: [
-    f("name", "Name", "text", true),
-    f("asset_key", "Asset key", "text", true),
-    f("asset_type", "Asset type"),
-    {
-      ...f("url", "Asset URL", "text", true),
-      upload: { kind: "site-asset", accept: "image/*,video/*,.zip,.pdf", label: "Upload asset" },
-    },
-    f("alt_text", "Alt text"),
-    f("notes", "Notes", "textarea"),
-    f("is_published", "Published", "boolean"),
-  ],
-  site_content: [
-    f("key", "Section key", "text", true),
-    f("value", "Section copy (JSON)", "json", true),
-  ],
-  categories: [
-    f("name", "Name", "text", true),
-    f("slug", "URL slug", "text", true),
-    f("description", "Description", "textarea"),
-    f("accent_color", "Accent color"),
-    f("sort_order", "Sort order", "number"),
-  ],
-  ai_logos: [
-    f("name", "Name", "text", true),
-    f("logo_url", "Logo URL"),
-    f("image_url", "Image URL"),
-    f("sort_order", "Sort order", "number"),
-    f("is_published", "Published", "boolean"),
-  ],
-  members: [f("email", "Email address"), f("created_at", "Joined"), f("source", "Signup source")],
-  waitlist_signups: [
-    f("email", "Email address", "text", true),
-    f("name", "Name"),
-    f("interests", "Interests", "textarea"),
-    f("source", "Signup source"),
-  ],
-};
-const rowId = (row: Row) => String(row.id ?? row.key ?? "");
-const shown = (value: unknown, field: Field) =>
-  field.type === "json"
-    ? JSON.stringify(value ?? {}, null, 2)
-    : Array.isArray(value)
-      ? value.join("\n")
-      : value == null
-        ? ""
-        : String(value);
-function parsed(value: string | boolean, field: Field) {
-  if (field.type === "boolean") return Boolean(value);
-  if (field.type === "number") return Number(value || 0);
-  if (field.type === "json") return JSON.parse(String(value || "{}"));
-  if (["gallery_urls", "compatibility", "tags"].includes(field.key))
-    return String(value)
-      .split("\n")
-      .map((v) => v.trim())
-      .filter(Boolean);
-  return value === "" &&
-    [
-      "category_id",
-      "pack_id",
-      "cover_image_url",
-      "demo_video_url",
-      "image_url",
-      "logo_url",
-      "download_url",
-      "source_url",
-    ].includes(field.key)
-    ? null
-    : value;
-}
-
+const pageSize = 20;
 export function AdminDashboard() {
   const [unlocked, setUnlocked] = useState(false),
-    [pin, setPin] = useState(""),
-    [tab, setTab] = useState<Table>("packs"),
+    [checking, setChecking] = useState(true),
+    [pin, setPin] = useState("");
+  const [tab, setTab] = useState<Table>("packs"),
     [rows, setRows] = useState<Row[]>([]),
-    [busy, setBusy] = useState(false),
+    [overview, setOverview] = useState(true);
+  const [summary, setSummary] = useState<{ table: Table; rows: Row[] }[]>([]);
+  const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [message, setMessage] = useState(""),
-    [editing, setEditing] = useState<Row | null>(null),
-    [uploading, setUploading] = useState<string | null>(null),
-    [uploadProgress, setUploadProgress] = useState(0),
-    [draft, setDraft] = useState<Record<string, string | boolean>>({});
-  const activeFields = useMemo(() => fields[tab], [tab]);
+    [message, setMessage] = useState("");
+  const [editing, setEditing] = useState<Row | null>(null),
+    [search, setSearch] = useState(""),
+    [filter, setFilter] = useState("all"),
+    [sort, setSort] = useState("recent"),
+    [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<string[]>([]),
+    [uploading, setUploading] = useState(false);
+  const requestVersion = useRef(0);
+  const handleError = useCallback((cause: unknown) => {
+    setError(cause instanceof Error ? cause.message : "Unable to complete the request.");
+    if (cause instanceof RequestError && cause.status === 401) {
+      setUnlocked(false);
+    }
+  }, []);
+  useEffect(() => {
+    void cmsRequest<{ authenticated: boolean }>("/api/admin/session")
+      .then((r) => setUnlocked(r.authenticated))
+      .catch(handleError)
+      .finally(() => setChecking(false));
+  }, [handleError]);
   const load = useCallback(async () => {
+    const version = ++requestVersion.current;
     setBusy(true);
     setError("");
     try {
-      const endpoint = tab === "members" ? "/api/admin/members" : `/api/admin/content?table=${tab}`;
-      const response = await fetch(endpoint, { cache: "no-store" });
-      const body = await response.json();
-      if (response.status === 401) {
-        setUnlocked(false);
-        return;
+      if (overview) {
+        const result = await Promise.all(
+          tabs
+            .filter(([t]) => ["packs", "prompts", "skills", "resources", "site_assets"].includes(t))
+            .map(async ([table]) => ({
+              table,
+              rows: (await cmsRequest(`/api/admin/content?table=${table}`)).data as Row[],
+            })),
+        );
+        if (version === requestVersion.current) setSummary(result);
+      } else {
+        const result = await cmsRequest(
+          tab === "members" ? "/api/admin/members" : `/api/admin/content?table=${tab}`,
+        );
+        if (version === requestVersion.current) {
+          setRows(result.data as Row[]);
+          setSelected([]);
+        }
       }
-      if (!response.ok) throw new Error(body.error || "Unable to load admin data");
-      setRows(body.data || []);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load admin data");
+      if (version === requestVersion.current) handleError(cause);
     } finally {
-      setBusy(false);
+      if (version === requestVersion.current) setBusy(false);
     }
-  }, [tab]);
+  }, [tab, overview, handleError]);
   useEffect(() => {
     if (unlocked) void load();
+    const requestVersionAtEffectStart = requestVersion;
+    return () => {
+      requestVersionAtEffectStart.current++;
+    };
   }, [unlocked, load]);
-  const openEditor = (row?: Row) => {
-    const source = row ?? {};
-    setEditing(row ?? {});
-    setDraft(
-      Object.fromEntries(
-        activeFields.map((field) => [
-          field.key,
-          field.type === "boolean" ? Boolean(source[field.key]) : shown(source[field.key], field),
-        ]),
-      ),
-    );
-    setError("");
+  const navigate = (next: Table | null) => {
+    if (uploading) return;
+    if (editing && !window.confirm("Close the editor? Unsaved changes will be lost.")) return;
+    setEditing(null);
+    setOverview(next === null);
+    if (next) setTab(next);
+    setRows([]);
+    setSearch("");
+    setFilter("all");
+    setPage(1);
+    setSelected([]);
     setMessage("");
   };
-  const unlock = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const filtered = useMemo(
+    () =>
+      rows
+        .filter(
+          (row) =>
+            `${titleOf(row)} ${row.slug || ""} ${row.description || ""}`
+              .toLowerCase()
+              .includes(search.toLowerCase()) &&
+            (filter === "all" || statusOf(row) === filter),
+        )
+        .sort((a, b) =>
+          sort === "title"
+            ? titleOf(a).localeCompare(titleOf(b))
+            : sort === "order"
+              ? Number(a.sort_order || 0) - Number(b.sort_order || 0)
+              : String(b.updated_at || b.created_at || "").localeCompare(
+                  String(a.updated_at || a.created_at || ""),
+                ),
+        ),
+    [rows, search, filter, sort],
+  );
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize)),
+    currentPage = Math.min(page, pageCount);
+  const visible = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const mutate = async (row: Row, patch: Record<string, unknown>) =>
+    cmsRequest(
+      `/api/admin/content?table=${tab}`,
+      jsonRequest("PATCH", { id: rowId(row), patch, expectedUpdatedAt: row.updated_at ?? "" }),
+    );
+  const action = async (work: () => Promise<unknown>, success: string) => {
+    if (busy) return;
     setBusy(true);
     setError("");
-    const response = await fetch("/api/admin/session", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ pin }),
-    });
-    const body = await response.json();
-    setBusy(false);
-    if (!response.ok) {
-      setError(body.error || "Unable to unlock");
-      return;
-    }
-    setUnlocked(true);
-    setPin("");
-  };
-  const uploadFile = async (field: Field, file?: File) => {
-    if (!field.upload || !file) return;
-    if (file.size > 18 * 1024 * 1024) {
-      setError("Files must be 18 MB or smaller.");
-      return;
-    }
-    const chunkSize = 4 * 1024 * 1024;
-    const total = Math.ceil(file.size / chunkSize);
-    const uploadId = crypto.randomUUID();
-    const base = new URLSearchParams({
-      kind: field.upload.kind,
-      uploadId,
-      total: String(total),
-    });
-    const headers = {
-      "content-type": "application/octet-stream",
-      "x-file-name": encodeURIComponent(file.name),
-      "x-file-type": file.type || "application/octet-stream",
-    };
+    setMessage("");
     try {
-      setUploading(field.key);
-      setUploadProgress(0);
-      setError("");
-      for (let index = 0; index < total; index += 1) {
-        const response = await fetch(`/api/admin/upload?${base}&stage=chunk&index=${index}`, {
-          method: "POST",
-          headers,
-          body: file.slice(index * chunkSize, Math.min(file.size, (index + 1) * chunkSize)),
-        });
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error || "Upload failed");
-        setUploadProgress(Math.round(((index + 1) / (total + 1)) * 100));
-      }
-      const response = await fetch(`/api/admin/upload?${base}&stage=complete`, {
-        method: "POST",
-        headers,
-      });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error || "Upload could not be completed");
-      setDraft((current) => ({ ...current, [field.key]: body.url }));
-      setMessage(`${file.name} uploaded. Save the item to publish this file.`);
-      setUploadProgress(100);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Upload failed");
-    } finally {
-      setUploading(null);
-    }
-  };
-  const save = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!editing) return;
-    try {
-      setBusy(true);
-      setError("");
-      const data = Object.fromEntries(
-        activeFields.map((field) => [field.key, parsed(draft[field.key] ?? "", field)]),
-      );
-      const id = rowId(editing),
-        creating = !id;
-      const response = await fetch(`/api/admin/content?table=${tab}`, {
-        method: creating ? "POST" : "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(creating ? { data } : { id, patch: data }),
-      });
-      const body = await response.json();
-      setBusy(false);
-      if (!response.ok) {
-        setError(body.error || "Save failed");
-        return;
-      }
-      setEditing(null);
-      setMessage(creating ? "Item created." : "Changes saved.");
+      await work();
+      setMessage(success);
       await load();
     } catch (cause) {
+      handleError(cause);
+    } finally {
       setBusy(false);
-      setError(cause instanceof Error ? cause.message : "Invalid form value");
     }
   };
-  const publish = async (row: Row) => {
-    const response = await fetch(`/api/admin/content?table=${tab}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: rowId(row), patch: { is_published: !row.is_published } }),
-    });
-    const body = await response.json();
-    if (!response.ok) setError(body.error || "Update failed");
-    else await load();
+  const unlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      await cmsRequest("/api/admin/session", jsonRequest("POST", { pin }));
+      setUnlocked(true);
+      setPin("");
+    } catch (cause) {
+      handleError(cause);
+    } finally {
+      setBusy(false);
+    }
   };
-  const remove = async (row: Row) => {
+  const duplicate = (row: Row) => {
+    const copy = { ...row };
+    delete copy.id;
+    delete copy.key;
+    delete copy.created_at;
+    delete copy.updated_at;
+    copy.title = `${titleOf(row)} (copy)`;
+    copy.slug = `${row.slug || "item"}-copy-${crypto.randomUUID().slice(0, 6)}`;
+    copy.is_published = false;
+    copy.publish_at = null;
+    copy.archived_at = null;
+    setEditing(copy);
+  };
+  const remove = (row: Row) => {
+    if (window.confirm(`Permanently delete ${titleOf(row)}? This cannot be undone.`))
+      void action(
+        () =>
+          cmsRequest(
+            `/api/admin/content?table=${tab}`,
+            jsonRequest("DELETE", { id: rowId(row), expectedUpdatedAt: row.updated_at ?? "" }),
+          ),
+        "Item deleted.",
+      );
+  };
+  const bulk = (publish: boolean) => {
+    const targets = rows.filter((r) => selected.includes(rowId(r)));
     if (
-      !window.confirm(
-        `Permanently delete ${String(row.title || row.name || row.key || "this item")}?`,
-      )
+      !targets.length ||
+      !window.confirm(`${publish ? "Publish" : "Unpublish"} ${targets.length} selected items?`)
     )
       return;
-    const response = await fetch(`/api/admin/content?table=${tab}`, {
-      method: "DELETE",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: rowId(row) }),
-    });
-    const body = await response.json();
-    if (!response.ok) setError(body.error || "Delete failed");
-    else {
-      setMessage("Item deleted.");
-      await load();
-    }
+    void action(async () => {
+      let done = 0;
+      try {
+        for (const row of targets) {
+          await mutate(row, { is_published: publish });
+          done++;
+        }
+      } catch (cause) {
+        throw new Error(
+          `${done} of ${targets.length} items updated. Refresh before retrying. ${cause instanceof Error ? cause.message : ""}`,
+        );
+      }
+    }, "Selected items updated.");
   };
-  const lock = async () => {
-    await fetch("/api/admin/session", { method: "DELETE" });
-    setUnlocked(false);
-    setRows([]);
-  };
-  const exportWaitlist = () => {
-    const cells = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+  const exportCsv = () => {
+    const cell = (v: unknown) => {
+      const text = String(v ?? "");
+      return `"${(/^[=+@\-\t\r]/.test(text) ? "'" : "") + text.replaceAll('"', '""')}"`;
+    };
+    const keys = ["email", "name", "interests", "source", "created_at"];
     const csv = [
-      ["email", "name", "interests", "source", "created_at"].join(","),
-      ...rows.map((row) =>
-        [row.email, row.name, row.interests, row.source, row.created_at].map(cells).join(","),
-      ),
+      keys.join(","),
+      ...filtered.map((r) => keys.map((k) => cell(r[k])).join(",")),
     ].join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `elitevisuals-waitlist-${new Date().toISOString().slice(0, 10)}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `elitevisuals-${tab}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
+  if (checking)
+    return (
+      <main className="admin-gate">
+        <p role="status">Checking admin session…</p>
+      </main>
+    );
   if (!unlocked)
     return (
       <main className="admin-gate">
-        <form onSubmit={unlock} className="admin-pin">
+        <form className="admin-pin" onSubmit={unlock}>
           <div className="admin-lock">
             <Lock />
           </div>
           <p className="kicker">Elite Visuals CMS</p>
           <h1>Admin access</h1>
-          <p>Enter your eight-digit PIN.</p>
+          <p>Enter your admin PIN.</p>
           <input
             aria-label="Admin PIN"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={8}
             type="password"
+            autoComplete="current-password"
+            required
             value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+            onChange={(e) => setPin(e.target.value)}
           />
-          {error && <div className="admin-error">{error}</div>}
-          <button className="button button-solid" disabled={busy || pin.length !== 8}>
-            {busy ? <Loader2 className="spin" /> : "Unlock"}
+          {error && (
+            <p className="admin-error" role="alert">
+              {error}
+            </p>
+          )}
+          <button className="button button-solid" disabled={busy || !pin}>
+            {busy ? "Unlocking…" : "Unlock"}
           </button>
         </form>
       </main>
     );
+  const all: (Row & { table: Table })[] = summary.flatMap((g) =>
+    g.rows.filter((r) => !r.referenced).map((r) => ({ ...r, table: g.table })),
+  );
+  const hasPublishing = fields[tab].some((f) => f.key === "is_published");
   return (
     <main className="admin-page">
       <aside>
@@ -408,233 +275,406 @@ export function AdminDashboard() {
           <p className="kicker">Elite Visuals</p>
           <h1>CMS</h1>
         </div>
-        <nav>
+        <nav aria-label="CMS sections">
+          <button className={overview ? "active" : ""} onClick={() => navigate(null)}>
+            Overview
+          </button>
           {tabs.map(([key, label]) => (
             <button
               key={key}
-              onClick={() => {
-                setTab(key);
-                setEditing(null);
-              }}
-              className={tab === key ? "active" : ""}
+              className={!overview && tab === key ? "active" : ""}
+              aria-current={!overview && tab === key ? "page" : undefined}
+              onClick={() => navigate(key)}
             >
               {label}
             </button>
           ))}
         </nav>
-        <button onClick={lock}>
-          <LogOut size={15} /> Lock
+        <a href="/" className="button button-outline">
+          View website
+        </a>
+        <button
+          disabled={busy || uploading}
+          onClick={() =>
+            void action(async () => {
+              await cmsRequest("/api/admin/session", { method: "DELETE" });
+              setUnlocked(false);
+              setRows([]);
+              setEditing(null);
+            }, "Locked")
+          }
+        >
+          <LogOut size={16} />
+          Lock
         </button>
       </aside>
       <section>
         <header>
           <div>
-            <p className="kicker">Manage the live site</p>
-            <h2>{tabs.find(([key]) => key === tab)?.[1]}</h2>
+            <p className="kicker">Your creative workspace</p>
+            <h2>{overview ? "Overview" : tabs.find(([key]) => key === tab)?.[1]}</h2>
           </div>
           <div className="admin-actions">
-            {tab === "waitlist_signups" && (
+            <button
+              className="admin-icon"
+              aria-label="Refresh content"
+              disabled={busy || uploading || Boolean(editing)}
+              onClick={() => void load()}
+            >
+              <RefreshCw size={18} />
+            </button>
+            {!overview && ["waitlist_signups", "members"].includes(tab) && (
               <button
-                onClick={exportWaitlist}
                 className="button button-outline"
-                disabled={!rows.length}
+                onClick={exportCsv}
+                disabled={!filtered.length}
               >
-                <Download size={16} /> Export CSV
+                <Download size={16} />
+                Export CSV
               </button>
             )}
-            <button onClick={load} className="admin-icon" aria-label="Refresh">
-              <RefreshCw size={17} />
-            </button>
-            {tab !== "members" && (
-              <button onClick={() => openEditor()} className="button button-solid" disabled={busy}>
-                <Plus size={16} /> Add new
+            {!overview && tab !== "members" && (
+              <button
+                className="button button-solid"
+                disabled={busy || uploading || Boolean(editing)}
+                onClick={() => setEditing({})}
+              >
+                <Plus size={16} />
+                Add new
               </button>
             )}
           </div>
         </header>
-        {error && <div className="admin-error admin-config-error">{error}</div>}
-        {message && <div className="admin-success">{message}</div>}
-        {editing && (
-          <form className="admin-editor" onSubmit={save}>
-            <header>
-              <div>
-                <p className="kicker">{rowId(editing) ? "Edit item" : "Create item"}</p>
-                <h3>{String(editing.title || editing.name || editing.key || "New content")}</h3>
-              </div>
-              <button
-                type="button"
-                className="admin-icon"
-                onClick={() => setEditing(null)}
-                aria-label="Close editor"
-              >
-                <X size={17} />
-              </button>
-            </header>
-            <div className="admin-fields">
-              {activeFields.map((field) => (
-                <div
-                  key={field.key}
-                  className={field.type === "textarea" || field.type === "json" ? "wide" : ""}
-                >
-                  {field.type === "boolean" ? (
-                    <label className="admin-check">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(draft[field.key])}
-                        onChange={(e) =>
-                          setDraft((current) => ({ ...current, [field.key]: e.target.checked }))
-                        }
-                      />{" "}
-                      {field.label}
-                    </label>
-                  ) : (
-                    <>
-                      <label htmlFor={`admin-field-${field.key}`}>{field.label}</label>
-                      {field.type === "textarea" || field.type === "json" ? (
-                        <textarea
-                          id={`admin-field-${field.key}`}
-                          rows={field.type === "json" ? 10 : 5}
-                          required={field.required}
-                          value={String(draft[field.key] ?? "")}
-                          onChange={(e) =>
-                            setDraft((current) => ({ ...current, [field.key]: e.target.value }))
-                          }
-                        />
-                      ) : (
-                        <>
-                          <input
-                            id={`admin-field-${field.key}`}
-                            type={field.type === "number" ? "number" : "text"}
-                            required={field.required}
-                            value={String(draft[field.key] ?? "")}
-                            onChange={(e) =>
-                              setDraft((current) => ({ ...current, [field.key]: e.target.value }))
-                            }
-                          />
-                          {field.upload && (
-                            <span className="admin-upload-row">
-                              <label className="button button-outline admin-upload-button">
-                                {uploading === field.key ? (
-                                  <Loader2 className="spin" size={15} />
-                                ) : (
-                                  <Upload size={15} />
-                                )}
-                                {uploading === field.key
-                                  ? `Uploading ${uploadProgress}%`
-                                  : field.upload.label}
-                                <input
-                                  type="file"
-                                  accept={field.upload.accept}
-                                  disabled={Boolean(uploading)}
-                                  onChange={(event) => {
-                                    void uploadFile(field, event.target.files?.[0]);
-                                    event.target.value = "";
-                                  }}
-                                />
-                              </label>
-                              <small>Up to 18 MB</small>
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-            <button className="button button-solid" disabled={busy}>
-              <Save size={16} /> {busy ? "Saving…" : "Save changes"}
-            </button>
-          </form>
+        {error && (
+          <div className="admin-error" role="alert">
+            {error}
+          </div>
+        )}
+        {message && (
+          <div className="admin-success" role="status">
+            {message}
+          </div>
         )}
         {busy && !editing ? (
-          <div className="admin-loading">
-            <Loader2 className="spin" /> Loading
+          <div className="admin-loading" role="status">
+            <Loader2 className="spin" />
+            Loading content…
           </div>
-        ) : (
-          <div className="admin-list">
-            {rows.map((row) => {
-              const published = typeof row.is_published === "boolean" ? row.is_published : null;
-              const media =
-                row.cover_image_url ||
-                row.image_url ||
-                row.logo_url ||
-                (["image", "icon"].includes(String(row.asset_type)) ? row.url : null);
-              return (
-                <article key={rowId(row)}>
-                  <div className="admin-thumb">
-                    {typeof media === "string" && media ? (
-                      <img src={media} alt="" />
-                    ) : (
-                      <span>{String(row.title || row.name || row.key || "A").slice(0, 1)}</span>
-                    )}
-                  </div>
-                  <div>
-                    <h3>
-                      {String(
-                        row.title ||
-                          row.name ||
-                          row.email ||
-                          row.asset_key ||
-                          row.key ||
-                          "Untitled",
-                      )}
-                    </h3>
-                    <p>
-                      {String(
-                        row.slug ||
-                          row.resource_type ||
-                          row.asset_type ||
-                          row.source ||
-                          row.created_at ||
-                          "",
-                      )}
-                    </p>
-                  </div>
-                  {published !== null && (
-                    <button
-                      className={`publish ${published ? "live" : "draft"}`}
-                      onClick={() => void publish(row)}
-                      disabled={busy}
-                    >
-                      {published ? <Eye size={14} /> : <EyeOff size={14} />}{" "}
-                      {published ? "Live" : "Draft"}
-                    </button>
-                  )}
-                  {tab !== "members" && (
-                    <>
-                      <button
-                        className="admin-edit"
-                        onClick={() => openEditor(row)}
-                        disabled={busy}
-                        aria-label="Edit"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        className="admin-delete"
-                        onClick={() => void remove(row)}
-                        disabled={busy}
-                        aria-label="Delete"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </>
-                  )}
+        ) : overview ? (
+          <>
+            <div className="cms-stats">
+              {[
+                ["Content items", all.filter((r) => r.table !== "site_assets").length],
+                [
+                  "Published",
+                  all.filter((r) => r.table !== "site_assets" && statusOf(r) === "published")
+                    .length,
+                ],
+                [
+                  "Drafts",
+                  all.filter((r) => r.table !== "site_assets" && statusOf(r) === "draft").length,
+                ],
+                ["Scheduled", all.filter((r) => statusOf(r) === "scheduled").length],
+              ].map(([label, count]) => (
+                <article key={label}>
+                  <span>{label}</span>
+                  <strong>{count}</strong>
                 </article>
-              );
-            })}
-            {!rows.length && !error && (
-              <div className="empty-state">
-                <h3>No items found.</h3>
-                <p>
-                  {tab === "members"
-                    ? "No member accounts yet."
-                    : "Create the first item with “Add new.”"}
-                </p>
+              ))}
+            </div>
+            <section className="cms-overview-section">
+              <h3>Quick create</h3>
+              <div className="admin-actions">
+                {tabs
+                  .filter(([key]) => ["prompts", "skills", "resources"].includes(key))
+                  .map(([key, label]) => (
+                    <button
+                      className="button button-outline"
+                      key={key}
+                      onClick={() => {
+                        navigate(key);
+                        setEditing({});
+                      }}
+                    >
+                      <Plus size={16} />
+                      {label}
+                    </button>
+                  ))}
               </div>
+            </section>
+            <section className="cms-overview-section">
+              <h3>Recently edited</h3>
+              <div className="recent-list">
+                {all
+                  .sort((a, b) =>
+                    String(b.updated_at || b.created_at || "").localeCompare(
+                      String(a.updated_at || a.created_at || ""),
+                    ),
+                  )
+                  .slice(0, 8)
+                  .map((row) => (
+                    <button
+                      key={`${row.table}-${rowId(row)}`}
+                      onClick={() => {
+                        navigate(row.table);
+                        setEditing(row);
+                      }}
+                    >
+                      <span>
+                        {titleOf(row)}
+                        <small>{tabs.find(([t]) => t === row.table)?.[1]}</small>
+                      </span>
+                      <span className={`status-badge ${statusOf(row)}`}>{statusOf(row)}</span>
+                    </button>
+                  ))}
+              </div>
+            </section>
+          </>
+        ) : (
+          <>
+            {editing ? (
+              <CmsEditor
+                key={`${tab}-${rowId(editing)}`}
+                table={tab}
+                row={editing}
+                onBusy={setUploading}
+                onClose={() => setEditing(null)}
+                onSaved={() => {
+                  setEditing(null);
+                  setMessage("Changes saved.");
+                  void load();
+                }}
+              />
+            ) : (
+              <>
+                {tab === "site_assets" && (
+                  <details className="cms-overview-section">
+                    <summary>Upload media to your library</summary>
+                    <MediaUpload
+                      kind="site-asset"
+                      multiple
+                      onChange={() =>
+                        setMessage("Media added to library. Refresh to view uploads.")
+                      }
+                      onBusy={setUploading}
+                    />
+                  </details>
+                )}
+                <div className="cms-toolbar">
+                  <label>
+                    Search
+                    <input
+                      type="search"
+                      placeholder="Search content…"
+                      value={search}
+                      onChange={(e) => {
+                        setSearch(e.target.value);
+                        setPage(1);
+                        setSelected([]);
+                      }}
+                    />
+                  </label>
+                  {hasPublishing && (
+                    <label>
+                      Status
+                      <select
+                        value={filter}
+                        onChange={(e) => {
+                          setFilter(e.target.value);
+                          setPage(1);
+                          setSelected([]);
+                        }}
+                      >
+                        <option value="all">All statuses</option>
+                        {["published", "draft", "scheduled", "archived"].map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  <label>
+                    Sort
+                    <select value={sort} onChange={(e) => setSort(e.target.value)}>
+                      <option value="recent">Recently edited</option>
+                      <option value="title">Title A–Z</option>
+                      <option value="order">Display order</option>
+                    </select>
+                  </label>
+                </div>
+                {selected.length > 0 && (
+                  <div className="cms-bulk">
+                    <span>{selected.length} selected</span>
+                    <button disabled={busy} onClick={() => bulk(true)}>
+                      Publish
+                    </button>
+                    <button disabled={busy} onClick={() => bulk(false)}>
+                      Unpublish
+                    </button>
+                    <button onClick={() => setSelected([])}>Clear selection</button>
+                  </div>
+                )}
+                <div className="admin-list">
+                  {visible.map((row) => {
+                    const name = titleOf(row),
+                      status = statusOf(row),
+                      url = previewPath(tab, row);
+                    const media =
+                      row.cover_image_url ||
+                      row.image_url ||
+                      row.logo_url ||
+                      (["image", "icon"].includes(String(row.asset_type)) ? row.url : null);
+                    return (
+                      <article key={rowId(row)}>
+                        <div className="admin-thumb">
+                          {typeof media === "string" && media ? (
+                            <img src={media} alt="" loading="lazy" />
+                          ) : (
+                            <span>{name.slice(0, 1)}</span>
+                          )}
+                        </div>
+                        <div className="cms-row-copy">
+                          <h3>{name}</h3>
+                          <p>{String(row.slug || row.asset_type || row.created_at || "")}</p>
+                        </div>
+                        <div className="cms-row-actions">
+                          {hasPublishing && !row.referenced && (
+                            <>
+                              <input
+                                type="checkbox"
+                                aria-label={`Select ${name}`}
+                                checked={selected.includes(rowId(row))}
+                                onChange={(e) =>
+                                  setSelected((ids) =>
+                                    e.target.checked
+                                      ? [...ids, rowId(row)]
+                                      : ids.filter((id) => id !== rowId(row)),
+                                  )
+                                }
+                              />
+                              <button
+                                disabled={busy || status === "archived"}
+                                className={`status-badge ${status}`}
+                                aria-label={`${status === "published" ? "Unpublish" : "Publish"} ${name}`}
+                                onClick={() =>
+                                  void action(
+                                    () => mutate(row, { is_published: !row.is_published }),
+                                    "Publication updated.",
+                                  )
+                                }
+                              >
+                                {status}
+                              </button>
+                            </>
+                          )}
+                          {url && status === "published" && (
+                            <a
+                              className="admin-icon"
+                              href={url}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`View ${name}`}
+                            >
+                              <Eye size={16} />
+                            </a>
+                          )}
+                          {tab !== "members" && (
+                            <>
+                              <button
+                                className="admin-icon"
+                                disabled={busy}
+                                aria-label={`Edit ${name}`}
+                                onClick={() => setEditing(row)}
+                              >
+                                <Pencil size={16} />
+                              </button>
+                              {["packs", "prompts", "skills", "resources", "ai_logos"].includes(
+                                tab,
+                              ) && (
+                                <>
+                                  <button
+                                    className="admin-icon"
+                                    disabled={busy}
+                                    aria-label={`Duplicate ${name}`}
+                                    onClick={() => duplicate(row)}
+                                  >
+                                    <Copy size={16} />
+                                  </button>
+                                  <button
+                                    className="admin-icon"
+                                    disabled={busy}
+                                    aria-label={`${row.archived_at ? "Restore" : "Archive"} ${name}`}
+                                    onClick={() =>
+                                      void action(
+                                        () =>
+                                          mutate(row, {
+                                            archived_at: row.archived_at
+                                              ? null
+                                              : new Date().toISOString(),
+                                            is_published: false,
+                                          }),
+                                        row.archived_at
+                                          ? "Restored as draft."
+                                          : "Archived. You can restore this item.",
+                                      )
+                                    }
+                                  >
+                                    <Archive size={16} />
+                                  </button>
+                                </>
+                              )}
+                              {!["packs", "categories"].includes(tab) && (
+                                <button
+                                  className="admin-icon admin-delete"
+                                  disabled={busy}
+                                  aria-label={`Delete ${name}`}
+                                  onClick={() => remove(row)}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
+                  {!visible.length && !error && (
+                    <div className="empty-state">
+                      <h3>
+                        {search || filter !== "all" ? "No matching content" : "No content yet"}
+                      </h3>
+                      <p>
+                        {search || filter !== "all"
+                          ? "Try another search or status filter."
+                          : "Use Add new to create your first item."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <nav className="cms-pagination" aria-label="Content pagination">
+                  <span>
+                    {filtered.length} items · Page {currentPage} of {pageCount}
+                  </span>
+                  <button
+                    className="button button-outline"
+                    disabled={currentPage === 1}
+                    onClick={() => setPage(currentPage - 1)}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    className="button button-outline"
+                    disabled={currentPage === pageCount}
+                    onClick={() => setPage(currentPage + 1)}
+                  >
+                    Next
+                  </button>
+                </nav>
+              </>
             )}
-          </div>
+          </>
         )}
       </section>
     </main>
