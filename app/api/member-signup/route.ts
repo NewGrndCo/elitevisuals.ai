@@ -1,8 +1,25 @@
+import { safeDestination } from "@/lib-next/content-policy";
 import { NextResponse } from "next/server";
 import { readBetaTable, seedBetaTable, writeBetaTable } from "@/lib-next/beta-content";
 import { createPublicClient } from "@/lib-next/supabase";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const canonicalOrigin = "https://elitevisualsai.netlify.app";
+
+function getMemberOrigin() {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!configured) return canonicalOrigin;
+  try {
+    const url = new URL(configured);
+    if (url.protocol !== "https:" || url.username || url.password) return canonicalOrigin;
+    if (url.hostname === "elitevisualsai.netlify.app" || url.hostname === "elitevisuals.ai") {
+      return url.origin;
+    }
+  } catch {
+    // Fall back to the known production origin below.
+  }
+  return canonicalOrigin;
+}
 
 export async function POST(request: Request) {
   try {
@@ -12,9 +29,10 @@ export async function POST(request: Request) {
     if (email.length > 320 || !emailPattern.test(email))
       return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
 
-    const next =
-      typeof input.next === "string" && input.next.startsWith("/") ? input.next : "/promptbox";
-    const origin = new URL(request.url).origin;
+    const next = safeDestination(input.next);
+    // Never inherit a preview host (for example a Lovable preview) for member links.
+    // Supabase must also allow this URL in Authentication > URL Configuration.
+    const origin = getMemberOrigin();
     const { error } = await createPublicClient().auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${origin}${next}`, shouldCreateUser: true },
