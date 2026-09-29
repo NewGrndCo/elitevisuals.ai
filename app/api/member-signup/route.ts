@@ -1,25 +1,10 @@
 import { safeDestination } from "@/lib-next/content-policy";
 import { NextResponse } from "next/server";
 import { readBetaTable, seedBetaTable, writeBetaTable } from "@/lib-next/beta-content";
+import { getMemberOrigin } from "@/lib-next/member-redirect";
 import { createPublicClient } from "@/lib-next/supabase";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const canonicalOrigin = "https://elitevisualsai.netlify.app";
-
-function getMemberOrigin() {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (!configured) return canonicalOrigin;
-  try {
-    const url = new URL(configured);
-    if (url.protocol !== "https:" || url.username || url.password) return canonicalOrigin;
-    if (url.hostname === "elitevisualsai.netlify.app" || url.hostname === "elitevisuals.ai") {
-      return url.origin;
-    }
-  } catch {
-    // Fall back to the known production origin below.
-  }
-  return canonicalOrigin;
-}
 
 export async function POST(request: Request) {
   try {
