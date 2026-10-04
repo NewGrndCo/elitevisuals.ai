@@ -142,7 +142,13 @@ export const fields: Record<Table, Field[]> = {
     f("sort_order", "Sort order", "number"),
     f("is_published", "Published", "boolean"),
   ],
-  members: [f("email", "Email address"), f("created_at", "Joined"), f("source", "Signup source")],
+  members: [
+    f("email", "Email address"),
+    f("status", "Access status"),
+    f("created_at", "Joined"),
+    f("last_signed_in_at", "Last sign-in"),
+    f("source", "Signup source"),
+  ],
   waitlist_signups: [
     f("email", "Email address", "text", true),
     f("name", "Name"),

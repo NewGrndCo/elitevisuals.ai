@@ -258,7 +258,10 @@ export function AdminDashboard() {
       const text = String(v ?? "");
       return `"${(/^[=+@\-\t\r]/.test(text) ? "'" : "") + text.replaceAll('"', '""')}"`;
     };
-    const keys = ["email", "name", "interests", "source", "created_at"];
+    const keys =
+      tab === "members"
+        ? ["email", "status", "created_at", "last_signed_in_at", "source"]
+        : ["email", "name", "interests", "source", "created_at"];
     const csv = [
       keys.join(","),
       ...filtered.map((r) => keys.map((k) => cell(r[k])).join(",")),

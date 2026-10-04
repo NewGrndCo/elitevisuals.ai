@@ -10,12 +10,12 @@ export default function Login() {
       <main id="main-content" tabIndex={-1} className="auth-page">
         <div className="auth-card">
           <p className="kicker">Member access</p>
-          <h1>Sign in to reveal prompts.</h1>
+          <h1>Your creative toolkit awaits.</h1>
           <p>Enter your email and we’ll send you a secure sign-in link.</p>
           <Suspense fallback={<p>Loading sign-in…</p>}>
             <LoginForm />
           </Suspense>
-          <Link href="/promptbox">← Back to Promptbox</Link>
+          <Link href="/">← Back to Home</Link>
         </div>
       </main>
     </>

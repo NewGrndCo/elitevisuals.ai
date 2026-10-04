@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { requireMember } from "@/lib-next/member-server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -6,6 +7,7 @@ import { SiteFooter, SiteHeader } from "@/components-next/site-header";
 import { getPack } from "@/lib-next/supabase";
 export default async function PackPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  await requireMember(`/pack/${encodeURIComponent(slug)}`);
   const data = await getPack(slug);
   if (!data) notFound();
   return (
@@ -46,6 +48,7 @@ export default async function PackPage({ params }: { params: Promise<{ slug: str
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  await requireMember(`/pack/${encodeURIComponent(slug)}`);
   const result = await getPack(slug);
   const item = result?.pack;
   return item

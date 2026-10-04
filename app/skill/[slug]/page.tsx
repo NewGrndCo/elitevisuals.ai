@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { requireMember } from "@/lib-next/member-server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Download } from "lucide-react";
@@ -8,6 +9,7 @@ import { getSkill } from "@/lib-next/supabase";
 
 export default async function SkillPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  await requireMember(`/skill/${encodeURIComponent(slug)}`);
   const skill = await getSkill(slug);
   if (!skill) notFound();
   return (
@@ -56,6 +58,7 @@ export default async function SkillPage({ params }: { params: Promise<{ slug: st
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  await requireMember(`/skill/${encodeURIComponent(slug)}`);
   const result = await getSkill(slug);
   const item = result;
   return item

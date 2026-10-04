@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { requireMember } from "@/lib-next/member-server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -7,6 +8,7 @@ import { PromptAccess } from "@/components-next/prompt-access";
 import { getPrompt } from "@/lib-next/supabase";
 export default async function PromptPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  await requireMember(`/prompt/${encodeURIComponent(slug)}`);
   const p = await getPrompt(slug);
   if (!p) notFound();
   return (
@@ -45,6 +47,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  await requireMember(`/prompt/${encodeURIComponent(slug)}`);
   const result = await getPrompt(slug);
   const item = result;
   return item

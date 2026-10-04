@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { requireMember } from "@/lib-next/member-server";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PageShell } from "@/components-next/page-shell";
@@ -8,6 +9,7 @@ import { Tilt } from "@/components/ui/tilt";
 export const metadata = { alternates: { canonical: "/promptbox" }, title: "Prompts" };
 export const revalidate = 60;
 export default async function Promptbox() {
+  await requireMember("/promptbox");
   const [packs, prompts] = await Promise.all([getPacks(), getPrompts()]);
   const imagePrompts = prompts.filter((prompt) => !prompt.pack_id);
   const grouped = imagePrompts.reduce<Record<string, typeof imagePrompts>>((groups, prompt) => {

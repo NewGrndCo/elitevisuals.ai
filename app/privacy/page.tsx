@@ -16,7 +16,9 @@ export default function PrivacyPage() {
           We collect the email address you submit for member access or the waitlist. The waitlist
           may also collect your name, interests, and signup source when you provide them. Our
           infrastructure may process standard technical information needed for security and site
-          delivery, such as request timestamps and network identifiers.
+          delivery, such as request timestamps and network identifiers. For member access, we also
+          record your authenticated account identifier and last sign-in time in our administrative
+          member directory.
         </p>
         <h2>How we use information</h2>
         <p>

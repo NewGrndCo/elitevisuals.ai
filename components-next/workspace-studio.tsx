@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { imagePresetBrief, type ImagePreset } from "@/lib-next/workspace-presets";
 import {
   ArrowRight,
   Check,
@@ -65,13 +66,22 @@ const tools: { mode: Mode; label: string; hint: string; fields: string[] }[] = [
     fields: [],
   },
 ];
-export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) {
+export function WorkspaceStudio({
+  motionPresets,
+  imagePresets,
+}: {
+  motionPresets: Preset[];
+  imagePresets: ImagePreset[];
+}) {
   const [mode, setMode] = useState<Mode>("Cover");
   const [assets, setAssets] = useState<Record<string, Asset>>({});
   const [values, setValues] = useState<Record<string, string>>({});
   const [preset, setPreset] = useState("");
   const [transitionMethod, setTransitionMethod] = useState<"preset" | "custom">("preset");
   const [search, setSearch] = useState("");
+  const [imageSearch, setImageSearch] = useState("");
+  const [imagePresetId, setImagePresetId] = useState("");
+  const imagePreset = imagePresets.find((item) => item.id === imagePresetId);
   const [message, setMessage] = useState("");
   const urls = useRef<string[]>([]);
   useEffect(() => () => urls.current.forEach(URL.revokeObjectURL), []);
@@ -105,7 +115,7 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
     try {
       localStorage.setItem(
         "elitevisuals-workspace-draft",
-        JSON.stringify({ mode, values, preset, transitionMethod }),
+        JSON.stringify({ mode, values, preset, transitionMethod, imagePresetId }),
       );
       setMessage("Brief saved on this device. Uploaded images stay in this session.");
     } catch {
@@ -123,6 +133,7 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
             ),
             preset: mode === "Motion" && transitionMethod === "preset" ? preset : undefined,
             transitionMethod: mode === "Motion" ? transitionMethod : undefined,
+            imagePrompt: mode === "Enhance" ? imagePresetBrief(imagePreset) : undefined,
             images: Object.entries(assets)
               .filter(([key]) => key.startsWith(`${mode}:`))
               .map(([key, asset]) => ({ role: key.split(":")[1], name: asset.name })),
@@ -134,11 +145,13 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
       { type: "application/json" },
     );
     const url = URL.createObjectURL(blob);
+    // Keep the download URL alive until unmount; immediate revocation can cancel
+    // browser downloads before they have begun reading the generated brief.
+    urls.current.push(url);
     const link = document.createElement("a");
     link.href = url;
     link.download = "elitevisuals-creative-brief.json";
     link.click();
-    URL.revokeObjectURL(url);
   }
   function restore() {
     try {
@@ -150,8 +163,14 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
       setMode(saved.mode);
       setValues(saved.values || {});
       setPreset(saved.preset || "");
+      const restoredImagePreset = imagePresets.find((item) => item.id === saved.imagePresetId);
+      setImagePresetId(restoredImagePreset?.id || "");
       setTransitionMethod(saved.transitionMethod === "custom" ? "custom" : "preset");
-      setMessage("Saved brief restored. Add your images again to continue.");
+      setMessage(
+        saved.imagePresetId && !restoredImagePreset
+          ? "Brief restored. The saved image prompt is no longer available; choose another. Add your image again."
+          : "Saved brief restored. Add your images again to continue.",
+      );
     } catch {
       setMessage("The saved brief could not be restored.");
     }
@@ -173,6 +192,8 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
               setAssets({});
               setValues({});
               setPreset("");
+              setImagePresetId("");
+              setImageSearch("");
               setTransitionMethod("preset");
               setMessage("");
             }}
@@ -288,7 +309,12 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
           </fieldset>
           <fieldset>
             <legend>
-              <span>2</span> {mode === "Motion" ? "Choose your transition" : "Make it yours"}
+              <span>2</span>{" "}
+              {mode === "Motion"
+                ? "Choose your transition"
+                : mode === "Enhance"
+                  ? "Choose your image prompt"
+                  : "Make it yours"}
             </legend>
             {mode === "Motion" ? (
               <>
@@ -374,6 +400,69 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
                 </label>
               ))
             )}
+            {mode === "Enhance" && (
+              <>
+                <p className="ev-help">
+                  Choose any image prompt from the site, or keep a simple enhancement below.
+                </p>
+                <input
+                  aria-label="Search image prompts"
+                  placeholder={`Search all ${imagePresets.length} image prompts…`}
+                  value={imageSearch}
+                  onChange={(event) => setImageSearch(event.target.value)}
+                />
+                <div className="ev-presets" aria-label="Image prompt library">
+                  <button
+                    type="button"
+                    aria-pressed={!imagePresetId}
+                    className={!imagePresetId ? "selected" : ""}
+                    onClick={() => setImagePresetId("")}
+                  >
+                    <Sparkles size={16} />
+                    <strong>Simple enhancement</strong>
+                    {!imagePresetId && <Check size={14} />}
+                  </button>
+                  {imagePresets
+                    .filter((item) =>
+                      `${item.title} ${item.description}`
+                        .toLowerCase()
+                        .includes(imageSearch.trim().toLowerCase()),
+                    )
+                    .map((item) => (
+                      <button
+                        type="button"
+                        key={item.id}
+                        aria-pressed={imagePresetId === item.id}
+                        className={imagePresetId === item.id ? "selected" : ""}
+                        onClick={() => setImagePresetId(item.id)}
+                      >
+                        {item.imageUrl && (
+                          <span style={{ backgroundImage: `url(${item.imageUrl})` }} />
+                        )}
+                        <strong>{item.title}</strong>
+                        {imagePresetId === item.id && <Check size={14} />}
+                      </button>
+                    ))}
+                </div>
+                {!imagePresets.length && (
+                  <p className="ev-help">
+                    No published image prompts are available yet. Simple enhancement is still
+                    available.
+                  </p>
+                )}
+                {imagePresets.length > 0 &&
+                  !imagePresets.some((item) =>
+                    `${item.title} ${item.description}`
+                      .toLowerCase()
+                      .includes(imageSearch.trim().toLowerCase()),
+                  ) && <p className="ev-help">No image prompts match. Try another search.</p>}
+                {imagePreset && (
+                  <p className="ev-custom-help">
+                    <strong>{imagePreset.title}</strong> · {imagePreset.description}
+                  </p>
+                )}
+              </>
+            )}
             {mode !== "Motion" && (
               <label>
                 {mode === "Enhance" ? "What should we improve?" : "Where will you use it?"}
@@ -398,18 +487,22 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
               </label>
             )}
           </fieldset>
-          {mode !== "Enhance" && (
+          {
             <fieldset>
               <legend>
                 <span>3</span>{" "}
                 {mode === "Motion" && transitionMethod === "custom"
                   ? "Describe your custom transition"
-                  : "Add your direction"}
+                  : mode === "Enhance"
+                    ? "Add any extra details"
+                    : "Add your direction"}
               </legend>
               <label>
                 {mode === "Motion"
                   ? "How should one frame become the next?"
-                  : "Tell us about your idea"}
+                  : mode === "Enhance"
+                    ? "What should stay the same or change? (optional)"
+                    : "Tell us about your idea"}
                 <textarea
                   rows={3}
                   value={values[field("Direction")] || ""}
@@ -424,7 +517,7 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
                 />
               </label>
             </fieldset>
-          )}
+          }
           <button className="ev-primary" type="submit">
             Save creative brief <ArrowRight size={17} />
           </button>
@@ -517,7 +610,9 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
                 ? transitionMethod === "custom"
                   ? "Custom transition · Your own direction"
                   : preset || "Choose a transition to begin"
-                : tool.hint}
+                : mode === "Enhance"
+                  ? imagePreset?.title || "Simple enhancement"
+                  : tool.hint}
             </span>
             <button type="button" onClick={download}>
               <Download size={15} /> Download brief

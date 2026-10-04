@@ -1,9 +1,11 @@
 import { PageShell } from "@/components-next/page-shell";
+import { requireMember } from "@/lib-next/member-server";
 import { ResourceDirectory } from "@/components-next/resource-directory";
 import { getResources } from "@/lib-next/supabase";
 export const metadata = { alternates: { canonical: "/resources" }, title: "AI Resources" };
 export const dynamic = "force-dynamic";
 export default async function Resources() {
+  await requireMember("/resources");
   const items = await getResources();
   return (
     <PageShell

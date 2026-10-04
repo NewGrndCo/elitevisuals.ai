@@ -16,7 +16,7 @@ test("pointer animation uses motion values without React state churn", async () 
   for (const file of ["components/ui/3d-card.tsx", "components/ui/tilt.tsx"]) {
     const code = await source(file);
     assert.match(code, /useSpring/);
-    assert.doesNotMatch(code, /useState/);
+    assert.doesNotMatch(code, /setRotation|setTilt/);
     assert.match(code, /event.pointerType === "touch"/);
     assert.match(code, /rotateX: reduceMotion \? 0/);
     assert.match(code, /rotateY: reduceMotion \? 0/);

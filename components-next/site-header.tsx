@@ -9,6 +9,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { MemberButton } from "./member-button";
 
 const links = [
+  { href: "/", label: "Home" },
   { href: "/workspace", label: "Workspace" },
   { href: "/promptbox", label: "Prompts" },
   { href: "/skills", label: "Skills" },
@@ -74,9 +75,14 @@ export function SiteHeader() {
               <Link
                 key={l.href}
                 href={l.href}
-                aria-current={path.startsWith(l.href) ? "page" : undefined}
+                prefetch={false}
+                aria-current={
+                  (l.href === "/" ? path === "/" : path.startsWith(l.href)) ? "page" : undefined
+                }
                 onClick={() => setMenuOpen(false)}
-                className={path.startsWith(l.href) ? "active" : ""}
+                className={
+                  (l.href === "/" ? path === "/" : path.startsWith(l.href)) ? "active" : ""
+                }
               >
                 {l.label}
               </Link>

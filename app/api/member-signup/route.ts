@@ -1,6 +1,6 @@
 import { safeDestination } from "@/lib-next/content-policy";
 import { NextResponse } from "next/server";
-import { readBetaTable, seedBetaTable, writeBetaTable } from "@/lib-next/beta-content";
+import { captureMember } from "@/lib-next/member-capture";
 import { getMemberOrigin } from "@/lib-next/member-redirect";
 import { createPublicClient } from "@/lib-next/supabase";
 
@@ -20,17 +20,14 @@ export async function POST(request: Request) {
     const origin = getMemberOrigin();
     const { error } = await createPublicClient().auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${origin}${next}`, shouldCreateUser: true },
+      options: {
+        emailRedirectTo: `${origin}/login?next=${encodeURIComponent(next)}`,
+        shouldCreateUser: true,
+      },
     });
     if (error) throw error;
 
-    const rows =
-      (await readBetaTable("member_signups")) ?? (await seedBetaTable("member_signups", []));
-    if (!rows.some((row) => String(row.email).toLowerCase() === email)) {
-      const now = new Date().toISOString();
-      rows.unshift({ id: crypto.randomUUID(), email, created_at: now, source: "member-access" });
-      await writeBetaTable("member_signups", rows);
-    }
+    await captureMember({ email });
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch {
     return NextResponse.json(

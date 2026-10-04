@@ -1,7 +1,9 @@
 import { SiteFooter, SiteHeader } from "@/components-next/site-header";
+import { requireMember } from "@/lib-next/member-server";
 import { WorkspaceStudio } from "@/components-next/workspace-studio";
 import { getPacks, getPrompts, isWorkspaceVisible } from "@/lib-next/supabase";
 import { notFound } from "next/navigation";
+import { getImagePresets } from "@/lib-next/workspace-presets";
 import "./studio.css";
 
 export const metadata = {
@@ -12,6 +14,7 @@ export const metadata = {
 };
 
 export default async function WorkspacePage() {
+  await requireMember("/workspace");
   if (!(await isWorkspaceVisible())) notFound();
   const [packs, prompts] = await Promise.all([getPacks(), getPrompts()]);
   const motionPackIds = new Set(
@@ -31,7 +34,7 @@ export default async function WorkspacePage() {
     <>
       <SiteHeader />
       <main id="main-content" className="workspace-page" tabIndex={-1}>
-        <WorkspaceStudio motionPresets={motionPresets} />
+        <WorkspaceStudio motionPresets={motionPresets} imagePresets={getImagePresets(prompts)} />
       </main>
       <SiteFooter />
     </>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion, useSpring } from "framer-motion";
+import { useState } from "react";
 
 type Interactive3DCardProps = {
   title: string;
@@ -20,6 +21,7 @@ export function Interactive3DCard({
   href,
   actionText = "View prompt",
 }: Interactive3DCardProps) {
+  const [failedSource, setFailedSource] = useState<string | null>(null);
   const rotateX = useSpring(0, { stiffness: 180, damping: 18 });
   const rotateY = useSpring(0, { stiffness: 180, damping: 18 });
   const reduceMotion = useReducedMotion();
@@ -43,17 +45,18 @@ export function Interactive3DCard({
       }}
     >
       <Link href={href} className="interactive-3d-card-link">
-        {imageUrl ? (
+        {imageUrl && failedSource !== imageUrl ? (
           <Image
             src={imageUrl}
             unoptimized={imageUrl.startsWith("/media/prompts/")}
             alt={title}
             fill
-            sizes="(max-width: 700px) 78vw, 240px"
+            sizes="(max-width: 800px) 78vw, (max-width: 1240px) 31vw, 382px"
             draggable={false}
+            onError={() => setFailedSource(imageUrl)}
           />
         ) : (
-          <div className="image-fallback" />
+          <div className="image-fallback" role="img" aria-label={`${title} preview unavailable`} />
         )}
         <div className="interactive-3d-card-shade" />
         <div className="interactive-3d-card-copy">

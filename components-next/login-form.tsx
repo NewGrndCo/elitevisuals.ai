@@ -2,7 +2,8 @@
 
 import { safeDestination } from "@/lib-next/content-policy";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { syncMemberSession, useMemberSession } from "@/lib-next/member-auth";
 import { Loader2 } from "lucide-react";
 
 export function LoginForm() {
@@ -11,6 +12,29 @@ export function LoginForm() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const { session, loading, syncError } = useMemberSession();
+  const token = session?.access_token;
+  const destination = safeDestination(search.get("next"));
+
+  useEffect(() => {
+    if (loading || !token) return;
+    let active = true;
+    void syncMemberSession(token)
+      .then(() => {
+        if (active)
+          window.location.replace(
+            destination === "/login" || destination.startsWith("/login?")
+              ? "/promptbox"
+              : destination,
+          );
+      })
+      .catch(() => {
+        if (active) setError("Unable to verify your session. Reload to try again.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [loading, token, destination]);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -52,7 +76,11 @@ export function LoginForm() {
         {busy ? "Sending…" : "Send magic link"}
       </button>
       {message && <div className="admin-success">{message}</div>}
-      {error && <div className="admin-error">{error}</div>}
+      {(error || syncError) && (
+        <div role="alert" className="admin-error">
+          {error || syncError}
+        </div>
+      )}
     </form>
   );
 }
