@@ -1,16 +1,19 @@
 import Link from "next/link";
-import type { Prompt } from "@/lib-next/supabase";
+import type { Prompt, Skill } from "@/lib-next/supabase";
 import { MotionControl } from "./motion-control";
 import { MediaTile } from "./media-tile";
 
-function Track({ prompts, reverse = false }: { prompts: Prompt[]; reverse?: boolean }) {
+type ShowcaseItem = Pick<Prompt, "id" | "slug" | "title" | "cover_image_url" | "demo_video_url"> & {
+  href: string;
+};
+function Track({ prompts, reverse = false }: { prompts: ShowcaseItem[]; reverse?: boolean }) {
   const repeated = [...prompts, ...prompts];
   return (
     <div className="marquee-row">
       <div className={`marquee-track ${reverse ? "reverse" : ""}`}>
         {repeated.map((prompt, index) => (
           <Link
-            href={`/prompt/${prompt.slug}`}
+            href={prompt.href}
             prefetch={false}
             className="visual-tile"
             key={`${prompt.id}-${index}`}
@@ -32,8 +35,22 @@ function Track({ prompts, reverse = false }: { prompts: Prompt[]; reverse?: bool
   );
 }
 
-export function VisualGrid({ prompts }: { prompts: Prompt[] }) {
-  const media = prompts.filter((p) => p.cover_image_url || p.demo_video_url);
+export function VisualGrid({ prompts, skills = [] }: { prompts: Prompt[]; skills?: Skill[] }) {
+  const media: ShowcaseItem[] = prompts
+    .filter((p) => p.cover_image_url || p.demo_video_url)
+    .map((p) => ({ ...p, href: `/prompt/${p.slug}` }));
+  skills
+    .filter((skill) => skill.cover_image_url)
+    .forEach((skill, index) => {
+      media.splice(Math.min(index * 3 + 2, media.length), 0, {
+        id: `skill-${skill.id}`,
+        slug: skill.slug,
+        title: skill.title,
+        cover_image_url: skill.cover_image_url,
+        demo_video_url: null,
+        href: `/skill/${skill.slug}`,
+      });
+    });
   const midpoint = Math.max(1, Math.ceil(media.length / 2));
   const first = media.slice(0, midpoint);
   const second = media.slice(midpoint);

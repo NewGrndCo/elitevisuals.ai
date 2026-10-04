@@ -35,7 +35,7 @@ async function publicSeed(table: ReturnType<typeof tableFrom>) {
 }
 
 function refreshSite() {
-  for (const path of ["/", "/promptbox", "/skills", "/resources", "/sitemap.xml"])
+  for (const path of ["/", "/promptbox", "/skills", "/resources", "/workspace", "/sitemap.xml"])
     revalidatePath(path);
 }
 
@@ -218,6 +218,16 @@ async function mutate(request: Request, action: "POST" | "PATCH" | "DELETE") {
       )
         throw new InputError("Section keys cannot be changed.");
       const slug = clean.slug;
+      if (
+        table === "site_content" &&
+        (clean.key ?? id) === "email_access" &&
+        clean.value !== undefined &&
+        (typeof clean.value !== "object" ||
+          clean.value === null ||
+          Array.isArray(clean.value) ||
+          typeof (clean.value as { required?: unknown }).required !== "boolean")
+      )
+        throw new InputError("Email access must specify required as true or false.");
       if (
         slug &&
         rows.some(

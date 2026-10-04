@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@netlify/blobs": "^11.0.1",
+    "@phosphor-icons/react": "2.1.10",
     "@supabase/supabase-js": "^2.106.2",
     "framer-motion": "^13.2.0",
     "lucide-react": "^0.575.0",

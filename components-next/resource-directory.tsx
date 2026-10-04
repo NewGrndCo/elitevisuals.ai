@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, Link2, Lock } from "lucide-react";
+import { ExternalLink, Link2, Lock } from "@/components-next/icons";
 import type { ResourceItem } from "@/lib-next/supabase";
 import { useMemberSession } from "@/lib-next/member-auth";
+import { useWebsiteAccess } from "@/lib-next/use-website-access";
 
 export function ResourceDirectory({ items }: { items: ResourceItem[] }) {
   const { session, loading } = useMemberSession();
-  const locked = loading || !session;
+  const access = useWebsiteAccess();
+  const locked = access.loading || (access.required && (loading || !session));
   return (
     <div className="member-gate-shell">
       <div className={`resource-directory ${locked ? "member-content-locked" : ""}`}>

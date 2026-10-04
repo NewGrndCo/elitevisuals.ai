@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { createPublicClient, getSkill } from "@/lib-next/supabase";
 import { getBetaAssetStore } from "@/lib-next/beta-content";
+import { isEmailAccessRequired } from "@/lib-next/website-access";
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
-    const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-    if (!token) return NextResponse.json({ error: "Sign in to download." }, { status: 401 });
-    const { data, error } = await createPublicClient().auth.getUser(token);
-    if (error || !data.user || data.user.is_anonymous)
-      return NextResponse.json({ error: "Your session is invalid or expired." }, { status: 401 });
+    if (await isEmailAccessRequired()) {
+      const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+      if (!token) return NextResponse.json({ error: "Sign in to download." }, { status: 401 });
+      const { data, error } = await createPublicClient().auth.getUser(token);
+      if (error || !data.user || data.user.is_anonymous)
+        return NextResponse.json({ error: "Your session is invalid or expired." }, { status: 401 });
+    }
     const skill = await getSkill((await params).slug);
     if (!skill?.download_url)
       return NextResponse.json({ error: "This package is not available." }, { status: 404 });

@@ -4,7 +4,7 @@ import { safeDestination } from "@/lib-next/content-policy";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { syncMemberSession, useMemberSession } from "@/lib-next/member-auth";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "@/components-next/icons";
 
 export function LoginForm() {
   const search = useSearchParams();

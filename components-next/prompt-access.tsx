@@ -1,10 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Check, Copy, Lock } from "lucide-react";
+import { Check, Copy, Lock } from "@/components-next/icons";
 import { useMemberSession } from "@/lib-next/member-auth";
+import { useWebsiteAccess } from "@/lib-next/use-website-access";
 export function PromptAccess({ slug }: { slug: string }) {
   const { session, loading } = useMemberSession();
+  const access = useWebsiteAccess();
   const [prompt, setPrompt] = useState(""),
     [error, setError] = useState(""),
     [copied, setCopied] = useState(false),
@@ -13,10 +15,10 @@ export function PromptAccess({ slug }: { slug: string }) {
   useEffect(() => {
     setPrompt("");
     setError("");
-    if (!token) return;
+    if (access.loading || (!token && access.required)) return;
     const controller = new AbortController();
     void fetch(`/api/prompts/${encodeURIComponent(slug)}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       signal: controller.signal,
       cache: "no-store",
     })
@@ -31,8 +33,8 @@ export function PromptAccess({ slug }: { slug: string }) {
           setError(e instanceof Error ? e.message : "Connection interrupted.");
       });
     return () => controller.abort();
-  }, [token, slug, retry]);
-  if (loading || !session)
+  }, [token, slug, retry, access.required, access.loading]);
+  if (access.loading || (access.required && (loading || !session)))
     return (
       <div className="prompt-lock">
         <div className="blurred-copy" aria-hidden="true">

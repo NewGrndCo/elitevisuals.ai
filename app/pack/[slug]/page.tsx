@@ -2,7 +2,7 @@ import Image from "next/image";
 import { requireMember } from "@/lib-next/member-server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "@/components-next/icons";
 import { SiteFooter, SiteHeader } from "@/components-next/site-header";
 import { getPack } from "@/lib-next/supabase";
 export default async function PackPage({ params }: { params: Promise<{ slug: string }> }) {

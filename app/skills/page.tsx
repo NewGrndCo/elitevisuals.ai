@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { requireMember } from "@/lib-next/member-server";
 import Link from "next/link";
-import { ArrowRight, Download, Sparkles } from "lucide-react";
+import { ArrowRight, Download, Sparkles } from "@/components-next/icons";
 import { PageShell } from "@/components-next/page-shell";
 import { getSkills } from "@/lib-next/supabase";
 export const metadata = { alternates: { canonical: "/skills" }, title: "Downloadable Skills" };

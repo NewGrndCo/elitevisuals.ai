@@ -23,7 +23,11 @@ export function MediaTile({
 
   if (!src || failed)
     return <div className="media-fallback" aria-label={`${prompt.title} artwork unavailable`} />;
-  if (IMAGE_RE.test(src)) {
+  // Image/CDN URLs may have no file extension (including Next image proxies).
+  if (
+    IMAGE_RE.test(src) ||
+    (src === prompt.cover_image_url && !/\.(mp4|webm|mov|m4v)(\?|$)/i.test(src))
+  ) {
     return (
       <Image
         src={src}

@@ -2,7 +2,7 @@ import Image from "next/image";
 import { requireMember } from "@/lib-next/member-server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "@/components-next/icons";
 import { SiteFooter, SiteHeader } from "@/components-next/site-header";
 import { PromptAccess } from "@/components-next/prompt-access";
 import { getPrompt } from "@/lib-next/supabase";

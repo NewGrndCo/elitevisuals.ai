@@ -12,7 +12,7 @@ import {
   Plus,
   RefreshCw,
   Trash2,
-} from "lucide-react";
+} from "@/components-next/icons";
 import {
   tabs,
   fields,
@@ -39,6 +39,7 @@ export function AdminDashboard() {
     [overview, setOverview] = useState(true);
   const [summary, setSummary] = useState<{ table: Table; rows: Row[] }[]>([]);
   const [workspaceVisible, setWorkspaceVisible] = useState(true);
+  const [emailRequired, setEmailRequired] = useState(true);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
@@ -163,10 +164,35 @@ export function AdminDashboard() {
   useEffect(() => {
     const rows = summary.find((group) => group.table === "site_content")?.rows ?? [];
     const setting = rows.find((row) => row.key === "workspace_visibility");
+    const access = rows.find((row) => row.key === "email_access");
+    setEmailRequired((access?.value as { required?: unknown } | undefined)?.required !== false);
     if (setting?.value && typeof setting.value === "object") {
       setWorkspaceVisible((setting.value as { visible?: unknown }).visible !== false);
     }
   }, [summary]);
+  const toggleEmailAccess = () =>
+    void action(
+      async () => {
+        const rows = summary.find((group) => group.table === "site_content")?.rows ?? [];
+        const setting = rows.find((row) => row.key === "email_access");
+        const required = !emailRequired;
+        await cmsRequest(
+          "/api/admin/content?table=site_content",
+          jsonRequest(
+            setting ? "PATCH" : "POST",
+            setting
+              ? {
+                  id: "email_access",
+                  patch: { value: { required } },
+                  expectedUpdatedAt: setting.updated_at ?? "",
+                }
+              : { data: { key: "email_access", value: { required } } },
+          ),
+        );
+        setEmailRequired(required);
+      },
+      emailRequired ? "Website is open to everyone" : "Email sign-in is required",
+    );
   const toggleWorkspace = () =>
     void action(
       async () => {
@@ -448,6 +474,28 @@ export function AdminDashboard() {
                       {label}
                     </button>
                   ))}
+              </div>
+            </section>
+            <section className="cms-overview-section">
+              <h3>Email-only website access</h3>
+              <div className="admin-toggle-row">
+                <div>
+                  <strong>{emailRequired ? "Email sign-in required" : "Open to everyone"}</strong>
+                  <p>
+                    Turn off to let visitors browse, reveal prompts, and download skills without
+                    signing in. Admin access stays protected.
+                  </p>
+                </div>
+                <button
+                  className={`admin-switch ${emailRequired ? "on" : ""}`}
+                  type="button"
+                  onClick={toggleEmailAccess}
+                  disabled={busy}
+                  aria-pressed={emailRequired}
+                  aria-label="Require email sign-in for website access"
+                >
+                  {emailRequired ? "On" : "Off"}
+                </button>
               </div>
             </section>
             <section className="cms-overview-section">

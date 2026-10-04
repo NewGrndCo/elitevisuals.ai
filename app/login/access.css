@@ -1,0 +1,129 @@
+.member-access-page {
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  padding: 128px 20px 60px;
+  overflow: hidden;
+  background: var(--paper);
+}
+.access-preview {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  filter: blur(9px);
+}
+.access-preview .subhero {
+  padding-top: 130px;
+}
+.access-preview .catalog-section {
+  padding-top: 0;
+}
+.access-backdrop {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: color-mix(in srgb, var(--paper) 38%, transparent);
+}
+.member-access-page .auth-card {
+  width: min(440px, 100%);
+  position: relative;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: 0 24px 70px rgba(30, 20, 50, 0.18);
+}
+.preview-visual-card {
+  position: relative;
+  min-height: 310px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.preview-visual-card img {
+  object-fit: cover;
+}
+.preview-visual-card > div {
+  position: absolute;
+  inset: 45% 0 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  padding: 24px;
+  color: white;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+}
+.preview-visual-card h2 {
+  font-size: 22px;
+  margin: 8px 0;
+}
+.preview-line {
+  height: 12px;
+  margin: 14px 0;
+  border-radius: 8px;
+  background: var(--line);
+}
+.preview-line.short {
+  width: 65%;
+}
+.preview-studio {
+  display: grid;
+  grid-template-columns: 220px 1fr 240px;
+  gap: 24px;
+}
+.preview-studio aside {
+  padding: 25px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+}
+.preview-studio aside h2 {
+  font-size: 20px;
+}
+.preview-studio aside p {
+  padding: 15px;
+  border-bottom: 1px solid var(--line);
+}
+.preview-studio-canvas {
+  position: relative;
+  min-height: 460px;
+  overflow: hidden;
+  border-radius: 22px;
+}
+.preview-studio-canvas img {
+  object-fit: cover;
+}
+.preview-studio-canvas span {
+  position: absolute;
+  inset: 45% 0 auto;
+  text-align: center;
+  color: white;
+  font-size: 28px;
+}
+@media (max-width: 700px) {
+  .member-access-page {
+    padding: 112px 18px 40px;
+  }
+  .access-preview .subhero {
+    padding-top: 100px;
+  }
+  .access-preview .catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .preview-visual-card {
+    min-height: 240px;
+  }
+  .preview-studio {
+    grid-template-columns: 1fr;
+  }
+  .preview-studio aside {
+    display: none;
+  }
+  .member-access-page .auth-card {
+    padding: 28px;
+  }
+  .member-access-page .auth-card h1 {
+    font-size: 34px;
+  }
+}

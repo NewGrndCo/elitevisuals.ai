@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2 } from "@/components-next/icons";
 
 export function WaitlistForm() {
   const [email, setEmail] = useState("");

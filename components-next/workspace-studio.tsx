@@ -16,7 +16,7 @@ import {
   Megaphone,
   FileImage,
   ScanLine,
-} from "lucide-react";
+} from "@/components-next/icons";
 type Mode = "Cover" | "Motion" | "Logo" | "Promo" | "Flyer" | "Enhance";
 type Preset = { title: string; description: string; imageUrl: string | null };
 type Asset = { name: string; url: string };

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createPublicClient } from "./supabase";
 import { safeDestination } from "./content-policy";
+import { isEmailAccessRequired } from "./website-access";
 
 export const MEMBER_COOKIE = "ev_member";
 
@@ -19,6 +20,7 @@ export const getVerifiedMember = cache(async () => {
 });
 
 export async function requireMember(destination: string) {
+  if (!(await isEmailAccessRequired())) return null;
   const user = await getVerifiedMember();
   if (!user) redirect(`/login?next=${encodeURIComponent(safeDestination(destination))}`);
   return user;

@@ -5,7 +5,8 @@ import { readFile } from "node:fs/promises";
 
 // Explicit test-only auth backend; no production sessions or credential reads.
 const mockUrl = `data:text/javascript,${encodeURIComponent(`
-export const state = { user: null, error: null, cookie: null, writes: [], deleted: false, members: [], captureFails: false, contentReads: 0 };
+export const state = { user: null, error: null, cookie: null, writes: [], deleted: false, members: [], captureFails: false, contentReads: 0, accessRequired: true };
+export const isEmailAccessRequired = async () => state.accessRequired;
 export const cookies = async () => ({
  get: () => state.cookie ? { value: state.cookie } : undefined,
  set: (...args) => { state.writes.push(args); state.cookie = args[1]; },
@@ -26,7 +27,14 @@ export const mutateBetaTable = async (table, change) => {
 registerHooks({
   resolve(specifier, context, nextResolve) {
     if (
-      ["next/headers", "next/navigation", "@/lib-next/supabase", "./supabase"].includes(specifier)
+      [
+        "next/headers",
+        "next/navigation",
+        "@/lib-next/supabase",
+        "./supabase",
+        "./website-access",
+        "@/lib-next/website-access",
+      ].includes(specifier)
     )
       return { url: mockUrl, shortCircuit: true };
     if (specifier === "next/server") return nextResolve("next/server.js", context);
@@ -45,6 +53,7 @@ registerHooks({
     return nextResolve(specifier, context);
   },
 });
+
 const { state } = await import(mockUrl);
 const { POST, DELETE } = await import("../app/api/member-session/route.ts");
 const { getVerifiedMember, requireMember } = await import("../lib-next/member-server.ts");
@@ -151,4 +160,23 @@ test("prompt and package APIs reject anonymous and expired users before reading 
   assert.equal(response.headers.get("cache-control"), "private, no-store");
   assert.deepEqual(await response.json(), { prompt: "test prompt" });
   assert.equal((await downloadGet(authorized, params)).status, 404);
+});
+
+test("open website access permits guests and re-enabling restores server and API gates", async () => {
+  state.user = null;
+  state.cookie = null;
+  state.error = null;
+  state.accessRequired = false;
+  const params = { params: Promise.resolve({ slug: "test" }) };
+  const guest = new Request("https://example.test/api/prompts/test");
+  try {
+    assert.equal(await requireMember("/promptbox"), null);
+    assert.equal((await promptGet(guest, params)).status, 200);
+    assert.equal((await downloadGet(guest, params)).status, 404);
+  } finally {
+    state.accessRequired = true;
+  }
+  await assert.rejects(requireMember("/promptbox"), /REDIRECT:/);
+  assert.equal((await promptGet(guest, params)).status, 401);
+  assert.equal((await downloadGet(guest, params)).status, 401);
 });

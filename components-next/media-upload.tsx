@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Upload, X, FolderOpen } from "lucide-react";
+import { Upload, X, FolderOpen } from "@/components-next/icons";
 import { cmsRequest } from "@/lib-next/cms-request";
 import { CHUNK_SIZE, fileError } from "@/lib-next/upload-policy";
 import type { Row } from "@/lib-next/cms-model";

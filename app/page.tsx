@@ -1,7 +1,7 @@
 export const metadata = { alternates: { canonical: "/" } };
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Download, Sparkles } from "lucide-react";
+import { ArrowRight, Download, Sparkles } from "@/components-next/icons";
 import { SiteFooter, SiteHeader } from "@/components-next/site-header";
 import { SectionReveal } from "@/components-next/section-reveal";
 import { VisualGrid } from "@/components-next/visual-grid";
@@ -40,7 +40,7 @@ export default async function Home() {
             </div>
           </section>
         </SectionReveal>
-        <VisualGrid prompts={prompts} />
+        <VisualGrid prompts={prompts} skills={skills} />
         {workspaceVisible && (
           <SectionReveal>
             <section className="home-workspace" aria-labelledby="home-workspace-title">

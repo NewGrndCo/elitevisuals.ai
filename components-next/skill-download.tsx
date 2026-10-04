@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Download, Loader2, Lock } from "lucide-react";
+import { Download, Loader2, Lock } from "@/components-next/icons";
 import { useMemberSession } from "@/lib-next/member-auth";
+import { useWebsiteAccess } from "@/lib-next/use-website-access";
 
 export function SkillDownload({ slug }: { slug: string }) {
   const { session, loading } = useMemberSession();
+  const access = useWebsiteAccess();
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
 
-  if (loading || !session)
+  if (access.loading || (access.required && (loading || !session)))
     return (
       <div className="locked-download">
         <button className="button button-solid" disabled>
@@ -27,7 +29,7 @@ export function SkillDownload({ slug }: { slug: string }) {
     setError("");
     try {
       const response = await fetch(`/api/skills/${encodeURIComponent(slug)}/download`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: session ? { Authorization: `Bearer ${session.access_token}` } : undefined,
       });
       if (!response.ok) throw new Error("The download could not be authorized.");
       const blob = await response.blob();

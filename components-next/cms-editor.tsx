@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Save, X, Eye } from "lucide-react";
+import { Save, X, Eye } from "@/components-next/icons";
 import { fields, parsed, shown, rowId, titleOf, type Row, type Table } from "@/lib-next/cms-model";
 import { cmsRequest, jsonRequest } from "@/lib-next/cms-request";
 import { MediaUpload } from "./media-upload";

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { requireMember } from "@/lib-next/member-server";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@/components-next/icons";
 import { PageShell } from "@/components-next/page-shell";
 import { getPacks, getPrompts } from "@/lib-next/supabase";
 import { PromptFlipCard } from "@/components-next/prompt-flip-card";

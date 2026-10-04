@@ -194,3 +194,15 @@
     transform: none;
   }
 }
+/* Native touch swiping stays available without browser scrollbar chrome. */
+.prompt-row,
+.catalog-grid {
+  scrollbar-width: none;
+}
+.prompt-row::-webkit-scrollbar,
+.catalog-grid::-webkit-scrollbar {
+  display: none;
+}
+.visual-stage:focus-within .marquee-track {
+  animation-play-state: paused;
+}

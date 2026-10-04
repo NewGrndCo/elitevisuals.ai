@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@/components-next/icons";
 import { CardStack, type CardStackItem } from "@/components/ui/card-stack";
 
 export function WaitlistCardStack({ items }: { items: CardStackItem[] }) {

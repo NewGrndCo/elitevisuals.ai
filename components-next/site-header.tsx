@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X } from "@/components-next/icons";
 import eliteVisualsLogo from "@/assets/logo.png";
 import { ThemeToggle } from "./theme-toggle";
 import { MemberButton } from "./member-button";

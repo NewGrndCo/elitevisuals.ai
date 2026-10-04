@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@/components-next/icons";
 import { motion, useReducedMotion, useSpring } from "framer-motion";
 import { useState } from "react";
 

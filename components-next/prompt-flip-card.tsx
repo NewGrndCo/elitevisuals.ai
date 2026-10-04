@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Check, Copy, FlipHorizontal, Loader2, Lock } from "lucide-react";
+import { Check, Copy, FlipHorizontal, Loader2, Lock } from "@/components-next/icons";
 import { useEffect, useState } from "react";
 import { FlippingCard } from "@/components/ui/flipping-card";
 import { useMemberSession } from "@/lib-next/member-auth";
+import { useWebsiteAccess } from "@/lib-next/use-website-access";
 
 type PromptFlipCardProps = {
   slug: string;
@@ -16,6 +17,8 @@ type PromptFlipCardProps = {
 
 export function PromptFlipCard({ slug, title, imageUrl, uses }: PromptFlipCardProps) {
   const { session, loading } = useMemberSession();
+  const access = useWebsiteAccess();
+  const token = session?.access_token;
   const [flipped, setFlipped] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [error, setError] = useState("");
@@ -23,11 +26,11 @@ export function PromptFlipCard({ slug, title, imageUrl, uses }: PromptFlipCardPr
   const [retry, setRetry] = useState(0);
 
   useEffect(() => {
-    if (!flipped || !session?.access_token || prompt) return;
+    if (!flipped || access.loading || (access.required && !token) || prompt) return;
     setError("");
     const controller = new AbortController();
     void fetch(`/api/prompts/${encodeURIComponent(slug)}`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       signal: controller.signal,
       cache: "no-store",
     })
@@ -41,7 +44,7 @@ export function PromptFlipCard({ slug, title, imageUrl, uses }: PromptFlipCardPr
           setError(cause instanceof Error ? cause.message : "Unable to load prompt.");
       });
     return () => controller.abort();
-  }, [flipped, prompt, session?.access_token, slug, retry]);
+  }, [flipped, prompt, token, slug, retry, access.required, access.loading]);
 
   const copyPrompt = async () => {
     if (!prompt) return;
@@ -96,11 +99,11 @@ export function PromptFlipCard({ slug, title, imageUrl, uses }: PromptFlipCardPr
             <FlipHorizontal size={15} /> Back
           </button>
           <h3>{title}</h3>
-          {loading ? (
+          {access.loading || (access.required && loading) ? (
             <p className="prompt-flip-status">
               <Loader2 className="spin" size={16} /> Checking access…
             </p>
-          ) : !session ? (
+          ) : access.required && !session ? (
             <div className="prompt-flip-locked">
               <Lock size={19} />
               <p>Sign in to reveal and copy this prompt.</p>
