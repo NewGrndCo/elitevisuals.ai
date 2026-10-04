@@ -19,10 +19,17 @@ export function SiteHeader() {
   const path = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [workspaceVisible, setWorkspaceVisible] = useState(true);
   const menuButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     setMenuOpen(false);
   }, [path]);
+  useEffect(() => {
+    fetch("/api/workspace-status", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : { visible: true }))
+      .then((data: { visible?: boolean }) => setWorkspaceVisible(data.visible !== false))
+      .catch(() => setWorkspaceVisible(true));
+  }, []);
   const logoClicks = useRef<number[]>([]);
   const handleLogoClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     const now = Date.now();
@@ -61,17 +68,19 @@ export function SiteHeader() {
           <span>elitevisuals.ai</span>
         </Link>
         <nav aria-label="Main navigation" id="site-navigation" className={menuOpen ? "open" : ""}>
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              aria-current={path.startsWith(l.href) ? "page" : undefined}
-              onClick={() => setMenuOpen(false)}
-              className={path.startsWith(l.href) ? "active" : ""}
-            >
-              {l.label}
-            </Link>
-          ))}
+          {links
+            .filter((l) => l.href !== "/workspace" || workspaceVisible)
+            .map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                aria-current={path.startsWith(l.href) ? "page" : undefined}
+                onClick={() => setMenuOpen(false)}
+                className={path.startsWith(l.href) ? "active" : ""}
+              >
+                {l.label}
+              </Link>
+            ))}
         </nav>
         <div className="nav-actions">
           <ThemeToggle />
