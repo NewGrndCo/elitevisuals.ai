@@ -23,7 +23,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: "image/jpeg",
-        alt: "EliteVisuals.ai — Create Beyond Ordinary. AI prompts, skills and creator resources.",
+        alt: "EliteVisuals.ai — Create Beyond Ordinary. Featuring Kinetic V1 and the Ultra Upscale Enhance prompt.",
       },
     ],
   },
