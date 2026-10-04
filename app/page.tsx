@@ -7,11 +7,12 @@ import { VisualGrid } from "@/components-next/visual-grid";
 import { Interactive3DCard } from "@/components/ui/3d-card";
 import { Tilt } from "@/components/ui/tilt";
 import { Marquee } from "@/components/ui/marquee";
-import { getHomeData } from "@/lib-next/supabase";
+import { getHomeData, isWorkspaceVisible } from "@/lib-next/supabase";
 
 export const revalidate = 60;
 export default async function Home() {
   const { packs, prompts, transitionPrompts, imagePrompts, skills, logos } = await getHomeData();
+  const workspaceVisible = await isWorkspaceVisible();
   return (
     <>
       <SiteHeader />
@@ -37,6 +38,64 @@ export default async function Home() {
           </div>
         </section>
         <VisualGrid prompts={prompts} />
+        {workspaceVisible && (
+          <section className="home-workspace" aria-labelledby="home-workspace-title">
+            <div className="home-workspace-copy">
+              <p className="kicker">Meet the Elite Visual Workspace</p>
+              <h2 id="home-workspace-title">
+                Your ideas.
+                <br />
+                <span>One workspace.</span>
+              </h2>
+              <p>
+                Bring your photos, explore transition presets, and shape your next visual with
+                simple, guided steps.
+              </p>
+              <Link href="/workspace" className="button button-solid">
+                Explore Workspace <ArrowRight size={17} />
+              </Link>
+              <small>Preview available now · Prepare and save your creative briefs.</small>
+            </div>
+            <div className="home-workspace-proof" aria-label="Workspace workflow overview">
+              <div className="home-workspace-proof-header">
+                <Sparkles size={16} />
+                <strong>Elite Visual Workspace</strong>
+                <span>Preview</span>
+              </div>
+              <div className="home-workspace-modes">
+                Cover art · Transitions · Logos
+                <br />
+                Promo graphics · Flyers · Enhancement
+              </div>
+              <ol>
+                <li>
+                  <span>01</span>
+                  <div>
+                    <strong>Add your image</strong>
+                    <p>Photos, references, or first and last frames.</p>
+                  </div>
+                </li>
+                <li>
+                  <span>02</span>
+                  <div>
+                    <strong>Make it yours</strong>
+                    <p>Choose your format or a transition preset.</p>
+                  </div>
+                </li>
+                <li>
+                  <span>03</span>
+                  <div>
+                    <strong>Shape your idea</strong>
+                    <p>Describe your direction and save your brief.</p>
+                  </div>
+                </li>
+              </ol>
+              <Link href="/workspace">
+                Step inside <ArrowRight size={16} />
+              </Link>
+            </div>
+          </section>
+        )}
         <section className="section promptbox">
           <div className="section-heading centered">
             <p className="kicker">Promptbox</p>
