@@ -5,15 +5,28 @@ import {
   Check,
   Download,
   ImageIcon,
-  Play,
   Plus,
   Sparkles,
   Upload,
   X,
+  Disc3,
+  Clapperboard,
+  PenTool,
+  Megaphone,
+  FileImage,
+  ScanLine,
 } from "lucide-react";
 type Mode = "Cover" | "Motion" | "Logo" | "Promo" | "Flyer" | "Enhance";
 type Preset = { title: string; description: string; imageUrl: string | null };
 type Asset = { name: string; url: string };
+const toolIcons = {
+  Cover: Disc3,
+  Motion: Clapperboard,
+  Logo: PenTool,
+  Promo: Megaphone,
+  Flyer: FileImage,
+  Enhance: ScanLine,
+};
 const tools: { mode: Mode; label: string; hint: string; fields: string[] }[] = [
   {
     mode: "Cover",
@@ -57,6 +70,7 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
   const [assets, setAssets] = useState<Record<string, Asset>>({});
   const [values, setValues] = useState<Record<string, string>>({});
   const [preset, setPreset] = useState("");
+  const [transitionMethod, setTransitionMethod] = useState<"preset" | "custom">("preset");
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
   const urls = useRef<string[]>([]);
@@ -65,7 +79,13 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
   const slots =
     mode === "Motion"
       ? ["First frame", "Last frame"]
-      : [mode === "Enhance" ? "Original image" : "Reference image"];
+      : [
+          mode === "Cover"
+            ? "Subject reference"
+            : mode === "Enhance"
+              ? "Original image"
+              : "Reference image",
+        ];
   const field = (name: string) => `${mode}:${name}`;
   function upload(key: string, file?: File) {
     if (!file) return;
@@ -85,7 +105,7 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
     try {
       localStorage.setItem(
         "elitevisuals-workspace-draft",
-        JSON.stringify({ mode, values, preset }),
+        JSON.stringify({ mode, values, preset, transitionMethod }),
       );
       setMessage("Brief saved on this device. Uploaded images stay in this session.");
     } catch {
@@ -101,8 +121,11 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
             settings: Object.fromEntries(
               Object.entries(values).filter(([key]) => key.startsWith(`${mode}:`)),
             ),
-            preset: mode === "Motion" ? preset : undefined,
-            images: slots.map((slot) => assets[field(slot)]?.name).filter(Boolean),
+            preset: mode === "Motion" && transitionMethod === "preset" ? preset : undefined,
+            transitionMethod: mode === "Motion" ? transitionMethod : undefined,
+            images: Object.entries(assets)
+              .filter(([key]) => key.startsWith(`${mode}:`))
+              .map(([key, asset]) => ({ role: key.split(":")[1], name: asset.name })),
           },
           null,
           2,
@@ -127,6 +150,7 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
       setMode(saved.mode);
       setValues(saved.values || {});
       setPreset(saved.preset || "");
+      setTransitionMethod(saved.transitionMethod === "custom" ? "custom" : "preset");
       setMessage("Saved brief restored. Add your images again to continue.");
     } catch {
       setMessage("The saved brief could not be restored.");
@@ -149,6 +173,7 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
               setAssets({});
               setValues({});
               setPreset("");
+              setTransitionMethod("preset");
               setMessage("");
             }}
           >
@@ -157,27 +182,26 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
         </div>
       </header>
       <nav className="ev-tools" aria-label="Creative tools">
-        {tools.map((item) => (
-          <button
-            type="button"
-            key={item.mode}
-            aria-pressed={mode === item.mode}
-            className={mode === item.mode ? "selected" : ""}
-            onClick={() => {
-              setMode(item.mode);
-              setMessage("");
-            }}
-          >
-            {item.mode === "Motion" ? (
-              <Play size={16} />
-            ) : item.mode === "Enhance" ? (
-              <Sparkles size={16} />
-            ) : (
-              <ImageIcon size={16} />
-            )}
-            {item.label}
-          </button>
-        ))}
+        {tools.map((item) => {
+          const Icon = toolIcons[item.mode];
+          return (
+            <button
+              type="button"
+              key={item.mode}
+              aria-pressed={mode === item.mode}
+              className={mode === item.mode ? "selected" : ""}
+              onClick={() => {
+                setMode(item.mode);
+                setMessage("");
+              }}
+            >
+              <span className="ev-tool-icon">
+                <Icon size={19} strokeWidth={1.65} aria-hidden="true" />
+              </span>
+              {item.label}
+            </button>
+          );
+        })}
       </nav>
       <div className="ev-studio-body">
         <form
@@ -200,7 +224,9 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
                 ? "Choose where the transition starts and ends."
                 : mode === "Enhance"
                   ? "Upload the photo you want to improve."
-                  : "Add a photo or reference. Optional for logos."}
+                  : mode === "Cover"
+                    ? "Upload the person who should appear on the cover. Add other images below for style, scenery, or inspiration."
+                    : "Add a photo or reference. Optional for logos."}
             </p>
             <div className="ev-upload-row">
               {slots.map((slot) => (
@@ -225,6 +251,40 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
                 </label>
               ))}
             </div>
+            {mode === "Cover" && (
+              <div className="ev-supporting-references">
+                <label
+                  className="ev-upload"
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    Array.from(event.dataTransfer.files).forEach((file) =>
+                      upload(`Cover:Supporting reference ${crypto.randomUUID()}`, file),
+                    );
+                  }}
+                >
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-label="Upload supporting references"
+                    onChange={(event) => {
+                      Array.from(event.target.files || []).forEach((file) =>
+                        upload(`Cover:Supporting reference ${crypto.randomUUID()}`, file),
+                      );
+                      event.target.value = "";
+                    }}
+                  />
+                  <Plus size={20} aria-hidden="true" />
+                  <strong>Add supporting references</strong>
+                  <small>Select multiple images</small>
+                </label>
+                <p className="ev-help">
+                  Style, colors, locations, props, or layouts. These guide the design, not the
+                  subject’s identity.
+                </p>
+              </div>
+            )}
           </fieldset>
           <fieldset>
             <legend>
@@ -232,34 +292,61 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
             </legend>
             {mode === "Motion" ? (
               <>
-                <input
-                  aria-label="Search transitions"
-                  placeholder={`Search ${motionPresets.length} transitions…`}
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                />
-                <div className="ev-presets">
-                  {motionPresets
-                    .filter((item) => item.title.toLowerCase().includes(search.toLowerCase()))
-                    .map((item) => (
-                      <button
-                        type="button"
-                        key={item.title}
-                        aria-pressed={preset === item.title}
-                        className={preset === item.title ? "selected" : ""}
-                        onClick={() => setPreset(item.title)}
-                      >
-                        {item.imageUrl && (
-                          <span style={{ backgroundImage: `url(${item.imageUrl})` }} />
-                        )}
-                        <strong>{item.title}</strong>
-                        {preset === item.title && <Check size={14} />}
-                      </button>
-                    ))}
-                  {!motionPresets.some((item) =>
-                    item.title.toLowerCase().includes(search.toLowerCase()),
-                  ) && <p className="ev-help">No transitions match. Try another search.</p>}
+                <div className="ev-transition-method" aria-label="Transition direction">
+                  <button
+                    type="button"
+                    aria-pressed={transitionMethod === "preset"}
+                    className={transitionMethod === "preset" ? "selected" : ""}
+                    onClick={() => setTransitionMethod("preset")}
+                  >
+                    <Clapperboard size={15} /> Use a preset
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={transitionMethod === "custom"}
+                    className={transitionMethod === "custom" ? "selected" : ""}
+                    onClick={() => setTransitionMethod("custom")}
+                  >
+                    <PenTool size={15} /> Write my own
+                  </button>
                 </div>
+                {transitionMethod === "preset" ? (
+                  <>
+                    <input
+                      aria-label="Search transitions"
+                      placeholder={`Search ${motionPresets.length} transitions…`}
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                    />
+                    <div className="ev-presets">
+                      {motionPresets
+                        .filter((item) => item.title.toLowerCase().includes(search.toLowerCase()))
+                        .map((item) => (
+                          <button
+                            type="button"
+                            key={item.title}
+                            aria-pressed={preset === item.title}
+                            className={preset === item.title ? "selected" : ""}
+                            onClick={() => setPreset(item.title)}
+                          >
+                            {item.imageUrl && (
+                              <span style={{ backgroundImage: `url(${item.imageUrl})` }} />
+                            )}
+                            <strong>{item.title}</strong>
+                            {preset === item.title && <Check size={14} />}
+                          </button>
+                        ))}
+                      {!motionPresets.some((item) =>
+                        item.title.toLowerCase().includes(search.toLowerCase()),
+                      ) && <p className="ev-help">No transitions match. Try another search.</p>}
+                    </div>
+                  </>
+                ) : (
+                  <p className="ev-custom-help">
+                    Start with a simple idea. Describe the movement, effect, and how the last frame
+                    should appear in step 3. No preset needed.
+                  </p>
+                )}
                 <label>
                   Length
                   <select
@@ -314,7 +401,10 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
           {mode !== "Enhance" && (
             <fieldset>
               <legend>
-                <span>3</span> Add your direction
+                <span>3</span>{" "}
+                {mode === "Motion" && transitionMethod === "custom"
+                  ? "Describe your custom transition"
+                  : "Add your direction"}
               </legend>
               <label>
                 {mode === "Motion"
@@ -392,8 +482,43 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
               </div>
             ))}
           </div>
+          {mode === "Cover" &&
+            Object.keys(assets).some((key) => key.startsWith("Cover:Supporting reference")) && (
+              <div className="ev-reference-gallery" aria-label="Supporting reference images">
+                <h3>Supporting references</h3>
+                <div>
+                  {Object.entries(assets)
+                    .filter(([key]) => key.startsWith("Cover:Supporting reference"))
+                    .map(([key, asset]) => (
+                      <figure key={key}>
+                        <img src={asset.url} alt={asset.name} />
+                        <figcaption>{asset.name}</figcaption>
+                        <button
+                          type="button"
+                          aria-label={`Remove reference ${asset.name}`}
+                          onClick={() =>
+                            setAssets((current) => {
+                              const next = { ...current };
+                              delete next[key];
+                              return next;
+                            })
+                          }
+                        >
+                          <X size={14} />
+                        </button>
+                      </figure>
+                    ))}
+                </div>
+              </div>
+            )}
           <div className="ev-preview-footer">
-            <span>{mode === "Motion" ? preset || "Choose a transition to begin" : tool.hint}</span>
+            <span>
+              {mode === "Motion"
+                ? transitionMethod === "custom"
+                  ? "Custom transition · Your own direction"
+                  : preset || "Choose a transition to begin"
+                : tool.hint}
+            </span>
             <button type="button" onClick={download}>
               <Download size={15} /> Download brief
             </button>
@@ -403,7 +528,9 @@ export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) 
             <p>
               <strong>A little guidance goes a long way.</strong>{" "}
               {mode === "Motion"
-                ? "Choose a preset, then describe only the details you want to change."
+                ? transitionMethod === "custom"
+                  ? "Describe what happens between your first and last frames. Keep the movement clear and specific."
+                  : "Choose a preset, then describe only the details you want to change."
                 : "Simple descriptions work best. Tell us the feeling and the details that matter."}
             </p>
           </div>
