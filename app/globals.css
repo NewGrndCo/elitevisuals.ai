@@ -203,11 +203,11 @@ main {
   display: grid;
   grid-template-columns: 88px minmax(0, 1fr) 330px;
   gap: 16px;
-  padding: 30px;
-  border: 1px solid rgba(118, 56, 238, 0.12);
+  padding: 10px 0 0;
+  border: 0;
   border-radius: 28px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(241, 232, 255, 0.7));
-  box-shadow: 0 24px 70px rgba(66, 37, 116, 0.12);
+  background: transparent;
+  box-shadow: none;
 }
 .workspace-rail {
   display: flex;
@@ -510,8 +510,9 @@ main {
   align-self: stretch;
   padding: 20px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(118, 56, 238, 0.12);
+  background: rgba(247, 243, 255, 0.44);
+  border: 1px solid rgba(118, 56, 238, 0.18);
+  backdrop-filter: blur(18px);
 }
 .workspace-panel-heading {
   display: flex;
@@ -563,6 +564,90 @@ main {
 }
 .workspace-upload span {
   color: var(--muted);
+  font-size: 10px;
+}
+.workspace-setting-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.workspace-setting-heading small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.workspace-motion-presets {
+  display: grid;
+  gap: 7px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.workspace-motion-preset {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.42);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.workspace-motion-preset:hover,
+.workspace-motion-preset.selected {
+  border-color: var(--purple);
+  background: rgba(238, 226, 255, 0.72);
+}
+.workspace-preset-thumb {
+  width: 44px;
+  height: 36px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #2b1248, #b77af0 60%, #f0d9ff);
+  background-size: cover;
+  background-position: center;
+}
+.workspace-motion-preset strong,
+.workspace-motion-preset small {
+  display: block;
+}
+.workspace-motion-preset strong {
+  font-size: 11px;
+}
+.workspace-motion-preset small {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workspace-setting-card {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.35);
+}
+.workspace-setting-card p {
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.workspace-inline-setting {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: var(--purple);
+  background: #eee3ff;
+  font: inherit;
   font-size: 10px;
 }
 .workspace-field-label {

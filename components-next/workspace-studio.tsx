@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 type Mode = "Cover" | "Motion" | "Logo" | "Promo" | "Flyer" | "Enhance";
+type MotionPreset = { title: string; description: string; imageUrl: string | null };
 
 const modes: { name: Mode; icon: typeof ImageIcon }[] = [
   { name: "Cover", icon: ImageIcon },
@@ -38,7 +39,7 @@ const projects = [
   { title: "New release", type: "Promo", state: "Ready", className: "workspace-art-promo" },
 ];
 
-export function WorkspaceStudio() {
+export function WorkspaceStudio({ motionPresets }: { motionPresets: MotionPreset[] }) {
   const [mode, setMode] = useState<Mode>("Cover");
   const [idea, setIdea] = useState(
     "A dreamy, cinematic music cover with purple butterfly effects.",
@@ -47,6 +48,7 @@ export function WorkspaceStudio() {
   const [firstFrameName, setFirstFrameName] = useState("");
   const [lastFrameName, setLastFrameName] = useState("");
   const [created, setCreated] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState(0);
 
   const modeDescription = useMemo(() => {
     const descriptions: Record<Mode, string> = {
@@ -252,22 +254,57 @@ export function WorkspaceStudio() {
               : "Tell us what you want to create..."
           }
         />
-        <span className="workspace-field-label">Visual style</span>
-        <div className="workspace-style-row">
-          {[
-            ["Cinematic", "workspace-style-cinematic"],
-            ["Dreamy", "workspace-style-dreamy"],
-            ["Luxury", "workspace-style-luxury"],
-          ].map(([label, className], index) => (
-            <button
-              type="button"
-              className={`workspace-style ${className} ${index === 0 ? "selected" : ""}`}
-              key={label}
-            >
-              <span>{label}</span>
+        {mode === "Motion" ? (
+          <div className="workspace-preset-section">
+            <div className="workspace-setting-heading">
+              <span className="workspace-field-label">Choose a transition preset</span>
+              <small>{motionPresets.length} motion presets</small>
+            </div>
+            <div className="workspace-motion-presets">
+              {(motionPresets.length
+                ? motionPresets
+                : [
+                    {
+                      title: "Smooth morph",
+                      description: "A gentle movement between your frames.",
+                      imageUrl: null,
+                    },
+                  ]
+              ).map((preset, index) => (
+                <button
+                  type="button"
+                  className={`workspace-motion-preset ${selectedPreset === index ? "selected" : ""}`}
+                  key={`${preset.title}-${index}`}
+                  onClick={() => setSelectedPreset(index)}
+                >
+                  <span
+                    className="workspace-preset-thumb"
+                    style={
+                      preset.imageUrl ? { backgroundImage: `url(${preset.imageUrl})` } : undefined
+                    }
+                  />
+                  <span>
+                    <strong>{preset.title}</strong>
+                    <small>{preset.description}</small>
+                  </span>
+                  {selectedPreset === index && <Check size={15} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="workspace-setting-card">
+            <span className="workspace-field-label">Guided settings</span>
+            <p>
+              {mode === "Cover"
+                ? "We will keep your subject recognizable and prepare a square artwork."
+                : modeDescription}
+            </p>
+            <button type="button" className="workspace-inline-setting">
+              Use guided settings <Check size={14} />
             </button>
-          ))}
-        </div>
+          </div>
+        )}
         <button className="button button-solid workspace-create-button" type="submit">
           {created ? (
             <>
