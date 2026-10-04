@@ -26,9 +26,11 @@ import {
 import { cmsRequest, jsonRequest, RequestError } from "@/lib-next/cms-request";
 import { CmsEditor } from "./cms-editor";
 import { MediaUpload } from "./media-upload";
+import { WorkspaceAdmin } from "./workspace-admin";
 
 const pageSize = 20;
 export function AdminDashboard() {
+  const [workspacePanel, setWorkspacePanel] = useState(false);
   const [unlocked, setUnlocked] = useState(false),
     [checking, setChecking] = useState(true),
     [pin, setPin] = useState("");
@@ -306,6 +308,7 @@ export function AdminDashboard() {
   const all: (Row & { table: Table })[] = summary.flatMap((g) =>
     g.rows.filter((r) => !r.referenced).map((r) => ({ ...r, table: g.table })),
   );
+  if (workspacePanel) return <WorkspaceAdmin onBack={() => setWorkspacePanel(false)} />;
   const hasPublishing = fields[tab].some((f) => f.key === "is_published");
   return (
     <main className="admin-page">
@@ -315,6 +318,9 @@ export function AdminDashboard() {
           <h1>CMS</h1>
         </div>
         <nav aria-label="CMS sections">
+          <button disabled={uploading || Boolean(editing)} onClick={() => setWorkspacePanel(true)}>
+            Workspace
+          </button>
           <button className={overview ? "active" : ""} onClick={() => navigate(null)}>
             Overview
           </button>
