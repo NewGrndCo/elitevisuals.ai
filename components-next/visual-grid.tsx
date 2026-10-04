@@ -11,6 +11,7 @@ function Track({ prompts, reverse = false }: { prompts: Prompt[]; reverse?: bool
         {repeated.map((prompt, index) => (
           <Link
             href={`/prompt/${prompt.slug}`}
+            prefetch={false}
             className="visual-tile"
             key={`${prompt.id}-${index}`}
             aria-hidden={index >= prompts.length}

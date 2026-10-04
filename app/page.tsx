@@ -11,8 +11,8 @@ import { getHomeData, isWorkspaceVisible } from "@/lib-next/supabase";
 
 export const revalidate = 60;
 export default async function Home() {
-  const { packs, prompts, transitionPrompts, imagePrompts, skills, logos } = await getHomeData();
-  const workspaceVisible = await isWorkspaceVisible();
+  const [{ packs, prompts, transitionPrompts, imagePrompts, skills, logos }, workspaceVisible] =
+    await Promise.all([getHomeData(), isWorkspaceVisible()]);
   return (
     <>
       <SiteHeader />

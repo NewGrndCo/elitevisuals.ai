@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
-import { useState } from "react";
+import { motion, useReducedMotion, useSpring } from "framer-motion";
 
 type Interactive3DCardProps = {
   title: string;
@@ -20,27 +20,38 @@ export function Interactive3DCard({
   href,
   actionText = "View prompt",
 }: Interactive3DCardProps) {
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const rotateX = useSpring(0, { stiffness: 180, damping: 18 });
+  const rotateY = useSpring(0, { stiffness: 180, damping: 18 });
   const reduceMotion = useReducedMotion();
   return (
     <motion.div
       className="interactive-3d-card"
-      style={{ transformStyle: "preserve-3d" }}
-      animate={reduceMotion ? {} : { rotateX: rotation.x, rotateY: rotation.y }}
-      transition={{ type: "spring", stiffness: 180, damping: 18 }}
-      onPointerMove={(event) => {
-        if (reduceMotion) return;
-        const bounds = event.currentTarget.getBoundingClientRect();
-        setRotation({
-          x: ((event.clientY - bounds.top) / bounds.height - 0.5) * -10,
-          y: ((event.clientX - bounds.left) / bounds.width - 0.5) * 10,
-        });
+      style={{
+        transformStyle: "preserve-3d",
+        rotateX: reduceMotion ? 0 : rotateX,
+        rotateY: reduceMotion ? 0 : rotateY,
       }}
-      onPointerLeave={() => setRotation({ x: 0, y: 0 })}
+      onPointerMove={(event) => {
+        if (reduceMotion || event.pointerType === "touch") return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        rotateX.set(((event.clientY - bounds.top) / bounds.height - 0.5) * -10);
+        rotateY.set(((event.clientX - bounds.left) / bounds.width - 0.5) * 10);
+      }}
+      onPointerLeave={() => {
+        rotateX.set(0);
+        rotateY.set(0);
+      }}
     >
       <Link href={href} className="interactive-3d-card-link">
         {imageUrl ? (
-          <img src={imageUrl} alt={title} draggable={false} />
+          <Image
+            src={imageUrl}
+            unoptimized={imageUrl.startsWith("/media/prompts/")}
+            alt={title}
+            fill
+            sizes="(max-width: 700px) 78vw, 240px"
+            draggable={false}
+          />
         ) : (
           <div className="image-fallback" />
         )}

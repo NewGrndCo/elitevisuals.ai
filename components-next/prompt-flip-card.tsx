@@ -64,7 +64,12 @@ export function PromptFlipCard({ slug, title, imageUrl, uses }: PromptFlipCardPr
           aria-label={`Reveal ${title} prompt`}
         >
           {imageUrl ? (
-            <Image src={imageUrl} alt={title} fill sizes="25vw" />
+            <Image
+              src={imageUrl}
+              alt={title}
+              fill
+              sizes="(max-width: 700px) 90vw, (max-width: 1100px) 45vw, 25vw"
+            />
           ) : (
             <div className="image-fallback" />
           )}
