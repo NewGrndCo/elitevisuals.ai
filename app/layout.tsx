@@ -1,27 +1,38 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import { siteDescription, siteOrigin, siteTitle, socialImage } from "@/lib-next/site-metadata";
 import "./globals.css";
 import "./premium.css";
 
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 export const metadata: Metadata = {
-  metadataBase: new URL("https://elitevisuals.ai"),
-  title: { default: "EliteVisuals.ai | AI Creator Toolkit", template: "%s | EliteVisuals.ai" },
-  description: "Curated AI prompt packs, visual workflows, and downloadable creative skills.",
+  metadataBase: new URL(siteOrigin),
+  title: { default: siteTitle, template: "%s | EliteVisuals.ai" },
+  description: siteDescription,
+  applicationName: "EliteVisuals.ai",
   icons: { icon: "/icon.png", shortcut: "/icon.png", apple: "/icon.png" },
   openGraph: {
     type: "website",
     url: "/",
     siteName: "EliteVisuals.ai",
-    title: "EliteVisuals.ai | AI Creator Toolkit",
-    description: "Prompts, downloadable skills and creator resources for better AI visuals.",
-    images: [{ url: "/social-preview.png", width: 1200, height: 630, alt: "EliteVisuals.ai" }],
+    locale: "en_US",
+    title: siteTitle,
+    description: siteDescription,
+    images: [
+      {
+        url: socialImage,
+        width: 1200,
+        height: 630,
+        type: "image/jpeg",
+        alt: "EliteVisuals.ai — Create Beyond Ordinary. Featuring Kinetic V1 and the Ultra Upscale Enhance prompt.",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "EliteVisuals.ai | AI Creator Toolkit",
-    description: "Prompts, downloadable skills and creator resources for better AI visuals.",
-    images: ["/social-preview.png"],
+    title: siteTitle,
+    description: siteDescription,
+    images: [socialImage],
   },
 };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
