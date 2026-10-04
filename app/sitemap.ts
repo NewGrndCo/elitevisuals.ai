@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { siteOrigin } from "@/lib-next/site-metadata";
 import { getPacks, getPrompts, getSkills } from "@/lib-next/supabase";
 export const revalidate = 60;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -6,7 +7,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const paths = [
     "",
     "/promptbox",
-    "/library",
     "/skills",
     "/resources",
     "/waitlist",
@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...skills.map((p) => `/skill/${encodeURIComponent(p.slug)}`),
   ];
   return paths.map((path) => ({
-    url: `https://elitevisuals.ai${path}`,
+    url: `${siteOrigin}${path}`,
     changeFrequency: "weekly",
     priority: path ? 0.7 : 1,
   }));

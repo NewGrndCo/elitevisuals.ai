@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { SiteHeader } from "@/components-next/site-header";
 import { LoginForm } from "@/components-next/login-form";
-export const metadata = { title: "Sign In" };
+export const metadata = { title: "Sign In", robots: { index: false, follow: true } };
 export default function Login() {
   return (
     <>
