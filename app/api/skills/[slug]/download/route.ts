@@ -7,7 +7,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
     if (!token) return NextResponse.json({ error: "Sign in to download." }, { status: 401 });
     const { data, error } = await createPublicClient().auth.getUser(token);
-    if (error || !data.user)
+    if (error || !data.user || data.user.is_anonymous)
       return NextResponse.json({ error: "Your session is invalid or expired." }, { status: 401 });
     const skill = await getSkill((await params).slug);
     if (!skill?.download_url)

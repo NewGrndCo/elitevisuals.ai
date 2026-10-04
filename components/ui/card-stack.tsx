@@ -57,6 +57,8 @@ export function CardStack({
   const reduceMotion = useReducedMotion();
   const [active, setActive] = React.useState(() => wrapIndex(initialIndex, items.length));
   const [hovering, setHovering] = React.useState(false);
+  const [paused, setPaused] = React.useState(false);
+  const [focused, setFocused] = React.useState(false);
   const length = items.length;
   const maxOffset = Math.floor(maxVisible / 2);
   const spacing = Math.max(22, Math.round(cardWidth * (1 - overlap)));
@@ -73,10 +75,10 @@ export function CardStack({
 
   React.useEffect(() => setActive((current) => wrapIndex(current, length)), [length]);
   React.useEffect(() => {
-    if (!autoAdvance || reduceMotion || hovering || length < 2) return;
+    if (!autoAdvance || reduceMotion || hovering || focused || paused || length < 2) return;
     const timer = window.setInterval(next, Math.max(900, intervalMs));
     return () => window.clearInterval(timer);
-  }, [autoAdvance, hovering, intervalMs, length, next, reduceMotion]);
+  }, [autoAdvance, hovering, focused, paused, intervalMs, length, next, reduceMotion]);
 
   if (!length) return null;
 
@@ -85,6 +87,10 @@ export function CardStack({
       className={cn("card-stack", className)}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
+      onFocusCapture={() => setFocused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
+      }}
     >
       <div
         className="card-stack-stage"
@@ -112,9 +118,20 @@ export function CardStack({
                   key={item.id}
                   className={cn("card-stack-card", isActive ? "is-active" : "")}
                   style={{ width: cardWidth, height: cardHeight, zIndex: 100 - distance }}
-                  initial={reduceMotion ? false : { opacity: 0, x, y: y + 35, rotateZ: offset * stepDeg }}
-                  animate={{ opacity: 1, x, y, rotateZ: offset * stepDeg, rotateX: isActive ? 0 : 10, scale: isActive ? 1.02 : 0.93 }}
-                  transition={{ type: "spring", stiffness: 270, damping: 27 }}
+                  initial={
+                    reduceMotion ? false : { opacity: 0, x, y: y + 35, rotateZ: offset * stepDeg }
+                  }
+                  animate={{
+                    opacity: 1,
+                    x,
+                    y,
+                    rotateZ: offset * stepDeg,
+                    rotateX: isActive ? 0 : 10,
+                    scale: isActive ? 1.02 : 0.93,
+                  }}
+                  transition={
+                    reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 270, damping: 27 }
+                  }
                   drag={isActive && !reduceMotion ? "x" : false}
                   dragConstraints={{ left: 0, right: 0 }}
                   dragElastic={0.18}
@@ -124,13 +141,27 @@ export function CardStack({
                   }}
                   onClick={() => setActive(index)}
                 >
-                  {renderCard ? renderCard(item, { active: isActive }) : <DefaultCard item={item} />}
+                  {renderCard ? (
+                    renderCard(item, { active: isActive })
+                  ) : (
+                    <DefaultCard item={item} />
+                  )}
                 </motion.div>
               );
             })}
           </AnimatePresence>
         </div>
       </div>
+      {autoAdvance && !reduceMotion && length > 1 && (
+        <button
+          className="motion-toggle"
+          type="button"
+          aria-pressed={paused}
+          onClick={() => setPaused((value) => !value)}
+        >
+          {paused ? "Resume featured releases" : "Pause featured releases"}
+        </button>
+      )}
       <div className="card-stack-dots" aria-label="Choose a featured release">
         {items.map((item, index) => (
           <button
@@ -150,7 +181,11 @@ export function CardStack({
 function DefaultCard({ item }: { item: CardStackItem }) {
   return (
     <div className="card-stack-default">
-      {item.imageSrc ? <img src={item.imageSrc} alt={item.title} draggable={false} /> : <div className="image-fallback" />}
+      {item.imageSrc ? (
+        <img src={item.imageSrc} alt={item.title} draggable={false} />
+      ) : (
+        <div className="image-fallback" />
+      )}
       <div className="card-stack-shade" />
       <div className="card-stack-copy">
         {item.tag && <span>{item.tag}</span>}

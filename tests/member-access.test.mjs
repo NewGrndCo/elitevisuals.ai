@@ -5,13 +5,16 @@ import { readFile } from "node:fs/promises";
 
 // Explicit test-only auth backend; no production sessions or credential reads.
 const mockUrl = `data:text/javascript,${encodeURIComponent(`
-export const state = { user: null, error: null, cookie: null, writes: [], deleted: false, members: [], captureFails: false };
+export const state = { user: null, error: null, cookie: null, writes: [], deleted: false, members: [], captureFails: false, contentReads: 0 };
 export const cookies = async () => ({
  get: () => state.cookie ? { value: state.cookie } : undefined,
  set: (...args) => { state.writes.push(args); state.cookie = args[1]; },
  delete: () => { state.deleted = true; state.cookie = null; }
 });
 export const createPublicClient = () => ({auth: { getUser: async () => ({data: {user: state.user}, error: state.error}) }});
+export const getPrompt = async () => { state.contentReads++; return {prompt_text: 'test prompt'}; };
+export const getSkill = async () => { state.contentReads++; return null; };
+export const getBetaAssetStore = () => { throw new Error('Unexpected package storage access'); };
 export const redirect = (url) => { throw new Error('REDIRECT:' + url); };
 export class ContentConflict extends Error {}
 export const mutateBetaTable = async (table, change) => {
@@ -27,7 +30,8 @@ registerHooks({
     )
       return { url: mockUrl, shortCircuit: true };
     if (specifier === "next/server") return nextResolve("next/server.js", context);
-    if (specifier === "./beta-content") return { url: mockUrl, shortCircuit: true };
+    if (["./beta-content", "@/lib-next/beta-content"].includes(specifier))
+      return { url: mockUrl, shortCircuit: true };
     if (specifier === "@/lib-next/member-capture")
       return nextResolve(new URL("../lib-next/member-capture.ts", import.meta.url).href, context);
     if (specifier === "@/lib-next/member-server")
@@ -44,6 +48,8 @@ registerHooks({
 const { state } = await import(mockUrl);
 const { POST, DELETE } = await import("../app/api/member-session/route.ts");
 const { getVerifiedMember, requireMember } = await import("../lib-next/member-server.ts");
+const { GET: promptGet } = await import("../app/api/prompts/[slug]/route.ts");
+const { GET: downloadGet } = await import("../app/api/skills/[slug]/download/route.ts");
 const request = (origin = "https://example.test", token = "test.token.signature") =>
   new Request("https://example.test/api/member-session", {
     method: "POST",
@@ -120,4 +126,29 @@ test("every navigation destination and detail page guards its server content", a
   const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.doesNotMatch(css, /border: [67]px solid/);
   assert.match(css, /\.prompt-row\s*\{[^}]*repeat\(3, minmax\(0, 1fr\)\)/);
+});
+
+test("prompt and package APIs reject anonymous and expired users before reading content", async () => {
+  const params = { params: Promise.resolve({ slug: "test" }) };
+  const authorized = new Request("https://example.test/api/prompts/test", {
+    headers: { Authorization: "Bearer test.token.signature" },
+  });
+  state.contentReads = 0;
+  state.error = null;
+  for (const user of [null, { id: "anonymous", is_anonymous: true }]) {
+    state.user = user;
+    assert.equal((await promptGet(authorized, params)).status, 401);
+    assert.equal((await downloadGet(authorized, params)).status, 401);
+  }
+  state.user = { id: "member", is_anonymous: false };
+  state.error = new Error("expired");
+  assert.equal((await promptGet(authorized, params)).status, 401);
+  assert.equal((await downloadGet(authorized, params)).status, 401);
+  assert.equal(state.contentReads, 0);
+  state.error = null;
+  const response = await promptGet(authorized, params);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  assert.deepEqual(await response.json(), { prompt: "test prompt" });
+  assert.equal((await downloadGet(authorized, params)).status, 404);
 });

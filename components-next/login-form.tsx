@@ -40,6 +40,7 @@ export function LoginForm() {
     event.preventDefault();
     setBusy(true);
     setError("");
+    setMessage("");
     const next = search.get("next");
     const destination = safeDestination(next);
     try {
@@ -64,6 +65,12 @@ export function LoginForm() {
         Email address
         <input
           type="email"
+          name="email"
+          maxLength={320}
+          aria-describedby={
+            error || syncError ? "login-error" : message ? "login-status" : undefined
+          }
+          aria-invalid={error === "Enter a valid email address." || undefined}
           autoComplete="email"
           placeholder="you@example.com"
           value={email}
@@ -75,9 +82,13 @@ export function LoginForm() {
         {busy && <Loader2 className="spin" size={16} />}
         {busy ? "Sending…" : "Send magic link"}
       </button>
-      {message && <div className="admin-success">{message}</div>}
+      {message && (
+        <div id="login-status" role="status" className="admin-success">
+          {message}
+        </div>
+      )}
       {(error || syncError) && (
-        <div role="alert" className="admin-error">
+        <div id="login-error" role="alert" className="admin-error">
           {error || syncError}
         </div>
       )}

@@ -1,4 +1,5 @@
 import { SiteFooter, SiteHeader } from "./site-header";
+import { SectionReveal } from "./section-reveal";
 export function PageShell({
   eyebrow,
   title,
@@ -16,13 +17,15 @@ export function PageShell({
     <>
       <SiteHeader />
       <main id="main-content" tabIndex={-1}>
-        <section className="subhero">
-          <p className="kicker">{eyebrow}</p>
-          {heroFeature}
-          <h1>{title}</h1>
-          <p>{description}</p>
-        </section>
-        {children}
+        <SectionReveal>
+          <section className="subhero">
+            <p className="kicker">{eyebrow}</p>
+            {heroFeature}
+            <h1>{title}</h1>
+            <p>{description}</p>
+          </section>
+        </SectionReveal>
+        <SectionReveal>{children}</SectionReveal>
       </main>
       <SiteFooter />
     </>

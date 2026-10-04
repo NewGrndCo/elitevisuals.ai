@@ -1,0 +1,196 @@
+/* Shared public surfaces; keep the studio and CMS layouts independent. */
+:root {
+  --ease-fluid: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-pill {
+  box-shadow: 0 8px 30px rgb(40 25 70 / 7%);
+}
+.button-solid {
+  box-shadow: 0 6px 18px rgb(118 56 238 / 18%);
+}
+.button-outline {
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgb(40 25 70 / 4%);
+}
+.hero > p,
+.subhero > p:last-child {
+  line-height: 1.65;
+}
+.pack-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+.button,
+.theme-toggle,
+.nav-pill nav a,
+.resource-card,
+.skill-visual-card {
+  transition:
+    transform 220ms var(--ease-fluid),
+    box-shadow 220ms var(--ease-fluid),
+    background-color 220ms ease,
+    border-color 220ms ease;
+}
+.button:active,
+.theme-toggle:active {
+  transform: scale(0.97);
+}
+.footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.form-card input,
+.auth-card input {
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: 16px;
+}
+.auth-card,
+.form-card {
+  box-shadow: 0 16px 48px rgb(40 25 70 / 6%);
+}
+.section-arrived {
+  animation: section-arrive 560ms var(--ease-fluid) both;
+}
+.card-stack-dots {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.card-stack-dots button,
+.card-stack-dots button.is-active {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+}
+.card-stack-dots button::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--muted);
+}
+.card-stack-dots button.is-active::after {
+  width: 22px;
+  background: var(--purple);
+}
+@keyframes section-arrive {
+  from {
+    opacity: 0.65;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes menu-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .resource-card:hover,
+  .skill-visual-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card);
+  }
+  .button-solid:hover {
+    box-shadow: 0 10px 24px rgb(118 56 238 / 24%);
+  }
+}
+@media (max-width: 800px) {
+  .nav-pill {
+    gap: 8px;
+    padding-left: 5px;
+  }
+  .menu-button {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 50%;
+  }
+  .nav-pill nav.open {
+    animation: menu-arrive 220ms var(--ease-fluid) both;
+  }
+  .prompt-row,
+  .pack-grid {
+    scroll-padding-inline: 2px;
+  }
+  .motion-toggle {
+    min-height: 44px;
+  }
+  .hero > p {
+    max-width: 34ch;
+    margin-inline: auto;
+  }
+  .hero-actions {
+    flex-wrap: wrap;
+  }
+  .auth-card h1 {
+    font-size: clamp(30px, 8vw, 38px);
+  }
+  .form-card form {
+    align-items: stretch;
+  }
+  .form-card label {
+    flex-basis: 100%;
+  }
+  .form-card form > .button {
+    width: 100%;
+  }
+  footer {
+    flex-wrap: wrap;
+    gap: 24px;
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+  }
+  .footer-links {
+    max-width: none;
+    justify-content: flex-start;
+    gap: 8px 20px;
+  }
+}
+@media (max-width: 360px) {
+  .nav-pill .brand {
+    font-size: 13px;
+    gap: 5px;
+  }
+  .nav-signin {
+    padding-inline: 12px;
+  }
+  .nav-actions {
+    gap: 4px;
+  }
+  .hero h1 {
+    font-size: clamp(38px, 12vw, 44px);
+  }
+}
+@media (max-width: 320px) {
+  .nav-pill .brand span {
+    display: none;
+  }
+}
+@media (hover: none) {
+  .button:hover {
+    transform: none;
+  }
+  .button:active {
+    transform: scale(0.97);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .section-arrived,
+  .nav-pill nav.open {
+    animation: none;
+  }
+  .button:active,
+  .theme-toggle:active {
+    transform: none;
+  }
+}

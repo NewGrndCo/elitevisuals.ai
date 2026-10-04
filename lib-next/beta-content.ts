@@ -63,6 +63,9 @@ export async function mutateBetaTable(
   change: (rows: ContentRow[]) => ContentRow[],
 ) {
   const snapshot = await store().getWithMetadata(keyFor(table), { type: "json" });
+  // An empty ETag disables the SDK's If-Match header. Fail closed rather than
+  // silently converting a conditional update into an unconditional overwrite.
+  if (snapshot && !snapshot.etag) throw new ContentConflict();
   const next = change(structuredClone((snapshot?.data ?? []) as ContentRow[]));
   const result = await store().setJSON(
     keyFor(table),

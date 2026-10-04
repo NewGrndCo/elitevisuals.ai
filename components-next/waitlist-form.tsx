@@ -41,6 +41,8 @@ export function WaitlistForm() {
           name="email"
           autoComplete="email"
           maxLength={320}
+          aria-invalid={error === "Enter a valid email address." || undefined}
+          aria-describedby={error ? "waitlist-error" : message ? "waitlist-status" : undefined}
           placeholder="you@example.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -63,12 +65,12 @@ export function WaitlistForm() {
         {busy ? "Joining…" : message || "Join Waitlist"}
       </button>
       {error && (
-        <div className="admin-error" role="alert">
+        <div id="waitlist-error" className="admin-error" role="alert">
           {error}
         </div>
       )}
       {message && (
-        <div className="admin-success" role="status">
+        <div id="waitlist-status" className="admin-success" role="status">
           {message}
         </div>
       )}

@@ -6,7 +6,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     if (!token)
       return NextResponse.json({ error: "Sign in to reveal this prompt." }, { status: 401 });
     const { data, error } = await createPublicClient().auth.getUser(token);
-    if (error || !data.user)
+    if (error || !data.user || data.user.is_anonymous)
       return NextResponse.json(
         { error: "Your session expired. Please sign in again." },
         { status: 401 },

@@ -20,9 +20,11 @@ export function PromptFlipCard({ slug, title, imageUrl, uses }: PromptFlipCardPr
   const [prompt, setPrompt] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     if (!flipped || !session?.access_token || prompt) return;
+    setError("");
     const controller = new AbortController();
     void fetch(`/api/prompts/${encodeURIComponent(slug)}`, {
       headers: { Authorization: `Bearer ${session.access_token}` },
@@ -39,7 +41,7 @@ export function PromptFlipCard({ slug, title, imageUrl, uses }: PromptFlipCardPr
           setError(cause instanceof Error ? cause.message : "Unable to load prompt.");
       });
     return () => controller.abort();
-  }, [flipped, prompt, session?.access_token, slug]);
+  }, [flipped, prompt, session?.access_token, slug, retry]);
 
   const copyPrompt = async () => {
     if (!prompt) return;
@@ -106,14 +108,28 @@ export function PromptFlipCard({ slug, title, imageUrl, uses }: PromptFlipCardPr
                 Sign In
               </Link>
             </div>
-          ) : error ? (
-            <p className="prompt-flip-error">{error}</p>
+          ) : error && !prompt ? (
+            <div className="prompt-flip-error" role="alert">
+              <p>{error}</p>
+              <button
+                type="button"
+                className="prompt-flip-copy"
+                onClick={() => setRetry((value) => value + 1)}
+              >
+                Retry loading prompt
+              </button>
+            </div>
           ) : !prompt ? (
             <p className="prompt-flip-status">
               <Loader2 className="spin" size={16} /> Loading prompt…
             </p>
           ) : (
             <>
+              {error && (
+                <p className="prompt-flip-error" role="alert">
+                  {error}
+                </p>
+              )}
               <p className="prompt-flip-text">{prompt}</p>
               <button className="prompt-flip-copy" type="button" onClick={() => void copyPrompt()}>
                 {copied ? <Check size={16} /> : <Copy size={16} />}

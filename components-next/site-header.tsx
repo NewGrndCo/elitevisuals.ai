@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState, useEffect } from "react";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import eliteVisualsLogo from "@/assets/logo.png";
 import { ThemeToggle } from "./theme-toggle";
 import { MemberButton } from "./member-button";
@@ -22,9 +22,19 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [workspaceVisible, setWorkspaceVisible] = useState(true);
   const menuButton = useRef<HTMLButtonElement>(null);
+  const header = useRef<HTMLElement>(null);
   useEffect(() => {
     setMenuOpen(false);
   }, [path]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const dismiss = (event: PointerEvent) => {
+      if (event.target instanceof Node && !header.current?.contains(event.target))
+        setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [menuOpen]);
   useEffect(() => {
     fetch("/api/workspace-status", { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : { visible: true }))
@@ -42,7 +52,11 @@ export function SiteHeader() {
   };
   return (
     <header
+      ref={header}
       className="site-header"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setMenuOpen(false);
+      }}
       onKeyDown={(e) => {
         if (e.key === "Escape") {
           setMenuOpen(false);
@@ -62,7 +76,7 @@ export function SiteHeader() {
           aria-controls="site-navigation"
           onClick={() => setMenuOpen((open) => !open)}
         >
-          <Menu size={20} />
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
         <Link href="/" className="brand" onClick={handleLogoClick}>
           <Image className="brand-logo" src={eliteVisualsLogo} alt="EliteVisuals.ai" priority />
