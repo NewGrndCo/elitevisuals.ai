@@ -44,6 +44,8 @@ export function WorkspaceStudio() {
     "A dreamy, cinematic music cover with purple butterfly effects.",
   );
   const [uploadName, setUploadName] = useState("");
+  const [firstFrameName, setFirstFrameName] = useState("");
+  const [lastFrameName, setLastFrameName] = useState("");
   const [created, setCreated] = useState(false);
 
   const modeDescription = useMemo(() => {
@@ -60,6 +62,10 @@ export function WorkspaceStudio() {
 
   function handleUpload(event: ChangeEvent<HTMLInputElement>) {
     setUploadName(event.target.files?.[0]?.name || "");
+  }
+
+  function frameUpload(setName: (name: string) => void) {
+    return (event: ChangeEvent<HTMLInputElement>) => setName(event.target.files?.[0]?.name || "");
   }
 
   return (
@@ -191,14 +197,39 @@ export function WorkspaceStudio() {
             <p>{modeDescription}</p>
           </div>
         </div>
-        <label className="workspace-upload">
-          <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleUpload} />
-          <ImageIcon size={22} />
-          <strong>{uploadName || "Upload an image"}</strong>
-          <span>
-            {uploadName ? "Image ready to use" : "Drop an image here, or click to upload"}
-          </span>
-        </label>
+        {mode === "Motion" ? (
+          <div className="workspace-frame-uploads">
+            <label className="workspace-upload compact">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={frameUpload(setFirstFrameName)}
+              />
+              <ImageIcon size={19} />
+              <strong>{firstFrameName || "First frame"}</strong>
+              <span>{firstFrameName ? "Ready" : "Upload starting image"}</span>
+            </label>
+            <label className="workspace-upload compact">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={frameUpload(setLastFrameName)}
+              />
+              <ImageIcon size={19} />
+              <strong>{lastFrameName || "Last frame"}</strong>
+              <span>{lastFrameName ? "Ready" : "Upload ending image"}</span>
+            </label>
+          </div>
+        ) : (
+          <label className="workspace-upload">
+            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleUpload} />
+            <ImageIcon size={22} />
+            <strong>{uploadName || "Upload an image"}</strong>
+            <span>
+              {uploadName ? "Image ready to use" : "Drop an image here, or click to upload"}
+            </span>
+          </label>
+        )}
         <label className="workspace-field-label" htmlFor="workspace-output">
           What are you making?
         </label>
@@ -208,14 +239,18 @@ export function WorkspaceStudio() {
           <ChevronDown size={16} />
         </button>
         <label className="workspace-field-label" htmlFor="workspace-idea">
-          Describe your idea
+          {mode === "Motion" ? "Describe the motion" : "Describe your idea"}
         </label>
         <textarea
           id="workspace-idea"
           value={idea}
           onChange={(event) => setIdea(event.target.value)}
           rows={4}
-          placeholder="Tell us what you want to create..."
+          placeholder={
+            mode === "Motion"
+              ? "Tell us how the first image should become the last..."
+              : "Tell us what you want to create..."
+          }
         />
         <span className="workspace-field-label">Visual style</span>
         <div className="workspace-style-row">
