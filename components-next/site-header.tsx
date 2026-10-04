@@ -9,6 +9,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { MemberButton } from "./member-button";
 
 const links = [
+  { href: "/workspace", label: "Workspace" },
   { href: "/promptbox", label: "Prompts" },
   { href: "/skills", label: "Skills" },
   { href: "/resources", label: "Resources" },

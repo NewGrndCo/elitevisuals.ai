@@ -36,6 +36,7 @@ export function AdminDashboard() {
     [rows, setRows] = useState<Row[]>([]),
     [overview, setOverview] = useState(true);
   const [summary, setSummary] = useState<{ table: Table; rows: Row[] }[]>([]);
+  const [workspaceVisible, setWorkspaceVisible] = useState(true);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
@@ -67,7 +68,11 @@ export function AdminDashboard() {
       if (overview) {
         const result = await Promise.all(
           tabs
-            .filter(([t]) => ["packs", "prompts", "skills", "resources", "site_assets"].includes(t))
+            .filter(([t]) =>
+              ["packs", "prompts", "skills", "resources", "site_assets", "site_content"].includes(
+                t,
+              ),
+            )
             .map(async ([table]) => ({
               table,
               rows: (await cmsRequest(`/api/admin/content?table=${table}`)).data as Row[],
@@ -153,6 +158,40 @@ export function AdminDashboard() {
       setBusy(false);
     }
   };
+  useEffect(() => {
+    const rows = summary.find((group) => group.table === "site_content")?.rows ?? [];
+    const setting = rows.find((row) => row.key === "workspace_visibility");
+    if (setting?.value && typeof setting.value === "object") {
+      setWorkspaceVisible((setting.value as { visible?: unknown }).visible !== false);
+    }
+  }, [summary]);
+  const toggleWorkspace = () =>
+    void action(
+      async () => {
+        const rows = summary.find((group) => group.table === "site_content")?.rows ?? [];
+        const setting = rows.find((row) => row.key === "workspace_visibility");
+        const visible = !workspaceVisible;
+        if (!setting) {
+          await cmsRequest(
+            "/api/admin/content?table=site_content",
+            jsonRequest("POST", { data: { key: "workspace_visibility", value: { visible } } }),
+          );
+        } else {
+          await cmsRequest(
+            "/api/admin/content?table=site_content",
+            jsonRequest("PATCH", {
+              id: String(setting.key),
+              patch: { value: { visible } },
+              expectedUpdatedAt: setting.updated_at ?? "",
+            }),
+          );
+        }
+        setWorkspaceVisible(visible);
+      },
+      workspaceVisible
+        ? "Workspace hidden from the website"
+        : "Workspace is visible on the website",
+    );
   const unlock = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -400,6 +439,28 @@ export function AdminDashboard() {
                       {label}
                     </button>
                   ))}
+              </div>
+            </section>
+            <section className="cms-overview-section">
+              <h3>Workspace visibility</h3>
+              <div className="admin-toggle-row">
+                <div>
+                  <strong>{workspaceVisible ? "Visible on website" : "Hidden from website"}</strong>
+                  <p>
+                    {workspaceVisible
+                      ? "Visitors can open the Elite Visual Workspace."
+                      : "The workspace route returns a not-found page to visitors."}
+                  </p>
+                </div>
+                <button
+                  className={`admin-switch ${workspaceVisible ? "on" : ""}`}
+                  type="button"
+                  onClick={toggleWorkspace}
+                  disabled={busy}
+                  aria-pressed={workspaceVisible}
+                >
+                  {workspaceVisible ? "On" : "Off"}
+                </button>
               </div>
             </section>
             <section className="cms-overview-section">

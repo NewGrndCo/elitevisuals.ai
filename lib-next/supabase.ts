@@ -143,3 +143,13 @@ export async function getHomeData() {
     logos: logos.slice(0, 8),
   };
 }
+
+export async function isWorkspaceVisible() {
+  await connection();
+  const beta = await readBetaTable("site_content");
+  const remote = beta ? null : await createPublicClient().from("site_content").select("key,value");
+  const rows = beta ?? remote?.data ?? [];
+  const setting = rows.find((row) => row.key === "workspace_visibility");
+  if (!setting || typeof setting.value !== "object" || setting.value === null) return true;
+  return (setting.value as { visible?: unknown }).visible !== false;
+}
