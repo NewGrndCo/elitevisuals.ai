@@ -20,7 +20,6 @@ export default async function WorkspacePage() {
   );
   const motionPresets = prompts
     .filter((prompt) => prompt.pack_id && motionPackIds.has(prompt.pack_id))
-    .slice(0, 8)
     .map((prompt) => ({
       title: prompt.title,
       description:
