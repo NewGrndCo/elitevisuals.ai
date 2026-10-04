@@ -2,6 +2,7 @@ import { SiteFooter, SiteHeader } from "@/components-next/site-header";
 import { WorkspaceStudio } from "@/components-next/workspace-studio";
 import { getPacks, getPrompts, isWorkspaceVisible } from "@/lib-next/supabase";
 import { notFound } from "next/navigation";
+import "./studio.css";
 
 export const metadata = {
   alternates: { canonical: "/workspace" },

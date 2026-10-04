@@ -1,325 +1,414 @@
 "use client";
-
-import { ChangeEvent, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Check,
-  ChevronDown,
-  FileImage,
-  Folder,
-  Image as ImageIcon,
-  Layers,
+  Download,
+  ImageIcon,
   Play,
   Plus,
   Sparkles,
-  Type,
-  WandSparkles,
+  Upload,
+  X,
 } from "lucide-react";
-
 type Mode = "Cover" | "Motion" | "Logo" | "Promo" | "Flyer" | "Enhance";
-type MotionPreset = { title: string; description: string; imageUrl: string | null };
-
-const modes: { name: Mode; icon: typeof ImageIcon }[] = [
-  { name: "Cover", icon: ImageIcon },
-  { name: "Motion", icon: Play },
-  { name: "Logo", icon: Type },
-  { name: "Promo", icon: WandSparkles },
-  { name: "Flyer", icon: FileImage },
-  { name: "Enhance", icon: Sparkles },
-];
-
-const projects = [
-  { title: "Midnight Echoes", type: "Cover art", state: "Ready", className: "workspace-art-cover" },
+type Preset = { title: string; description: string; imageUrl: string | null };
+type Asset = { name: string; url: string };
+const tools: { mode: Mode; label: string; hint: string; fields: string[] }[] = [
   {
-    title: "Butterfly Dreams",
-    type: "Motion",
-    state: "Creating",
-    className: "workspace-art-motion",
+    mode: "Cover",
+    label: "Cover art",
+    hint: "Your next release starts here.",
+    fields: ["Artist name", "Release title"],
   },
-  { title: "New release", type: "Promo", state: "Ready", className: "workspace-art-promo" },
+  {
+    mode: "Motion",
+    label: "Transitions",
+    hint: "Connect two frames with a visual transition.",
+    fields: [],
+  },
+  {
+    mode: "Logo",
+    label: "Logo",
+    hint: "Give your name a memorable identity.",
+    fields: ["Brand name", "Tagline (optional)"],
+  },
+  {
+    mode: "Promo",
+    label: "Promo graphic",
+    hint: "Make your announcement stand out.",
+    fields: ["Headline", "Call to action"],
+  },
+  {
+    mode: "Flyer",
+    label: "Flyer",
+    hint: "All the details. One striking design.",
+    fields: ["Event name", "Date and time", "Location"],
+  },
+  {
+    mode: "Enhance",
+    label: "Enhance image",
+    hint: "Give your image a cleaner finish.",
+    fields: [],
+  },
 ];
-
-export function WorkspaceStudio({ motionPresets }: { motionPresets: MotionPreset[] }) {
+export function WorkspaceStudio({ motionPresets }: { motionPresets: Preset[] }) {
   const [mode, setMode] = useState<Mode>("Cover");
-  const [idea, setIdea] = useState(
-    "A dreamy, cinematic music cover with purple butterfly effects.",
-  );
-  const [uploadName, setUploadName] = useState("");
-  const [firstFrameName, setFirstFrameName] = useState("");
-  const [lastFrameName, setLastFrameName] = useState("");
-  const [created, setCreated] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState(0);
-
-  const modeDescription = useMemo(() => {
-    const descriptions: Record<Mode, string> = {
-      Cover: "Turn your idea into polished cover art.",
-      Motion: "Bring your still visuals to life with guided motion.",
-      Logo: "Build a memorable mark for your artist or brand.",
-      Promo: "Create a social-ready post for your next release.",
-      Flyer: "Design a clear, beautiful flyer in a few steps.",
-      Enhance: "Improve sharpness, detail, and image quality.",
-    };
-    return descriptions[mode];
-  }, [mode]);
-
-  function handleUpload(event: ChangeEvent<HTMLInputElement>) {
-    setUploadName(event.target.files?.[0]?.name || "");
+  const [assets, setAssets] = useState<Record<string, Asset>>({});
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [preset, setPreset] = useState("");
+  const [search, setSearch] = useState("");
+  const [message, setMessage] = useState("");
+  const urls = useRef<string[]>([]);
+  useEffect(() => () => urls.current.forEach(URL.revokeObjectURL), []);
+  const tool = tools.find((item) => item.mode === mode)!;
+  const slots =
+    mode === "Motion"
+      ? ["First frame", "Last frame"]
+      : [mode === "Enhance" ? "Original image" : "Reference image"];
+  const field = (name: string) => `${mode}:${name}`;
+  function upload(key: string, file?: File) {
+    if (!file) return;
+    if (
+      !["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
+      file.size > 15 * 1024 * 1024
+    ) {
+      setMessage("Choose a JPG, PNG, or WebP image smaller than 15 MB.");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    urls.current.push(url);
+    setAssets((current) => ({ ...current, [key]: { name: file.name, url } }));
+    setMessage("");
   }
-
-  function frameUpload(setName: (name: string) => void) {
-    return (event: ChangeEvent<HTMLInputElement>) => setName(event.target.files?.[0]?.name || "");
+  function save() {
+    try {
+      localStorage.setItem(
+        "elitevisuals-workspace-draft",
+        JSON.stringify({ mode, values, preset }),
+      );
+      setMessage("Brief saved on this device. Uploaded images stay in this session.");
+    } catch {
+      setMessage("This browser could not save the brief. You can download it instead.");
+    }
   }
-
+  function download() {
+    const blob = new Blob(
+      [
+        JSON.stringify(
+          {
+            tool: tool.label,
+            settings: Object.fromEntries(
+              Object.entries(values).filter(([key]) => key.startsWith(`${mode}:`)),
+            ),
+            preset: mode === "Motion" ? preset : undefined,
+            images: slots.map((slot) => assets[field(slot)]?.name).filter(Boolean),
+          },
+          null,
+          2,
+        ),
+      ],
+      { type: "application/json" },
+    );
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "elitevisuals-creative-brief.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+  function restore() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("elitevisuals-workspace-draft") || "null");
+      if (!saved || !tools.some((item) => item.mode === saved.mode)) {
+        setMessage("No saved brief on this device yet.");
+        return;
+      }
+      setMode(saved.mode);
+      setValues(saved.values || {});
+      setPreset(saved.preset || "");
+      setMessage("Saved brief restored. Add your images again to continue.");
+    } catch {
+      setMessage("The saved brief could not be restored.");
+    }
+  }
   return (
-    <section className="workspace-shell" aria-label="Elite Visual Workspace">
-      <aside className="workspace-rail" aria-label="Workspace navigation">
-        <button className="workspace-rail-item active" type="button">
-          <Sparkles size={18} />
-          <span>Create</span>
-        </button>
-        <button className="workspace-rail-item" type="button">
-          <Folder size={18} />
-          <span>Projects</span>
-        </button>
-        <button className="workspace-rail-item" type="button">
-          <Layers size={18} />
-          <span>Presets</span>
-        </button>
-        <button className="workspace-rail-item" type="button">
-          <ImageIcon size={18} />
-          <span>Assets</span>
-        </button>
-      </aside>
-
-      <div className="workspace-main">
-        <div className="workspace-project-bar">
-          <div>
-            <span className="workspace-kicker">Current project</span>
-            <h2>Midnight Echoes</h2>
-          </div>
-          <div className="workspace-project-actions">
-            <button className="workspace-quiet-button" type="button">
-              Save
-            </button>
-            <button className="workspace-quiet-button" type="button">
-              Export
-            </button>
-          </div>
+    <section className="ev-studio" aria-label="Elite Visual Workspace">
+      <header className="ev-studio-top">
+        <div>
+          <span className="ev-eyebrow">ELITE VISUAL WORKSPACE</span>
+          <h1>Your ideas. Ready to create.</h1>
         </div>
-
-        <div className="workspace-canvas" aria-label="Project preview">
-          <div className="workspace-cover-preview">
-            <div className="workspace-orbit" />
-            <div className="workspace-sparkle">✦</div>
-            <div className="workspace-cover-copy">
-              <span>NEW RELEASE</span>
-              <strong>
-                Midnight
-                <br />
-                Echoes
-              </strong>
-            </div>
-          </div>
-          <div className="workspace-motion-preview">
-            <div className="workspace-frame workspace-frame-one">
-              <span>First frame</span>
-            </div>
-            <ArrowRight className="workspace-frame-arrow" size={22} />
-            <div className="workspace-frame workspace-frame-two">
-              <span>Last frame</span>
-            </div>
-            <div className="workspace-player">
-              <Play size={13} fill="currentColor" />
-              <span />
-              <small>0:00 / 0:05</small>
-            </div>
-          </div>
+        <div className="ev-draft-actions">
+          <button type="button" onClick={restore}>
+            Open saved brief
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAssets({});
+              setValues({});
+              setPreset("");
+              setMessage("");
+            }}
+          >
+            <Plus size={16} /> New brief
+          </button>
         </div>
-
-        <div className="workspace-mode-tabs" role="tablist" aria-label="Creation modes">
-          {modes.map(({ name, icon: Icon }) => (
-            <button
-              key={name}
-              type="button"
-              role="tab"
-              aria-selected={mode === name}
-              className={mode === name ? "active" : ""}
-              onClick={() => {
-                setMode(name);
-                setCreated(false);
-              }}
-            >
-              <Icon size={16} />
-              <span>{name}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="workspace-timeline">
-          <div className="workspace-timeline-heading">
-            <span>
-              <Folder size={16} /> Project timeline
-            </span>
-            <small>Everything from your idea, in one place.</small>
+      </header>
+      <nav className="ev-tools" aria-label="Creative tools">
+        {tools.map((item) => (
+          <button
+            type="button"
+            key={item.mode}
+            aria-pressed={mode === item.mode}
+            className={mode === item.mode ? "selected" : ""}
+            onClick={() => {
+              setMode(item.mode);
+              setMessage("");
+            }}
+          >
+            {item.mode === "Motion" ? (
+              <Play size={16} />
+            ) : item.mode === "Enhance" ? (
+              <Sparkles size={16} />
+            ) : (
+              <ImageIcon size={16} />
+            )}
+            {item.label}
+          </button>
+        ))}
+      </nav>
+      <div className="ev-studio-body">
+        <form
+          className="ev-controls"
+          onSubmit={(event) => {
+            event.preventDefault();
+            save();
+          }}
+        >
+          <div className="ev-tool-heading">
+            <h2>{tool.label}</h2>
+            <p>{tool.hint}</p>
           </div>
-          <div className="workspace-output-row">
-            {projects.map((project) => (
-              <div className="workspace-output" key={project.title}>
-                <div className={`workspace-output-thumb ${project.className}`} />
-                <div>
-                  <strong>{project.title}</strong>
-                  <small>{project.type}</small>
-                </div>
-                <span
-                  className={`workspace-status ${project.state === "Ready" ? "ready" : "creating"}`}
+          <fieldset>
+            <legend>
+              <span>1</span> {mode === "Motion" ? "Add your two frames" : "Add your image"}
+            </legend>
+            <p className="ev-help">
+              {mode === "Motion"
+                ? "Choose where the transition starts and ends."
+                : mode === "Enhance"
+                  ? "Upload the photo you want to improve."
+                  : "Add a photo or reference. Optional for logos."}
+            </p>
+            <div className="ev-upload-row">
+              {slots.map((slot) => (
+                <label
+                  className="ev-upload"
+                  key={field(slot)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    upload(field(slot), event.dataTransfer.files[0]);
+                  }}
                 >
-                  {project.state === "Ready" ? <Check size={12} /> : <Sparkles size={12} />}
-                  {project.state}
-                </span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-label={`Upload ${slot.toLowerCase()}`}
+                    onChange={(event) => upload(field(slot), event.target.files?.[0])}
+                  />
+                  <Upload size={20} />
+                  <strong>{slot}</strong>
+                  <small>{assets[field(slot)]?.name || "Choose or drop image"}</small>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>
+              <span>2</span> {mode === "Motion" ? "Choose your transition" : "Make it yours"}
+            </legend>
+            {mode === "Motion" ? (
+              <>
+                <input
+                  aria-label="Search transitions"
+                  placeholder={`Search ${motionPresets.length} transitions…`}
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+                <div className="ev-presets">
+                  {motionPresets
+                    .filter((item) => item.title.toLowerCase().includes(search.toLowerCase()))
+                    .map((item) => (
+                      <button
+                        type="button"
+                        key={item.title}
+                        aria-pressed={preset === item.title}
+                        className={preset === item.title ? "selected" : ""}
+                        onClick={() => setPreset(item.title)}
+                      >
+                        {item.imageUrl && (
+                          <span style={{ backgroundImage: `url(${item.imageUrl})` }} />
+                        )}
+                        <strong>{item.title}</strong>
+                        {preset === item.title && <Check size={14} />}
+                      </button>
+                    ))}
+                  {!motionPresets.some((item) =>
+                    item.title.toLowerCase().includes(search.toLowerCase()),
+                  ) && <p className="ev-help">No transitions match. Try another search.</p>}
+                </div>
+                <label>
+                  Length
+                  <select
+                    value={values[field("Length")] || "5 seconds"}
+                    onChange={(event) =>
+                      setValues({ ...values, [field("Length")]: event.target.value })
+                    }
+                  >
+                    <option>5 seconds</option>
+                    <option>10 seconds</option>
+                  </select>
+                </label>
+              </>
+            ) : (
+              tool.fields.map((name) => (
+                <label key={name}>
+                  {name}
+                  <input
+                    value={values[field(name)] || ""}
+                    onChange={(event) =>
+                      setValues({ ...values, [field(name)]: event.target.value })
+                    }
+                    placeholder={name}
+                  />
+                </label>
+              ))
+            )}
+            {mode !== "Motion" && (
+              <label>
+                {mode === "Enhance" ? "What should we improve?" : "Where will you use it?"}
+                <select
+                  value={values[field("Format")] || ""}
+                  onChange={(event) =>
+                    setValues({ ...values, [field("Format")]: event.target.value })
+                  }
+                >
+                  <option value="">Choose an option</option>
+                  {(mode === "Enhance"
+                    ? ["Sharper details", "Larger image", "Cleaner photo"]
+                    : mode === "Cover"
+                      ? ["Single cover", "Album cover", "EP cover"]
+                      : mode === "Logo"
+                        ? ["Artist identity", "Business identity", "Personal brand"]
+                        : ["Instagram post", "Instagram Story", "Printed flyer"]
+                  ).map((option) => (
+                    <option key={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </fieldset>
+          {mode !== "Enhance" && (
+            <fieldset>
+              <legend>
+                <span>3</span> Add your direction
+              </legend>
+              <label>
+                {mode === "Motion"
+                  ? "How should one frame become the next?"
+                  : "Tell us about your idea"}
+                <textarea
+                  rows={3}
+                  value={values[field("Direction")] || ""}
+                  onChange={(event) =>
+                    setValues({ ...values, [field("Direction")]: event.target.value })
+                  }
+                  placeholder={
+                    mode === "Motion"
+                      ? "Example: dissolve into glowing particles, then reveal the last frame."
+                      : "Describe the mood, colors, and anything you want included."
+                  }
+                />
+              </label>
+            </fieldset>
+          )}
+          <button className="ev-primary" type="submit">
+            Save creative brief <ArrowRight size={17} />
+          </button>
+          <p className="ev-help ev-service-note">
+            Generation is being connected. You can prepare and save your brief now.
+          </p>
+          {message && (
+            <p className="ev-message" role="status">
+              {message}
+            </p>
+          )}
+        </form>
+        <div className="ev-preview-area">
+          <div className="ev-preview-heading">
+            <div>
+              <h2>{mode === "Motion" ? "Your transition frames" : "Your image preview"}</h2>
+              <p>Your uploaded content appears here.</p>
+            </div>
+            <span>Preview</span>
+          </div>
+          <div className={`ev-preview ${mode === "Motion" ? "motion" : ""}`}>
+            {slots.map((slot) => (
+              <div className="ev-preview-slot" key={field(slot)}>
+                {assets[field(slot)] ? (
+                  <>
+                    <img src={assets[field(slot)].url} alt={slot} />
+                    <button
+                      type="button"
+                      aria-label={`Remove ${slot}`}
+                      onClick={() =>
+                        setAssets((current) => {
+                          const next = { ...current };
+                          delete next[field(slot)];
+                          return next;
+                        })
+                      }
+                    >
+                      <X size={16} />
+                    </button>
+                  </>
+                ) : (
+                  <div className="ev-preview-empty">
+                    <ImageIcon size={32} strokeWidth={1} />
+                    <strong>
+                      {mode === "Motion" ? slot : "A little space for your next big idea."}
+                    </strong>
+                    <p>
+                      {mode === "Motion"
+                        ? "Add this frame in step 1."
+                        : "Upload an image to see it here."}
+                    </p>
+                  </div>
+                )}
+                {mode === "Motion" && <span className="ev-frame-label">{slot}</span>}
               </div>
             ))}
-            <button className="workspace-new-output" type="button">
-              <Plus size={18} /> New output
+          </div>
+          <div className="ev-preview-footer">
+            <span>{mode === "Motion" ? preset || "Choose a transition to begin" : tool.hint}</span>
+            <button type="button" onClick={download}>
+              <Download size={15} /> Download brief
             </button>
+          </div>
+          <div className="ev-tip">
+            <Sparkles size={18} />
+            <p>
+              <strong>A little guidance goes a long way.</strong>{" "}
+              {mode === "Motion"
+                ? "Choose a preset, then describe only the details you want to change."
+                : "Simple descriptions work best. Tell us the feeling and the details that matter."}
+            </p>
           </div>
         </div>
       </div>
-
-      <form
-        className="workspace-create-panel"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setCreated(true);
-        }}
-      >
-        <div className="workspace-panel-heading">
-          <WandSparkles size={20} />
-          <div>
-            <h2>Create with EliteVisuals</h2>
-            <p>{modeDescription}</p>
-          </div>
-        </div>
-        {mode === "Motion" ? (
-          <div className="workspace-frame-uploads">
-            <label className="workspace-upload compact">
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={frameUpload(setFirstFrameName)}
-              />
-              <ImageIcon size={19} />
-              <strong>{firstFrameName || "First frame"}</strong>
-              <span>{firstFrameName ? "Ready" : "Upload starting image"}</span>
-            </label>
-            <label className="workspace-upload compact">
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={frameUpload(setLastFrameName)}
-              />
-              <ImageIcon size={19} />
-              <strong>{lastFrameName || "Last frame"}</strong>
-              <span>{lastFrameName ? "Ready" : "Upload ending image"}</span>
-            </label>
-          </div>
-        ) : (
-          <label className="workspace-upload">
-            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleUpload} />
-            <ImageIcon size={22} />
-            <strong>{uploadName || "Upload an image"}</strong>
-            <span>
-              {uploadName ? "Image ready to use" : "Drop an image here, or click to upload"}
-            </span>
-          </label>
-        )}
-        <label className="workspace-field-label" htmlFor="workspace-output">
-          What are you making?
-        </label>
-        <button className="workspace-select" id="workspace-output" type="button">
-          <ImageIcon size={16} />
-          <span>{mode === "Cover" ? "Cover art" : `${mode} creation`}</span>
-          <ChevronDown size={16} />
-        </button>
-        <label className="workspace-field-label" htmlFor="workspace-idea">
-          {mode === "Motion" ? "Describe the motion" : "Describe your idea"}
-        </label>
-        <textarea
-          id="workspace-idea"
-          value={idea}
-          onChange={(event) => setIdea(event.target.value)}
-          rows={4}
-          placeholder={
-            mode === "Motion"
-              ? "Tell us how the first image should become the last..."
-              : "Tell us what you want to create..."
-          }
-        />
-        {mode === "Motion" ? (
-          <div className="workspace-preset-section">
-            <div className="workspace-setting-heading">
-              <span className="workspace-field-label">Choose a transition preset</span>
-              <small>{motionPresets.length} motion presets</small>
-            </div>
-            <div className="workspace-motion-presets">
-              {(motionPresets.length
-                ? motionPresets
-                : [
-                    {
-                      title: "Smooth morph",
-                      description: "A gentle movement between your frames.",
-                      imageUrl: null,
-                    },
-                  ]
-              ).map((preset, index) => (
-                <button
-                  type="button"
-                  className={`workspace-motion-preset ${selectedPreset === index ? "selected" : ""}`}
-                  key={`${preset.title}-${index}`}
-                  onClick={() => setSelectedPreset(index)}
-                >
-                  <span
-                    className="workspace-preset-thumb"
-                    style={
-                      preset.imageUrl ? { backgroundImage: `url(${preset.imageUrl})` } : undefined
-                    }
-                  />
-                  <span>
-                    <strong>{preset.title}</strong>
-                    <small>{preset.description}</small>
-                  </span>
-                  {selectedPreset === index && <Check size={15} />}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="workspace-setting-card">
-            <span className="workspace-field-label">Guided settings</span>
-            <p>
-              {mode === "Cover"
-                ? "We will keep your subject recognizable and prepare a square artwork."
-                : modeDescription}
-            </p>
-            <button type="button" className="workspace-inline-setting">
-              Use guided settings <Check size={14} />
-            </button>
-          </div>
-        )}
-        <button className="button button-solid workspace-create-button" type="submit">
-          {created ? (
-            <>
-              <Check size={17} /> Added to project
-            </>
-          ) : (
-            <>
-              <Sparkles size={17} /> Create <ArrowRight size={17} />
-            </>
-          )}
-        </button>
-        <button className="workspace-more-options" type="button">
-          More options <ChevronDown size={15} />
-        </button>
-      </form>
     </section>
   );
 }
